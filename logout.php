@@ -10,7 +10,7 @@ session_destroy();
         Swal.fire({
             icon: 'success',
             title: 'Logout Berhasil!',
-            text: 'Anda telah berhasil logout.',
+            text: 'Anda telah berhasil logout dari sistem.',
             timer: 2000, 
             showConfirmButton: false,
             customClass: {
