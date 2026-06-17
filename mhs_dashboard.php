@@ -1,10 +1,11 @@
 <?php
-  session_start();
-  include "koneksi.php";
+session_start();
+include "koneksi.php";
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 </head>
+
 <body>
     <nav class="navbar">
         <a href="#" class="navbar-logo">
@@ -28,13 +30,42 @@
         </div>
 
         <div class="navbar-extra">
-            <a href="mhs_dashboard.php" id="user-icon"><i class="fa-solid fa-circle-user"></i></a>
+            <div class="user-menu-container">
+                <?php
+                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+                $inisial = '';
+                $namaParts = explode(' ', $namaLengkap);
+                if (!empty($namaParts)) {
+                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+                }
+                ?>
+                <button id="user-btn" class="user-btn">
+                    <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
+                </button>
+                <div id="user-dropdown" class="dropdown-menu">
+                    <div class="user-info">
+                        <span class="user-name"><?= ($namaLengkap) ?></span>
+                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
+                    </div>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Logout</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
     <section class="hero" id="home">
         <main class="content">
-            <h2>Halo, <?php echo $_SESSION['nama_mhs']; ?></h2>
+            <?php
+            $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+            ?>
+            <h2>Halo, <?= $namaLengkap ?></h2>
             <h1>Selamat datang di layanan Akademik FST UIN RIL</h1>
         </main>
     </section>
@@ -48,14 +79,14 @@
         <div class="services-container">
             <div class="service-box">
                 <div class="icon-left">
-                    <i class="fa-solid fa-paper-plane"></i> 
+                    <i class="fa-solid fa-paper-plane"></i>
                 </div>
                 <div class="text-middle">
                     <h3>Pengajuan Surat Online</h3>
                     <p>Ajukan kebutuhan administrasi surat Anda secara daring, mudah, dan dapat dilacak</p>
                 </div>
                 <div class="btn-right">
-                    <a href="form_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="mhs_daftar_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -63,7 +94,7 @@
         <div class="services-container">
             <div class="service-box">
                 <div class="icon-left">
-                    <i class="fa-solid fa-file-word"></i> 
+                    <i class="fa-solid fa-file-word"></i>
                 </div>
                 <div class="text-middle">
                     <h3>Draft Surat Akademik</h3>
@@ -82,9 +113,9 @@
                 <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
             </svg>
         </div>
-        
+
         <div class="riwayat-header">
-            <h2>Informasi <span class="text-orange">Permohonan</span></h2>
+            <h2>Informasi <span class="text-orange">Pengajuan</span></h2>
         </div>
 
         <div class="dashboard-container">
@@ -127,7 +158,7 @@
                 <p>Pantau posisi terkini dan proses disposisi surat Anda secara real-time.</p>
                 <a href="mhs_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
-        </div> 
+        </div>
     </section>
 
     <footer class="footer-section">
@@ -172,10 +203,53 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="footer-bottom">
             <p>&copy; 2026 Layanan Akademik FST UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        /*icon user control*/
+        document.addEventListener('DOMContentLoaded', function() {
+            const userBtn = document.getElementById('user-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            userBtn.addEventListener('click', function(event) {
+                dropdown.classList.toggle('show');
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.matches('#user-btn') && !event.target.closest('#user-btn')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+        });
+
+        /*konfirmasi logout*/
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus login kembali untuk mengakses layanan akademik.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
+    </script>
 </body>
+
 </html>
