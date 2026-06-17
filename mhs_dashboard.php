@@ -97,7 +97,7 @@ include "koneksi.php";
                     <i class="fa-solid fa-file-word"></i>
                 </div>
                 <div class="text-middle">
-                    <h3>Draft Surat Akademik</h3>
+                    <h3>Format Surat Akademik</h3>
                     <p>Unduh format baku surat akademik untuk mempermudah berbagai keperluan administrasi Anda</p>
                 </div>
                 <div class="btn-right">
