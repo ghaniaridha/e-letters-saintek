@@ -1,10 +1,11 @@
 <?php
-  session_start();
-  include "koneksi.php";
+session_start();
+include "koneksi.php";
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <link rel="stylesheet" href="index.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 </head>
+
 <body>
     <form class="login-form" method="POST" action="">
         <div class="form-container">
@@ -25,10 +27,11 @@
                 <img src="images/AKADEMIK FST1.jpg" alt="image" />
 
                 <?php if (isset($_SESSION['error'])): ?>
-                <div class="error-message">
-                    <?= $_SESSION['error']; ?>
-                </div>
-                <?php unset($_SESSION['error']); endif; ?>
+                    <div class="error-message">
+                        <?= $_SESSION['error']; ?>
+                    </div>
+                <?php unset($_SESSION['error']);
+                endif; ?>
 
                 <div class="box-input-data">
                     <i class="fa-regular fa-user"></i>
@@ -53,56 +56,56 @@
         $queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
         $resultAdmin = mysqli_query($koneksi, $queryAdmin);
         $dataAdmin = mysqli_fetch_assoc($resultAdmin);
-        
+
         if ($dataAdmin && password_verify($password, $dataAdmin['password'])) {
             $_SESSION['id_admin'] = $dataAdmin['id_admin'];
-            $_SESSION['nama_admin'] = $dataAdmin['nama_admin'];
+            $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
             $_SESSION['nama'] = $dataAdmin['npa'];
             $_SESSION['role'] = 'admin';
             header("Location:adm_dashboard.php");
             exit;
-            }
+        }
 
-            $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";
-            $resultDosen = mysqli_query($koneksi, $queryDosen);
-            $dataDosen = mysqli_fetch_assoc($resultDosen);
-        
-            if ($dataDosen && password_verify($password, $dataDosen['password'])) {
-                $_SESSION['id_dosen'] = $dataDosen['id_dosen'];
-                $_SESSION['nama_dosen'] = $dataDosen['nama_dosen'];
-                $_SESSION['nama'] = $dataDosen['nip'];
-                $_SESSION['nip'] = $dataDosen['nip'];
-                $_SESSION['jabatan'] = $dataDosen['jabatan'];
-                $_SESSION['role'] = 'dosen';
-                header("Location: dosen_dashboard.php");
-                exit;
-            }
+        $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";
+        $resultDosen = mysqli_query($koneksi, $queryDosen);
+        $dataDosen = mysqli_fetch_assoc($resultDosen);
 
-            $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
-            $resultMhs = mysqli_query($koneksi, $queryMhs);
-            $dataMhs = mysqli_fetch_assoc($resultMhs);
-
-            if ($dataMhs && password_verify($password, $dataMhs['password'])) {
-                $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
-                $_SESSION['nama_mhs'] = $dataMhs['nama_mhs'];
-                $_SESSION['nama'] = $dataMhs['npm'];
-                $_SESSION['npm'] = $dataMhs['npm']; 
-                $_SESSION['role'] = 'mahasiswa';
-                header("Location: mhs_dashboard.php");
-                exit;
-            }
-        
-            $_SESSION['error'] = "Login gagal! NIP/NPM/NPA atau password salah.";
-            header("Location: index.php");
+        if ($dataDosen && password_verify($password, $dataDosen['password'])) {
+            $_SESSION['id_dosen'] = $dataDosen['id_dosen'];
+            $_SESSION['nama_lengkap'] = $dataDosen['nama_dosen'];
+            $_SESSION['nama'] = $dataDosen['nip'];
+            $_SESSION['nip'] = $dataDosen['nip'];
+            $_SESSION['jabatan'] = $dataDosen['jabatan'];
+            $_SESSION['role'] = 'dosen';
+            header("Location: dosen_dashboard.php");
             exit;
         }
+
+        $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
+        $resultMhs = mysqli_query($koneksi, $queryMhs);
+        $dataMhs = mysqli_fetch_assoc($resultMhs);
+
+        if ($dataMhs && password_verify($password, $dataMhs['password'])) {
+            $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
+            $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
+            $_SESSION['nama'] = $dataMhs['npm'];
+            $_SESSION['npm'] = $dataMhs['npm'];
+            $_SESSION['role'] = 'mahasiswa';
+            header("Location: mhs_dashboard.php");
+            exit;
+        }
+
+        $_SESSION['error'] = "Login gagal! NIP/NPM/NPA atau password salah.";
+        header("Location: index.php");
+        exit;
+    }
     ?>
 
     <script>
         const togglePassword = document.getElementById("toggle-password");
         const passwordInput = document.getElementById("password");
 
-            togglePassword.addEventListener("click", function () {
+        togglePassword.addEventListener("click", function() {
             const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
             passwordInput.setAttribute("type", type);
 
@@ -111,4 +114,5 @@
         });
     </script>
 </body>
+
 </html>
