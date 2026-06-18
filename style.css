@@ -521,11 +521,9 @@ body.swal2-shown {
   background-color: #0f172a;
   color: #9ca3af;
   font-family: "Montserrat", sans-serif;
-  padding-top: 60px;
-  margin-top: 60px;
   position: relative;
   padding-top: 100px;
-  margin-top: 60px;
+  margin-top: 0;
 }
 
 .footer-wave {
@@ -637,6 +635,53 @@ body.swal2-shown {
 }
 /*footer section end*/
 
+/*template surat*/
+
+body {
+  background: #f4f7fb;
+}
+
+.top-action {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 10px;
+}
+
+.btn-kembali {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #2c4664;
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.template-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.template-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.template-icon {
+  width: 78px;
+  height: 78px;
+  border-radius: 18px;
+  background: #fff8dc;
+}
 /*daftar surat section*/
 .daftar-surat {
   padding-top: 130px;
@@ -713,6 +758,57 @@ body.swal2-shown {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 2rem;
+}
+
+.template-info {
+  flex: 1;
+}
+
+.template-info h3 {
+  color: #2c4664;
+  font-size: 1.35rem;
+  margin-bottom: 8px;
+}
+
+.template-info p {
+  color: #6b7280;
+}
+
+.template-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-view,
+.btn-download {
+  width: 55px;
+  height: 55px;
+  border-radius: 13px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+.btn-view {
+  background: #2c4664;
+  color: white;
+}
+
+.btn-download {
+  background: #ffcc00;
+  color: white;
+}
+
+.empty-template {
+  max-width: 700px;
+  margin: 30px auto;
+  background: white;
+  padding: 40px;
+  border-radius: 18px;
+  text-align: center;
 }
 
 .icon-box.color-orange {
