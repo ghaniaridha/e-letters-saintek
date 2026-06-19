@@ -211,7 +211,6 @@ include "koneksi.php";
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        /*icon user control*/
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
@@ -230,7 +229,6 @@ include "koneksi.php";
             });
         });
 
-        /*konfirmasi logout*/
         function confirmLogout(event, url) {
             event.preventDefault();
             Swal.fire({
