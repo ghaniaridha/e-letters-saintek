@@ -12,6 +12,44 @@ $pembimbing_2 = $_POST['pembimbing_2'];
 
 $id_mhs = $_SESSION['id_mhs'];
 
+$folder_upload = "uploads/dokumen_hss/";
+
+if (!is_dir($folder_upload)) {
+    mkdir($folder_upload, 0777, true);
+}
+
+function uploadFile($field, $folder_upload)
+{
+    if (!isset($_FILES[$field]) || $_FILES[$field]['error'] != 0) {
+        echo "<script>alert('File " . $field . " wajib diupload'); history.back();</script>";
+        exit;
+    }
+
+    $nama_asli = $_FILES[$field]['name'];
+    $tmp_file = $_FILES[$field]['tmp_name'];
+    $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
+
+    $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+
+    if (!in_array($ext, $allowed)) {
+        echo "<script>alert('Format file harus PDF, JPG, JPEG, atau PNG'); history.back();</script>";
+        exit;
+    }
+
+    $nama_baru = $field . "_" . time() . "_" . rand(1000, 9999) . "." . $ext;
+
+    if (!move_uploaded_file($tmp_file, $folder_upload . $nama_baru)) {
+        echo "<script>alert('Gagal upload file " . $field . "'); history.back();</script>";
+        exit;
+    }
+
+    return $nama_baru;
+}
+
+$proposal_penelitian = uploadFile('proposal_penelitian', $folder_upload);
+$khs = uploadFile('khs', $folder_upload);
+$bukti_ukt = uploadFile('bukti_ukt', $folder_upload);
+
 $mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM mahasiswa
     WHERE id_mhs = '$id_mhs'
@@ -49,7 +87,10 @@ mysqli_query($koneksi, "
         pembimbing_2,
         status_dospem1,
         status_dospem2,
-        status_pimpinan
+        status_pimpinan,
+        proposal_penelitian,
+        khs,
+        bukti_ukt
     )
     VALUES
     (
@@ -65,7 +106,10 @@ mysqli_query($koneksi, "
         '$pembimbing_2',
         'Menunggu',
         'Menunggu',
-        'Menunggu'
+        'Menunggu',
+        '$proposal_penelitian',
+        '$khs',
+        '$bukti_ukt'
     )
 ");
 
@@ -148,7 +192,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
         <ol>
             <li>Proposal Penelitian</li>
-            <li>Foto Copy Slip pembayaran SPP Terakhir</li>
+            <li>Foto Copy Slip pembayaran UKT Terakhir</li>
             <li>KHS Semester terakhir</li>
         </ol>
 
@@ -190,7 +234,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
     <div class="preview-actions">
         <p>Status surat: <strong>Menunggu Dospem 1</strong></p>
-        <p>QR pemohon sudah dibuat sebagai tanda verifikasi digital.</p>
+        <p>Dokumen pendukung dan QR pemohon sudah dibuat.</p>
 
         <a href="mhs_riwayat.php" class="btn-generate">Kirim Pengajuan</a>
         <a href="daftar_surat.php" class="btn-back-form">Kembali</a>

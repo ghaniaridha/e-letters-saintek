@@ -1,10 +1,67 @@
+<?php
+session_start();
+include "koneksi.php";
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
+    echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
+    exit;
+}
+
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
+
+$qMenunggu = mysqli_query($koneksi, "
+    SELECT COUNT(*) AS total
+    FROM surat_pengajuan
+    WHERE 
+    (pembimbing_1 = '$id_dosen' AND status_dospem1 = 'Menunggu')
+    OR
+    (pembimbing_2 = '$id_dosen' AND status_dospem1 = 'Disetujui' AND status_dospem2 = 'Menunggu')
+");
+
+$qDisetujui = mysqli_query($koneksi, "
+    SELECT COUNT(*) AS total
+    FROM surat_pengajuan
+    WHERE 
+    (pembimbing_1 = '$id_dosen' AND status_dospem1 = 'Disetujui')
+    OR
+    (pembimbing_2 = '$id_dosen' AND status_dospem2 = 'Disetujui')
+");
+
+$qDitolak = mysqli_query($koneksi, "
+    SELECT COUNT(*) AS total
+    FROM surat_pengajuan
+    WHERE 
+    (pembimbing_1 = '$id_dosen' AND status_dospem1 = 'Ditolak')
+    OR
+    (pembimbing_2 = '$id_dosen' AND status_dospem2 = 'Ditolak')
+");
+
+$menunggu = mysqli_fetch_assoc($qMenunggu)['total'];
+$disetujui = mysqli_fetch_assoc($qDisetujui)['total'];
+$ditolak = mysqli_fetch_assoc($qDitolak)['total'];
+
+$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
+$idLogin = $_SESSION['nama'] ?? '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Dosen</title>
+
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
 
 <body>
@@ -15,33 +72,25 @@
 
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
-            <a href="#services">Verifikasi Permohonan</a>
+            <a href="dosen_permohonan.php">Verifikasi Permohonan</a>
             <a href="#riwayat">Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat Verifikasi</a>
+            <a href="dosen_riwayat.php">Riwayat Verifikasi</a>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
-                    <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
+                    <span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span>
                 </button>
+
                 <div id="user-dropdown" class="dropdown-menu">
                     <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
+                        <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
+                        <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
                     </div>
+
                     <div class="divider"></div>
+
                     <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
                         <span>Logout</span>
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -53,74 +102,80 @@
 
     <section class="hero" id="home">
         <main class="content">
-            <?php
-            $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-            ?>
-            <h2>Halo, <?= $namaLengkap ?></h2>
-            <h1>Selamat datang di layanan Akademik FST UIN RIL</h1>
+            <h2>Halo, <?= htmlspecialchars($namaLengkap); ?></h2>
+            <h1>Selamat datang di Dashboard Dosen Akademik FST UIN RIL</h1>
         </main>
     </section>
 
     <section id="riwayat" class="riwayat-section">
         <div class="wave-divider">
-            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+                      class="shape-fill"></path>
             </svg>
         </div>
 
         <div class="riwayat-header">
-            <h2>Informasi <span class="text-orange">Pengajuan</span></h2>
+            <h2>Informasi <span class="text-orange">Verifikasi</span></h2>
         </div>
 
         <div class="dashboard-container">
             <div class="status-grid">
                 <div class="status-box">
-                    <span class="status-count" style="color: #f59e0b;">3</span>
+                    <span class="status-count" style="color:#f59e0b;"><?= $menunggu; ?></span>
                     <h4>Menunggu</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #10b981;">1</span>
+                    <span class="status-count" style="color:#10b981;"><?= $disetujui; ?></span>
                     <h4>Disetujui</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #ef4444;">0</span>
+                    <span class="status-count" style="color:#ef4444;"><?= $ditolak; ?></span>
                     <h4>Ditolak</h4>
                 </div>
 
                 <div class="status-box">
-                    </i> <span class="status-count" style="color: #3b82f6;">5</span>
-                    <h4>Selesai</h4>
+                    <span class="status-count" style="color:#3b82f6;"><?= $menunggu + $disetujui + $ditolak; ?></span>
+                    <h4>Total</h4>
                 </div>
+            </div>
+
+            <div class="action-box">
+                <div class="action-icon">
+                    <i class="fa-solid fa-file-signature"></i>
+                </div>
+                <h3>Verifikasi Permohonan</h3>
+                <p>Lihat dan verifikasi permohonan surat mahasiswa yang membutuhkan persetujuan Anda.</p>
+                <a href="dosen_permohonan.php" class="btn-action">
+                    Verifikasi Permohonan <i class="fa-solid fa-arrow-right"></i>
+                </a>
             </div>
 
             <div class="action-box">
                 <div class="action-icon">
                     <i class="fa-solid fa-clock-rotate-left"></i>
                 </div>
-                <h3>Riwayat Pengajuan</h3>
-                <p>Lihat detail riwayat seluruh surat yang pernah Anda ajukan sebelumnya.</p>
-                <a href="mhs_riwayat.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-
-            <div class="action-box">
-                <div class="action-icon">
-                    <i class="fa-solid fa-magnifying-glass-location"></i>
-                </div>
-                <h3>Lacak Disposisi</h3>
-                <p>Pantau posisi terkini dan proses disposisi surat Anda secara real-time.</p>
-                <a href="mhs_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
+                <h3>Riwayat Verifikasi</h3>
+                <p>Lihat daftar surat yang sudah pernah Anda setujui atau tolak sebelumnya.</p>
+                <a href="dosen_riwayat.php" class="btn-action">
+                    Lihat Riwayat <i class="fa-solid fa-arrow-right"></i>
+                </a>
             </div>
         </div>
     </section>
 
     <footer class="footer-section">
         <div class="footer-wave">
-            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                <path d="M1200,0H0V60.4C138.85,108.62,298.54,125,441.77,105.81,595.6,85.19,705.51,20.89,864,24.7c124.62,3,212.87,41.4,336,65.7V0Z" class="shape-fill"></path>
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M1200,0H0V60.4C138.85,108.62,298.54,125,441.77,105.81,595.6,85.19,705.51,20.89,864,24.7c124.62,3,212.87,41.4,336,65.7V0Z"
+                      class="shape-fill"></path>
             </svg>
         </div>
+
         <div class="footer-container">
             <div class="footer-col info-col">
                 <h3>Layanan Akademik FST</h3>
@@ -135,9 +190,8 @@
                 <h4>Tautan Cepat</h4>
                 <ul>
                     <li><a href="#home">Beranda</a></li>
-                    <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#riwayat">Lacak</a></li>
-                    <li><a href="#kalender">Riwayat Permohonan</a></li>
+                    <li><a href="dosen_permohonan.php">Verifikasi Permohonan</a></li>
+                    <li><a href="dosen_riwayat.php">Riwayat Verifikasi</a></li>
                 </ul>
             </div>
 
@@ -164,6 +218,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
@@ -185,9 +240,10 @@
 
         function confirmLogout(event, url) {
             event.preventDefault();
+
             Swal.fire({
                 title: 'Yakin ingin keluar?',
-                text: "Anda harus login kembali untuk mengakses layanan akademik.",
+                text: 'Anda harus login kembali untuk mengakses layanan akademik.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',

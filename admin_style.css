@@ -253,3 +253,57 @@ table td {
     min-width: 240px;
     font-family: inherit;
 }
+
+
+/* khusus halaman dosen tanpa sidebar */
+.dosen-page .admin-wrapper {
+    display: block;
+}
+
+.dosen-page .main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 40px 30px;
+}
+
+.dosen-page .page-title {
+    max-width: 1300px;
+    margin: 0 auto 25px auto;
+}
+
+.dosen-page .table-card {
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+/*detail dosen*/
+
+.modal-preview {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-preview {
+    background: white;
+    width: 88%;
+    max-width: 1050px;
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+}
+
+.close-preview {
+    position: absolute;
+    right: 18px;
+    top: 10px;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 10;
+}

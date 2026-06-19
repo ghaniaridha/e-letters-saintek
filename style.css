@@ -1240,3 +1240,8 @@ body.swal2-shown {
   background-color: #0d6efd;
   color: #ffffff;
 }
+
+.status-ditolak {
+  background: #fee2e2;
+  color: #dc2626;
+}
