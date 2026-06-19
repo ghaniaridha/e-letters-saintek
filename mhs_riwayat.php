@@ -1,6 +1,9 @@
 <?php
 session_start();
 include "koneksi.php";
+
+$id_mhs = $_SESSION['id_mhs'];
+$query_riwayat = mysqli_query($koneksi, "SELECT * FROM pengajuan_surat WHERE id_mhs = '$id_mhs' ORDER BY tgl_pengajuan DESC");
 ?>
 
 <!DOCTYPE html>
@@ -79,6 +82,83 @@ include "koneksi.php";
         <div class="riwayat-permohonan-header">
             <h2>Riwayat Permohonan</h2>
         </div>
+
+        <div class="table-responsive">
+            <table class="table-riwayat">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal Pengajuan</th>
+                        <th>Jenis Surat</th>
+                        <th>File Surat Permohonan</th>
+                        <th>Status Pengajuan</th>
+                        <th>File Final</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $no = 1;
+                    // Cek apakah ada data pengajuan
+                    if (mysqli_num_rows($query_riwayat) > 0) {
+                        // Looping data dari database
+                        while ($row = mysqli_fetch_assoc($query_riwayat)) {
+                            $tanggal = date('d-m-Y H:i', strtotime($row['tgl_pengajuan']));
+
+                            echo "<tr>";
+
+                            // 1. Kolom No
+                            echo "<td>" . $no++ . "</td>";
+
+                            // 2. Kolom Tanggal Pengajuan
+                            echo "<td>" . $tanggal . "</td>";
+
+                            // 3. Kolom Jenis Surat 
+                            // Catatan: Agar muncul nama teks (seperti 'Surat Keterangan Riset'), pastikan query SQL Anda sudah me-JOIN tabel pengajuan dengan tabel jenis_surat
+                            $jenis_surat = isset($row['nama_jenis']) ? $row['nama_jenis'] : "Surat Riset";
+                            echo "<td>" . htmlspecialchars($jenis_surat) . "</td>";
+
+                            // 4. Kolom File Surat Permohonan (Hasil generate otomatis dengan barcode)
+                            // Diarahkan ke folder tempat Anda menyimpan PDF surat tersebut
+                            $file_permohonan = "hasil_surat/surat_" . $row['id_pengajuan'] . ".pdf";
+                            echo "<td>";
+                            if (file_exists($file_permohonan)) {
+                                echo "<a href='$file_permohonan' target='_blank' class='btn-aksi' style='padding: 4px 10px; font-size: 0.8rem;'>Unduh</a>";
+                            } else {
+                                echo "<span style='color: #94a3b8;'>-</span>";
+                            }
+                            echo "</td>";
+
+                            // 5. Kolom Status Pengajuan
+                            $status = $row['status_pengajuan'];
+                            $badge_class = ($status == 'SELESAI' || $status == 'Selesai') ? 'status-selesai' : 'status-proses';
+                            echo "<td><span class='badge-status $badge_class'>" . $status . "</span></td>";
+
+                            // 6. Kolom File Final (Mengambil data dari kolom file_surat_hasil jika sudah diupload admin)
+                            echo "<td>";
+                            if (!empty($row['file_surat_hasil'])) {
+                                echo "<a href='files_final/" . $row['file_surat_hasil'] . "' target='_blank' class='btn-aksi' style='padding: 4px 10px; font-size: 0.8rem; background-color: #10b981; color: white; border-color: #10b981;'>Unduh</a>";
+                            } else {
+                                echo "<span style='color: #94a3b8; font-style: italic; font-size: 0.85rem;'>Belum Tersedia</span>";
+                            }
+                            echo "</td>";
+
+                            // 7. Kolom Aksi (Detail)
+                            echo "<td>";
+                            echo "<a href='detail_pengajuan.php?id=" . $row['id_pengajuan'] . "' class='btn-aksi'>Detail</a>";
+                            echo "</td>";
+
+                            echo "</tr>";
+                        }
+                    } else {
+                        // PERUBAHAN KRUSIAL: colspan diubah dari 6 menjadi 7 agar penuh menutupi semua kolom
+                        echo "<tr><td colspan='7' class='text-center'>Belum ada riwayat permohonan surat.</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </body>
 
 </html>
