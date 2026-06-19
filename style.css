@@ -636,11 +636,6 @@ body.swal2-shown {
 /*footer section end*/
 
 /*template surat*/
-
-body {
-  background: #f4f7fb;
-}
-
 .top-action {
   max-width: 1200px;
   margin: 0 auto;
@@ -673,7 +668,7 @@ body {
   display: flex;
   align-items: center;
   gap: 25px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 .template-icon {
@@ -682,6 +677,7 @@ body {
   border-radius: 18px;
   background: #fff8dc;
 }
+
 /*daftar surat section*/
 .daftar-surat {
   padding-top: 130px;
@@ -916,4 +912,111 @@ body {
   .layanan-card {
     min-height: 180px;
   }
+}
+
+/*form permohonan surat*/
+.permintaan {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 98%;
+  margin: auto;
+  margin-bottom: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.permintaan .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.permintaan .align-items-center {
+  align-items: center;
+}
+
+.permintaan .col-sm-3 {
+  flex: 0 0 20%;
+  max-width: 20%;
+  padding-right: 15px;
+}
+
+.permintaan .col-sm-9 {
+  flex: 0 0 80%;
+  max-width: 80%;
+}
+
+.permintaan .col-form-label {
+  font-size: 1rem;
+  color: #333;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.permintaan .form-control {
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 1rem;
+  color: #333;
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.permintaan .form-control[readonly] {
+  background-color: #ffffff;
+  cursor: default;
+}
+
+.permintaan .form-control:focus {
+  border-color: #86b7fe;
+  outline: 0;
+}
+
+.form-isolated {
+  width: 100%;
+}
+
+.btn-input {
+  min-width: 90px;
+  border: none;
+  background-color: #0f2038;
+  color: #ffffff;
+  border-radius: 5px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  font-weight: normal;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-input:hover {
+  background-color: #ffcc00;
+}
+
+.submit-container {
+  text-align: right;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.riwayat-permohonan {
+  padding-top: 130px;
+}
+
+.riwayat-permohonan-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.riwayat-permohonan-header h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #353f4b;
+  margin: 0;
+  display: inline-block;
+  position: relative;
 }
