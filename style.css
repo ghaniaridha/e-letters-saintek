@@ -1005,6 +1005,9 @@ body.swal2-shown {
 
 .riwayat-permohonan {
   padding-top: 130px;
+  width: 95%; /* Mengambil 95% dari lebar layar agar ada sisa ruang */
+  max-width: 1200px; /* Batas maksimal lebar agar di layar monitor besar tidak terlalu memanjang */
+  margin: 40px auto; /* 'auto' akan membuat kotak berada tepat di tengah layar */
 }
 
 .riwayat-permohonan-header {
@@ -1152,4 +1155,88 @@ body.swal2-shown {
   background: white;
   padding: 20px;
   border-radius: 12px;
+  }
+
+/*tabel riwayat permohonan*/
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Styling Tabel Utama */
+.table-riwayat {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Montserrat", sans-serif; /* Sesuai font navbar Anda */
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.table-riwayat th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  text-align: center;
+  padding: 14px 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.table-riwayat td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table-riwayat tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Penyesuaian Khusus Kolom */
+.text-left {
+  text-align: left !important;
+}
+.text-center {
+  text-align: center !important;
+}
+.col-judul {
+  min-width: 250px;
+} /* Agar judul skripsi tidak terlalu terjepit */
+
+/* Styling Badge Status (Bentuk Oval/Pill) */
+.badge-status {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 50px;
+}
+
+.status-selesai {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.status-proses {
+  background-color: #fef9c3; /* Latar belakang kuning pastel */
+  color: #ca8a04; /* Teks kuning tua/coklat */
+  border: 1px solid #fde047;
+}
+
+/* Styling Tombol Aksi */
+.btn-aksi {
+  background-color: transparent;
+  color: #0d6efd;
+  border: 1px solid #0d6efd;
+  padding: 5px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-aksi:hover {
+  background-color: #0d6efd;
+  color: #ffffff;
 }
