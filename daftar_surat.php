@@ -108,7 +108,7 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="pengajuan_riset.php">
+            <a class="layanan-card" href="form_generate_surat.php?id_jenis=1">
                 <div class="layanan-content">
                     <h3>Permohonan<br>Riset</h3>
                 </div>
