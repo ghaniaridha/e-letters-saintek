@@ -108,12 +108,6 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="pengajuan_pra_riset.php">
-                <div class="layanan-content">
-                    <h3>Permohonan<br>Pra Riset</h3>
-                </div>
-            </a>
-
             <a class="layanan-card" href="pengajuan_riset.php">
                 <div class="layanan-content">
                     <h3>Permohonan<br>Riset</h3>
@@ -129,6 +123,12 @@ include "koneksi.php";
             <a class="layanan-card" href="pengajuan_ket_aktif_kuliah_kembali.php">
                 <div class="layanan-content">
                     <h3>Keterangan<br>Aktif Kuliah Kembali</h3>
+                </div>
+            </a>
+
+            <a class="layanan-card" href="pengajuan_ket_aktif_kuliah_kembali.php">
+                <div class="layanan-content">
+                    <h3>Peminjaman<br>Gedung</h3>
                 </div>
             </a>
         </div>
