@@ -19,6 +19,11 @@
     <a href="admin_pengguna.php">
         <i class="fa-solid fa-users"></i> Pengguna
     </a>
+    
+    <a href="admin_riwayat_review.php">
+    <i class="fa-solid fa-clock-rotate-left"></i>
+    Riwayat Review
+</a>
 
     <a href="admin_laporan_surat.php">
         <i class="fa-solid fa-file-export"></i> Laporan Surat Keluar

@@ -2,6 +2,11 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['id_mhs'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
+    exit;
+}
+
 $id_mhs = $_SESSION['id_mhs'];
 
 $query_riwayat = mysqli_query($koneksi, "
@@ -13,6 +18,8 @@ $query_riwayat = mysqli_query($koneksi, "
         sp.status_dospem1,
         sp.status_dospem2,
         sp.status_pimpinan,
+        sp.posisi_sekarang,
+        sp.urutan_sekarang,
         sp.file_surat_final,
         sp.dokumen_hash,
         js.nama_surat
@@ -24,7 +31,7 @@ $query_riwayat = mysqli_query($koneksi, "
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
@@ -141,7 +148,7 @@ if (isset($_SESSION['pesan'])) {
                                 <div style="font-size:0.85rem; line-height:1.8;">
                                     <div>Dospem 1: <?= htmlspecialchars($row['status_dospem1']); ?></div>
                                     <div>Dospem 2: <?= htmlspecialchars($row['status_dospem2']); ?></div>
-                                    <div>Pimpinan: <?= htmlspecialchars($row['status_pimpinan']); ?></div>
+                                    <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
                                 </div>
                             </td>
 

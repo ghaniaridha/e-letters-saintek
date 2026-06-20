@@ -114,21 +114,15 @@ include "koneksi.php";
                 </div>
             </a>
 
-            <a class="layanan-card" href="pengajuan_cuti.php">
+            <a class="layanan-card" href="pengajuan_magang.php?id_jenis=4">
                 <div class="layanan-content">
-                    <h3>Permohonan<br>Cuti</h3>
+                    <h3>Permohonan<br>Magang</h3>
                 </div>
             </a>
 
             <a class="layanan-card" href="pengajuan_ket_aktif_kuliah_kembali.php">
                 <div class="layanan-content">
                     <h3>Keterangan<br>Aktif Kuliah Kembali</h3>
-                </div>
-            </a>
-
-            <a class="layanan-card" href="pengajuan_ket_aktif_kuliah_kembali.php">
-                <div class="layanan-content">
-                    <h3>Peminjaman<br>Gedung</h3>
                 </div>
             </a>
         </div>

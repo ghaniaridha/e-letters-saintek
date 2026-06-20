@@ -2,7 +2,13 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['id_mhs'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
+    exit;
+}
+
 $id_jenis = $_GET['id_jenis'] ?? 1;
+$id_mhs = $_SESSION['id_mhs'];
 
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
@@ -14,13 +20,31 @@ if (!$surat) {
     exit;
 }
 
+$mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
+    SELECT * FROM mahasiswa
+    WHERE id_mhs = '$id_mhs'
+"));
+
+if (!$mhs || empty($mhs['id_prodi'])) {
+    echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='daftar_surat.php';</script>";
+    exit;
+}
+
+$id_prodi = $mhs['id_prodi'];
+
 $dosen1 = mysqli_query($koneksi, "
-    SELECT * FROM dosen
+    SELECT *
+    FROM dosen
+    WHERE role_akses = 'Dosen'
+    AND id_prodi = '$id_prodi'
     ORDER BY nama_dosen ASC
 ");
 
 $dosen2 = mysqli_query($koneksi, "
-    SELECT * FROM dosen
+    SELECT *
+    FROM dosen
+    WHERE role_akses = 'Dosen'
+    AND id_prodi = '$id_prodi'
     ORDER BY nama_dosen ASC
 ");
 ?>
@@ -87,11 +111,17 @@ $dosen2 = mysqli_query($koneksi, "
                 <select name="pembimbing_1" required>
                     <option value="">Pilih Pembimbing I</option>
 
-                    <?php while ($d1 = mysqli_fetch_assoc($dosen1)) { ?>
-                        <option value="<?= $d1['id_dosen']; ?>">
-                            <?= htmlspecialchars($d1['nama_dosen']); ?>
-                            - NIP.
-                            <?= htmlspecialchars($d1['nip']); ?>
+                    <?php if ($dosen1 && mysqli_num_rows($dosen1) > 0) { ?>
+                        <?php while ($d1 = mysqli_fetch_assoc($dosen1)) { ?>
+                            <option value="<?= $d1['id_dosen']; ?>">
+                                <?= htmlspecialchars($d1['nama_dosen']); ?>
+                                - NIP.
+                                <?= htmlspecialchars($d1['nip']); ?>
+                            </option>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <option value="" disabled>
+                            Belum ada dosen untuk prodi ini
                         </option>
                     <?php } ?>
                 </select>
@@ -102,11 +132,17 @@ $dosen2 = mysqli_query($koneksi, "
                 <select name="pembimbing_2" required>
                     <option value="">Pilih Pembimbing II</option>
 
-                    <?php while ($d2 = mysqli_fetch_assoc($dosen2)) { ?>
-                        <option value="<?= $d2['id_dosen']; ?>">
-                            <?= htmlspecialchars($d2['nama_dosen']); ?>
-                            - NIP.
-                            <?= htmlspecialchars($d2['nip']); ?>
+                    <?php if ($dosen2 && mysqli_num_rows($dosen2) > 0) { ?>
+                        <?php while ($d2 = mysqli_fetch_assoc($dosen2)) { ?>
+                            <option value="<?= $d2['id_dosen']; ?>">
+                                <?= htmlspecialchars($d2['nama_dosen']); ?>
+                                - NIP.
+                                <?= htmlspecialchars($d2['nip']); ?>
+                            </option>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <option value="" disabled>
+                            Belum ada dosen untuk prodi ini
                         </option>
                     <?php } ?>
                 </select>

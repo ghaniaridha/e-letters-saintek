@@ -26,8 +26,25 @@ if (!$data) {
     exit;
 }
 
-$link_verifikasi = "http://192.168.1.4/e-letters-saintek/verifikasi_surat.php?hash=" . $data['dokumen_hash'];
-$qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_verifikasi);
+$base_url = "http://192.168.1.4/e-letters-saintek";
+
+$qr_mhs = "";
+if (!empty($data['dokumen_hash'])) {
+    $link_mhs = $base_url . "/verifikasi_surat.php?hash=" . $data['dokumen_hash'];
+    $qr_mhs = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_mhs);
+}
+
+$qr_dospem1 = "";
+if (!empty($data['ttd_dospem1'])) {
+    $link_dospem1 = $base_url . "/verifikasi_ttd.php?hash=" . $data['ttd_dospem1'];
+    $qr_dospem1 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_dospem1);
+}
+
+$qr_dospem2 = "";
+if (!empty($data['ttd_dospem2'])) {
+    $link_dospem2 = $base_url . "/verifikasi_ttd.php?hash=" . $data['ttd_dospem2'];
+    $qr_dospem2 = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_dospem2);
+}
 ?>
 
 <!DOCTYPE html>
@@ -149,7 +166,13 @@ td {
         <div>
             <p>Mengetahui,</p>
             <p>Pembimbing I</p>
-            <br><br><br>
+
+            <?php if (!empty($qr_dospem1)) { ?>
+                <img src="<?= $qr_dospem1; ?>" class="qr-img" alt="QR Dospem 1">
+            <?php } else { ?>
+                <br><br><br>
+            <?php } ?>
+
             <p><b><?= htmlspecialchars($data['nama_dospem1']); ?></b></p>
             <p>NIP. <?= htmlspecialchars($data['nip_dospem1']); ?></p>
         </div>
@@ -157,7 +180,13 @@ td {
         <div>
             <p>&nbsp;</p>
             <p>Pembimbing II</p>
-            <br><br><br>
+
+            <?php if (!empty($qr_dospem2)) { ?>
+                <img src="<?= $qr_dospem2; ?>" class="qr-img" alt="QR Dospem 2">
+            <?php } else { ?>
+                <br><br><br>
+            <?php } ?>
+
             <p><b><?= htmlspecialchars($data['nama_dospem2']); ?></b></p>
             <p>NIP. <?= htmlspecialchars($data['nip_dospem2']); ?></p>
         </div>
@@ -166,8 +195,8 @@ td {
             <p>&nbsp;</p>
             <p>Pemohon</p>
 
-            <?php if (!empty($data['dokumen_hash'])) { ?>
-                <img src="<?= $qr_url; ?>" class="qr-img" alt="QR Verifikasi">
+            <?php if (!empty($qr_mhs)) { ?>
+                <img src="<?= $qr_mhs; ?>" class="qr-img" alt="QR Mahasiswa">
             <?php } else { ?>
                 <br><br><br>
             <?php } ?>
