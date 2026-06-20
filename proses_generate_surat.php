@@ -130,116 +130,120 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Preview Surat</title>
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
 </head>
+
 <body>
 
-<div class="surat-preview">
-    <div class="surat-kertas">
+    <div class="surat-preview">
+        <div class="surat-kertas">
 
-        <p>Perihal : Permohonan Surat Rekomendasi Riset</p>
+            <p>Perihal : Permohonan Surat Rekomendasi Riset</p>
 
-        <br>
+            <br>
 
-        <p>Kepada Yth,</p>
-        <p><strong>Dekan Fakultas Sains dan Teknologi</strong></p>
-        <p><strong>UIN Raden Intan Lampung</strong></p>
-        <p>di-</p>
-        <p style="margin-left:40px;">Bandar Lampung</p>
+            <p>Kepada Yth,</p>
+            <p><strong>Dekan Fakultas Sains dan Teknologi</strong></p>
+            <p><strong>UIN Raden Intan Lampung</strong></p>
+            <p>di-</p>
+            <p style="margin-left:40px;">Bandar Lampung</p>
 
-        <br>
+            <br>
 
-        <p>Assalamu’alaikum wr. wb.</p>
-        <p>Saya yang bertanda tangan dibawah ini :</p>
+            <p>Assalamu’alaikum wr. wb.</p>
+            <p>Saya yang bertanda tangan dibawah ini :</p>
 
-        <table class="surat-table">
-            <tr>
-                <td>Nama / NPM</td>
-                <td>:</td>
-                <td><?= htmlspecialchars($mhs['nama_mhs']); ?> / <?= htmlspecialchars($mhs['npm']); ?></td>
-            </tr>
-            <tr>
-                <td>Semester / Program Studi</td>
-                <td>:</td>
-                <td><?= htmlspecialchars($semester); ?> / <?= htmlspecialchars($mhs['prodi']); ?></td>
-            </tr>
-            <tr>
-                <td>Judul Skripsi</td>
-                <td>:</td>
-                <td><?= htmlspecialchars($_POST['judul_skripsi']); ?></td>
-            </tr>
-            <tr>
-                <td>Lokasi Penelitian</td>
-                <td>:</td>
-                <td><?= htmlspecialchars($_POST['lokasi_penelitian']); ?></td>
-            </tr>
-            <tr>
-                <td>Surat Ditujukan Kepada</td>
-                <td>:</td>
-                <td><?= htmlspecialchars($_POST['surat_ditujukan']); ?></td>
-            </tr>
-        </table>
+            <table class="surat-table">
+                <tr>
+                    <td>Nama / NPM</td>
+                    <td>:</td>
+                    <td><?= htmlspecialchars($mhs['nama_mhs']); ?> / <?= htmlspecialchars($mhs['npm']); ?></td>
+                </tr>
+                <tr>
+                    <td>Semester / Program Studi</td>
+                    <td>:</td>
+                    <td><?= htmlspecialchars($semester); ?> / <?= htmlspecialchars($mhs['prodi']); ?></td>
+                </tr>
+                <tr>
+                    <td>Judul Skripsi</td>
+                    <td>:</td>
+                    <td><?= htmlspecialchars($_POST['judul_skripsi']); ?></td>
+                </tr>
+                <tr>
+                    <td>Lokasi Penelitian</td>
+                    <td>:</td>
+                    <td><?= htmlspecialchars($_POST['lokasi_penelitian']); ?></td>
+                </tr>
+                <tr>
+                    <td>Surat Ditujukan Kepada</td>
+                    <td>:</td>
+                    <td><?= htmlspecialchars($_POST['surat_ditujukan']); ?></td>
+                </tr>
+            </table>
 
-        <br>
+            <br>
 
-        <p>
-            Bermaksud memohon surat Rekomendasi Riset dari pihak Fakultas,
-            sebagai bahan pertimbangan Bapak, saya lampirkan:
-        </p>
+            <p>
+                Bermaksud memohon surat Rekomendasi Riset dari pihak Fakultas,
+                sebagai bahan pertimbangan Bapak, saya lampirkan:
+            </p>
 
-        <ol>
-            <li>Proposal Penelitian</li>
-            <li>Foto Copy Slip pembayaran UKT Terakhir</li>
-            <li>KHS Semester terakhir</li>
-        </ol>
+            <ol>
+                <li>Proposal Penelitian</li>
+                <li>Foto Copy Slip pembayaran UKT Terakhir</li>
+                <li>KHS Semester terakhir</li>
+            </ol>
 
-        <p>Atas perhatian Bapak, saya ucapkan terima kasih</p>
-        <p>Wassalamu’alaikum Wr. Wb.</p>
+            <p>Atas perhatian Bapak, saya ucapkan terima kasih</p>
+            <p>Wassalamu’alaikum Wr. Wb.</p>
 
-        <br>
+            <br>
 
-        <p style="text-align:right;">Bandar Lampung, <?= date('d-m-Y'); ?></p>
+            <p style="text-align:right;">Bandar Lampung, <?= date('d-m-Y'); ?></p>
 
-        <div class="ttd-area">
-            <div>
-                <p>Mengetahui,</p>
-                <p>Pembimbing I</p>
-                <br><br><br>
-                <p><strong><?= htmlspecialchars($dospem1['nama_dosen']); ?></strong></p>
-                <p>NIP. <?= htmlspecialchars($dospem1['nip']); ?></p>
+            <div class="ttd-area">
+                <div>
+                    <p>Mengetahui,</p>
+                    <p>Pembimbing I</p>
+                    <br><br><br>
+                    <p><strong><?= htmlspecialchars($dospem1['nama_dosen']); ?></strong></p>
+                    <p>NIP. <?= htmlspecialchars($dospem1['nip']); ?></p>
+                </div>
+
+                <div>
+                    <p>&nbsp;</p>
+                    <p>Pembimbing II</p>
+                    <br><br><br>
+                    <p><strong><?= htmlspecialchars($dospem2['nama_dosen']); ?></strong></p>
+                    <p>NIP. <?= htmlspecialchars($dospem2['nip']); ?></p>
+
+                </div>
+
+                <div>
+                    <p>&nbsp;</p>
+                    <p>Pemohon</p>
+
+                    <img src="<?= $qr_url; ?>" width="85" height="85" alt="QR Verifikasi">
+
+                    <p><strong><?= htmlspecialchars($mhs['nama_mhs']); ?></strong></p>
+                    <p><?= htmlspecialchars($mhs['npm']); ?></p>
+                </div>
             </div>
+        </div>
 
-            <div>
-                <p>&nbsp;</p>
-                <p>Pembimbing II</p>
-                <br><br><br>
-                <p><strong><?= htmlspecialchars($dospem2['nama_dosen']); ?></strong></p>
-                <p>NIP. <?= htmlspecialchars($dospem2['nip']); ?></p>
-            </div>
+        <div class="preview-actions">
+            <p>Status surat: <strong>Menunggu Dospem 1</strong></p>
+            <p>Dokumen pendukung dan QR pemohon sudah dibuat.</p>
 
-            <div>
-                <p>&nbsp;</p>
-                <p>Pemohon</p>
-
-                <img src="<?= $qr_url; ?>" width="85" height="85" alt="QR Verifikasi">
-
-                <p><strong><?= htmlspecialchars($mhs['nama_mhs']); ?></strong></p>
-                <p><?= htmlspecialchars($mhs['npm']); ?></p>
-            </div>
+            <a href="mhs_riwayat.php" class="btn-generate">Kirim Pengajuan</a>
+            <a href="daftar_surat.php" class="btn-back-form">Kembali</a>
         </div>
     </div>
 
-    <div class="preview-actions">
-        <p>Status surat: <strong>Menunggu Dospem 1</strong></p>
-        <p>Dokumen pendukung dan QR pemohon sudah dibuat.</p>
-
-        <a href="mhs_riwayat.php" class="btn-generate">Kirim Pengajuan</a>
-        <a href="daftar_surat.php" class="btn-back-form">Kembali</a>
-    </div>
-</div>
-
 </body>
+
 </html>
