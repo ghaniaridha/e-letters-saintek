@@ -35,7 +35,7 @@ include "koneksi.php";
 
                 <div class="box-input-data">
                     <i class="fa-regular fa-user"></i>
-                    <input type="text" name="login_id" placeholder="NIP/NPM/NPA" required>
+                    <input type="text" name="login_id" placeholder="NIP/NPM/NPA/USERNAME" required>
                 </div>
                 <div class="box-input-pass">
                     <i class="fa-solid fa-lock"></i>
@@ -76,8 +76,13 @@ include "koneksi.php";
             $_SESSION['nama'] = $dataDosen['nip'];
             $_SESSION['nip'] = $dataDosen['nip'];
             $_SESSION['jabatan'] = $dataDosen['jabatan'];
-            $_SESSION['role'] = 'dosen';
-            header("Location: dosen_dashboard.php");
+            if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
+                $_SESSION['role'] = 'pimpinan';
+                header("Location: pimpinan_dashboard.php");
+            } else {
+                $_SESSION['role'] = 'dosen';
+                header("Location: dosen_dashboard.php");
+            }
             exit;
         }
 
@@ -100,7 +105,24 @@ include "koneksi.php";
             exit;
         }
 
-        $_SESSION['error'] = "Login gagal! NIP/NPM/NPA atau password salah.";
+        $queryOrmawa = "SELECT * FROM ormawa WHERE username='$login_id'";
+        $resultOrmawa = mysqli_query($koneksi, $queryOrmawa);
+        $dataOrmawa = mysqli_fetch_assoc($resultOrmawa);
+
+        if ($dataOrmawa && password_verify($password, $dataOrmawa['password'])) {
+            $_SESSION['id_ormawa'] = $dataOrmawa['id_ormawa'];
+            $_SESSION['nama_lengkap'] = $dataOrmawa['nama_ormawa']; // Disimpan sebagai nama_lengkap agar seragam dengan navbar
+            $_SESSION['nama'] = $dataOrmawa['username'];
+            $_SESSION['username'] = $dataOrmawa['username'];
+            $_SESSION['id_pembina'] = $dataOrmawa['id_pembina'];
+            $_SESSION['id_prodi'] = $dataOrmawa['id_prodi'];
+            $_SESSION['role'] = 'ormawa';
+            header("Location: ormawa_dashboard.php");
+            exit;
+        }
+
+        // Jika semua gagal (Pesan error disesuaikan)
+        $_SESSION['error'] = "Login gagal! NIP/NPM/NPA/Username atau password salah.";
         header("Location: index.php");
         exit;
     }

@@ -9,7 +9,7 @@ include "koneksi.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Mahasiswa</title>
+    <title>Dashboard Ormawa</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css" media="screen" title="no title">
@@ -24,7 +24,7 @@ include "koneksi.php";
 
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
-            <a href="#services">Layanan Akademik</a>
+            <a href="#services">Layanan</a>
             <a href="#riwayat">Informasi</a>
             <a href="mhs_riwayat.php">Riwayat Permohonan</a>
         </div>
@@ -66,13 +66,13 @@ include "koneksi.php";
             $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
             ?>
             <h2>Halo, <?= $namaLengkap ?></h2>
-            <h1>Selamat datang di layanan Akademik FST UIN RIL</h1>
+            <h1>Selamat datang di layanan Persuratan FST UIN RIL</h1>
         </main>
     </section>
 
     <section id="services" class="services">
         <div class="services-header">
-            <h2>Layanan Akademik</h2>
+            <h2>Layanan Persuratan</h2>
             <h2 class="highlight">FST UIN RIL</h2>
         </div>
 
@@ -83,25 +83,10 @@ include "koneksi.php";
                 </div>
                 <div class="text-middle">
                     <h3>Pengajuan Surat Online</h3>
-                    <p>Ajukan kebutuhan administrasi surat Anda secara daring, mudah, dan dapat dilacak</p>
+                    <p>Ajukan kebutuhan surat Anda secara daring, mudah, dan dapat dilacak</p>
                 </div>
                 <div class="btn-right">
-                    <a href="daftar_surat_akademik.php"><i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-            </div>
-        </div>
-
-        <div class="services-container">
-            <div class="service-box">
-                <div class="icon-left">
-                    <i class="fa-solid fa-file-word"></i>
-                </div>
-                <div class="text-middle">
-                    <h3>Format Surat Akademik</h3>
-                    <p>Unduh format baku surat akademik untuk mempermudah berbagai keperluan administrasi Anda</p>
-                </div>
-                <div class="btn-right">
-                    <a href="template_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="daftar_surat_ormawa.php"><i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
