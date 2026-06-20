@@ -76,8 +76,13 @@ include "koneksi.php";
             $_SESSION['nama'] = $dataDosen['nip'];
             $_SESSION['nip'] = $dataDosen['nip'];
             $_SESSION['jabatan'] = $dataDosen['jabatan'];
-            $_SESSION['role'] = 'dosen';
-            header("Location: dosen_dashboard.php");
+            if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
+                $_SESSION['role'] = 'pimpinan';
+                header("Location: pimpinan_dashboard.php");
+            } else {
+                $_SESSION['role'] = 'dosen';
+                header("Location: dosen_dashboard.php");
+            }
             exit;
         }
 
