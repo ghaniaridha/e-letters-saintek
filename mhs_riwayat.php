@@ -176,20 +176,34 @@ $query_riwayat = mysqli_query($koneksi, "
                                     <?php } ?>
                                 </td>
 
-                                <td>
-                                    <?php if (!empty($row['file_surat_final'])) { ?>
-                                        <a href="uploads/surat_final/<?= htmlspecialchars($row['file_surat_final']); ?>"
-                                            target="_blank"
-                                            class="btn-aksi"
-                                            style="background-color:#10b981; color:white; border-color:#10b981;">
-                                            Unduh
-                                        </a>
-                                    <?php } else { ?>
-                                        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
-                                            Belum Tersedia
-                                        </span>
-                                    <?php } ?>
-                                </td>
+                              <td>
+    <?php if (!empty($row['file_surat_final'])) { ?>
+
+        <?php
+        $namaSurat = strtolower($row['nama_surat']);
+
+        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+         $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
+        } else {
+         $linkUnduh = "preview_surat.php?id=" . $row['id_surat'];
+        }
+        ?>
+
+        <a href="<?= $linkUnduh; ?>"
+           target="_blank"
+           class="btn-aksi"
+           style="background-color:#10b981; color:white; border-color:#10b981;">
+            Unduh
+        </a>
+
+    <?php } else { ?>
+
+        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
+            Belum Tersedia
+        </span>
+
+    <?php } ?>
+</td>
 
                                 <td>
                                     <a href="detail_pengajuan.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">

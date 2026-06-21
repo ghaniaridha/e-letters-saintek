@@ -2,8 +2,8 @@
 session_start();
 include "koneksi.php";
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
-    echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
+if (!isset($_SESSION['role'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
@@ -319,13 +319,17 @@ body {
 </div>
 
 <div class="action">
-    <button onclick="window.print()" class="btn-print">Preview / Cetak</button>
+    <button onclick="window.print()" class="btn-print">
+    Download Surat (PDF)
+</button>
 
+<?php if ($_SESSION['role'] == 'pimpinan') { ?>
     <form method="POST">
         <button type="submit" name="kirim_balasan" class="btn-approve">
             Setujui & Kirim ke Mahasiswa
         </button>
     </form>
+<?php } ?>
 
     <a href="pimpinan_verif.php" class="btn-print">Kembali</a>
 </div>
