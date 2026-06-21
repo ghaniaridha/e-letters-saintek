@@ -88,7 +88,7 @@ include "koneksi.php";
                     <p>Ajukan permohonan surat administrasi Anda secara daring, mudah, dan dapat dilacak.</p>
                 </div>
                 <div class="btn-right">
-                    <a href="daftar_surat_akademik.php"><i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="mhs_daftar_surat_akademik.php"><i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
