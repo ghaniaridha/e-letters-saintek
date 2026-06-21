@@ -90,6 +90,20 @@ if (!$surat) {
                     <input type="text" name="semester" placeholder="Contoh: Semester 6" required>
                 </div>
 
+                     <div class="form-group">
+                        <label>Tanggal Mulai Magang</label>
+                        <input type="date"
+                            name="tanggal_mulai_magang"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tanggal Selesai Magang</label>
+                        <input type="date"
+                            name="tanggal_selesai_magang"
+                            required>
+                    </div>
+
                 <div class="form-group">
                     <label>Lokasi Magang</label>
                     <input type="text" name="lokasi_magang" placeholder="Contoh: PT Telkom Indonesia" required>

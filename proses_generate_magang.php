@@ -10,7 +10,9 @@ if (!isset($_SESSION['id_mhs'])) {
 $id_mhs = $_SESSION['id_mhs'];
 
 $id_jenis = $_POST['id_jenis'];
-$semester = $_POST['semester'];
+$semester = mysqli_real_escape_string($koneksi, $_POST['semester']);
+$tanggal_mulai_magang = mysqli_real_escape_string($koneksi, $_POST['tanggal_mulai_magang']);
+$tanggal_selesai_magang = mysqli_real_escape_string($koneksi, $_POST['tanggal_selesai_magang']);
 $lokasi_magang = mysqli_real_escape_string($koneksi, $_POST['lokasi_magang']);
 $surat_ditujukan = mysqli_real_escape_string($koneksi, $_POST['surat_ditujukan']);
 
@@ -25,6 +27,8 @@ mysqli_query($koneksi, "
         tanggal_pengajuan,
         status_akhir,
         semester,
+        tanggal_mulai_magang,
+        tanggal_selesai_magang,
         lokasi_magang,
         surat_ditujukan,
         dokumen_hash
@@ -36,6 +40,8 @@ mysqli_query($koneksi, "
         '$tanggal_pengajuan',
         'Menunggu Admin',
         '$semester',
+        '$tanggal_mulai_magang',
+        '$tanggal_selesai_magang',
         '$lokasi_magang',
         '$surat_ditujukan',
         '$dokumen_hash'

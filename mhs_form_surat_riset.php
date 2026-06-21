@@ -194,8 +194,8 @@ $dosen2 = mysqli_query($koneksi, "
                 </div>
 
                 <div class="form-actions">
-                    <a href="mhs_daftar_surat_akademik.php" class="btn-back-form" `>Kembali</a>
-                    <button type="submit" class="btn-generate">Generate Surat</button>
+                    <a href="daftar_surat_akademik.php" class="btn-back-form" onclick="confirmBatalAjukanSurat(event, this.href)">Kembali</a>
+                    <button type="submit" class="btn-generate">Ajukan Surat</button>
                 </div>
             </form>
         </div>
