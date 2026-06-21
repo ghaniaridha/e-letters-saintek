@@ -9,24 +9,26 @@ include "koneksi.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Surat</title>
+    <title>Daftar Surat Akademik</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="style.css" media="screen" title="no title">
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 </head>
 
 <body>
     <nav class="navbar">
         <a href="#" class="navbar-logo">
-            <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+            <img src="images/logo2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
-            <a href="mhs_dashboard.php">Beranda</a>
-            <a href="mhs_dashboard.php#services">Layanan Akademik</a>
-            <a href="mhs_dashboard.php#riwayat">Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat Permohonan</a>
+            <a href="mhs_beranda.php#home">Beranda</a>
+            <a href="mhs_beranda.php#services">Pengajuan Surat</a>
+            <a href="mhs_beranda.php#status-info">Status & Informasi</a>
+            <a href="mhs_lacak.php">Lacak Surat</a>
+            <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
@@ -57,7 +59,7 @@ include "koneksi.php";
 
     <section id="daftar-surat" class="daftar-surat">
         <div class="daftar-surat-header">
-            <h2>Pengajuan Surat Online</h2>
+            <h2>Pengajuan Surat Daring</h2>
         </div>
 
         <div class="jadwal-container">
@@ -108,7 +110,7 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="form_generate_surat.php?id_jenis=1">
+            <a class="layanan-card" href="form_surat_riset.php?id_jenis=1">
                 <div class="layanan-content">
                     <h3>Permohonan<br>Riset</h3>
                 </div>
@@ -138,7 +140,7 @@ include "koneksi.php";
         </div>
         <div class="footer-container">
             <div class="footer-col info-col">
-                <h3>Layanan Akademik FST</h3>
+                <h3>SIPATU FST</h3>
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
@@ -151,8 +153,8 @@ include "koneksi.php";
                 <ul>
                     <li><a href="#home">Beranda</a></li>
                     <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#riwayat">Lacak</a></li>
-                    <li><a href="#kalender">Riwayat Permohonan</a></li>
+                    <li><a href="#status-info">Lacak Surat</a></li>
+                    <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
                 </ul>
             </div>
 
@@ -174,7 +176,7 @@ include "koneksi.php";
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 Layanan Akademik FST UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
+            <p>&copy; 2026 Fakultas Sains dan Teknologi UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
         </div>
     </footer>
 

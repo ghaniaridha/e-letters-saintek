@@ -12,7 +12,8 @@ include "koneksi.php";
     <title>Beranda Mahasiswa</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="style.css" media="screen" title="no title">
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 </head>
 
