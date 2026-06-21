@@ -1097,7 +1097,7 @@ body.swal2-shown {
 }
 /*form pengajuan surat - end*/
 
-/*review surat surat*/
+/*review surat surat* - start*/
 
 .surat-preview {
   background: #f4f7fb;
@@ -1148,11 +1148,35 @@ body.swal2-shown {
 
 .preview-actions {
   width: 800px;
-  margin: 20px auto;
-  background: white;
+  margin: 30px auto; /* Memberi jarak lebih luas dari surat */
   padding: 20px;
-  border-radius: 12px;
+  background: #fff; /* Memberikan latar putih agar kontras */
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  text-align: center;
 }
+
+.preview-actions p {
+  margin: 5px 0; /* Menipiskan jarak antar teks status */
+  color: #4a5568;
+}
+
+/* Membungkus tombol agar ada jarak antar tombol */
+.btn-group {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Memberi jarak antar tombol kiri dan kanan */
+}
+
+.btn-generate,
+.btn-back-form {
+  padding: 10px 25px;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: 500;
+}
+/*review surat surat* - start*/
 
 /*tabel riwayat permohonan*/
 .table-responsive {

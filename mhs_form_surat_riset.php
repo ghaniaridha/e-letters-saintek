@@ -111,7 +111,7 @@ $dosen2 = mysqli_query($koneksi, "
         </div>
 
         <div class="generate-card">
-            <form action="proses_generate_surat.php" method="POST" enctype="multipart/form-data">
+            <form action="generate_surat_riset.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="id_jenis" value="<?= htmlspecialchars($id_jenis); ?>">
 
                 <div class="form-group">
@@ -194,8 +194,8 @@ $dosen2 = mysqli_query($koneksi, "
                 </div>
 
                 <div class="form-actions">
-                    <a href="daftar_surat_akademik.php" class="btn-back-form" onclick="confirmBatalAjukanSurat(event, this.href)">Kembali</a>
-                    <button type="submit" class="btn-generate" onclick="confirmAjukanSurat(event, this.href)">Ajukan Surat</button>
+                    <a href="mhs_daftar_surat_akademik.php" class="btn-back-form" `>Kembali</a>
+                    <button type="submit" class="btn-generate">Generate Surat</button>
                 </div>
             </form>
         </div>

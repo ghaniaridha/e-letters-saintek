@@ -239,8 +239,10 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             <p>Status surat: <strong>Menunggu Dospem 1</strong></p>
             <p>Dokumen pendukung dan QR pemohon sudah dibuat.</p>
 
-            <a href="mhs_riwayat.php" class="btn-generate">Kirim Pengajuan</a>
-            <a href="daftar_surat.php" class="btn-back-form">Kembali</a>
+            <div class="btn-group">
+                <a href="mhs_riwayat.php" class="btn-generate">Kirim Pengajuan</a>
+                <a href="mhs_daftar_surat_akademik.php" class="btn-back-form" style="background:#ef4444; color:#fff;">Kembali</a>
+            </div>
         </div>
     </div>
 

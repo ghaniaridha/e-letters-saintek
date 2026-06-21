@@ -66,14 +66,15 @@ $query_riwayat = mysqli_query($koneksi, "
 
     <nav class="navbar">
         <a href="#" class="navbar-logo">
-            <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+            <img src="images/logo2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
-            <a href="mhs_dashboard.php">Beranda</a>
-            <a href="mhs_dashboard.php#services">Layanan Akademik</a>
-            <a href="mhs_dashboard.php#riwayat">Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat Permohonan</a>
+            <a href="mhs_beranda.php#home">Beranda</a>
+            <a href="mhs_beranda.php#services">Pengajuan Surat</a>
+            <a href="mhs_beranda.php#status-info">Status & Informasi</a>
+            <a href="mhs_lacak.php">Lacak Surat</a>
+            <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
@@ -92,12 +93,16 @@ $query_riwayat = mysqli_query($koneksi, "
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
-
                 <div id="user-dropdown" class="dropdown-menu">
                     <div class="user-info">
-                        <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
-                        <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        <span class="user-name"><?= ($namaLengkap) ?></span>
+                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
                     </div>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -145,13 +150,13 @@ $query_riwayat = mysqli_query($koneksi, "
                                 <td><?= $tanggal; ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
 
-                            <td>
-                                <div style="font-size:0.85rem; line-height:1.8;">
-                                    <div>Dospem 1: <?= htmlspecialchars($row['status_dospem1']); ?></div>
-                                    <div>Dospem 2: <?= htmlspecialchars($row['status_dospem2']); ?></div>
-                                    <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
-                                </div>
-                            </td>
+                                <td>
+                                    <div style="font-size:0.85rem; line-height:1.8;">
+                                        <div>Dospem 1: <?= htmlspecialchars($row['status_dospem1']); ?></div>
+                                        <div>Dospem 2: <?= htmlspecialchars($row['status_dospem2']); ?></div>
+                                        <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
+                                    </div>
+                                </td>
 
                                 <td>
                                     <span class="badge-status <?= $badge_class; ?>">
