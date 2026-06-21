@@ -26,7 +26,8 @@ include "koneksi.php";
             <a href="#home">Beranda</a>
             <a href="#services">Pengajuan Surat</a>
             <a href="#status-info">Status & Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat & Lacak Surat</a>
+            <a href="mhs_lacak.php">Lacak Surat</a>
+            <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
