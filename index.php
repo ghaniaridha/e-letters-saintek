@@ -24,7 +24,7 @@ include "koneksi.php";
                 </a>
             </div>
             <div class="form-content">
-                <img src="images/AKADEMIK FST1.jpg" alt="image" />
+                <img src="images/LOGO 1.png" alt="image" />
 
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="error-message">
@@ -35,15 +35,15 @@ include "koneksi.php";
 
                 <div class="box-input-data">
                     <i class="fa-regular fa-user"></i>
-                    <input type="text" name="login_id" placeholder="NIP/NPM/NPA/USERNAME" required>
+                    <input type="text" name="login_id" placeholder="Nomor Identitas atau Nama Pengguna" required>
                 </div>
                 <div class="box-input-pass">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="password" name="password" placeholder="PASSWORD" required>
+                    <input type="password" id="password" name="password" placeholder="Kata Sandi" required>
                     <i id="toggle-password" class="fa-regular fa-eye-slash"></i>
                 </div>
 
-                <button type="submit" class="btn-input">Login</button>
+                <button type="submit" class="btn-input">Masuk</button>
             </div>
         </div>
     </form>
@@ -111,7 +111,7 @@ include "koneksi.php";
 
         if ($dataOrmawa && password_verify($password, $dataOrmawa['password'])) {
             $_SESSION['id_ormawa'] = $dataOrmawa['id_ormawa'];
-            $_SESSION['nama_lengkap'] = $dataOrmawa['nama_ormawa']; // Disimpan sebagai nama_lengkap agar seragam dengan navbar
+            $_SESSION['nama_lengkap'] = $dataOrmawa['nama_ormawa'];
             $_SESSION['nama'] = $dataOrmawa['username'];
             $_SESSION['username'] = $dataOrmawa['username'];
             $_SESSION['id_pembina'] = $dataOrmawa['id_pembina'];
@@ -121,8 +121,7 @@ include "koneksi.php";
             exit;
         }
 
-        // Jika semua gagal (Pesan error disesuaikan)
-        $_SESSION['error'] = "Login gagal! NIP/NPM/NPA/Username atau password salah.";
+        $_SESSION['error'] = "Gagal masuk! Identitas pengguna atau kata sandi tidak sesuai.";
         header("Location: index.php");
         exit;
     }
