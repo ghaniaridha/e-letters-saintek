@@ -3,7 +3,7 @@ session_start();
 include "koneksi.php";
 
 if (!isset($_SESSION['id_mhs'])) {
-    echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
@@ -16,7 +16,7 @@ $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
 "));
 
 if (!$surat) {
-    echo "<script>alert('Jenis surat tidak ditemukan'); window.location='daftar_surat_akademik.php';</script>";
+    echo "<script>alert('Jenis surat tidak ditemukan'); window.location='mhs_daftar_surat_akademik.php';</script>";
     exit;
 }
 
@@ -26,7 +26,7 @@ $mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
 "));
 
 if (!$mhs || empty($mhs['id_prodi'])) {
-    echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='daftar_surat_akademik.php';</script>";
+    echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='mhs_daftar_surat_akademik.php';</script>";
     exit;
 }
 
