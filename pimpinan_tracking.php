@@ -40,9 +40,9 @@ if (!empty($namaParts)) {
         </a>
 
         <div class="navbar-nav">
-            <a href="pimpinan_dashboard.php#home">Beranda</a>
+            <a href="pimpinan_beranda.php#home">Beranda</a>
             <a href="pimpinan_verif.php">Disposisi & Verifikasi</a>
-            <a href="pimpinan_dashboard.php#riwayat">Informasi</a>
+            <a href="pimpinan_beranda.php#riwayat">Informasi</a>
             <a href="pimpinan_riwayat.php">Riwayat Verifikasi</a>
             <a href="pimpinan_tracking.php">Tracking</a>
         </div>
