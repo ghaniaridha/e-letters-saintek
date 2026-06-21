@@ -24,7 +24,7 @@ include "koneksi.php";
                 </a>
             </div>
             <div class="form-content">
-                <img src="images/LOGO 1.png" alt="image" />
+                <img src="images/logo1.png" alt="image" />
 
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="error-message">
@@ -78,10 +78,10 @@ include "koneksi.php";
             $_SESSION['jabatan'] = $dataDosen['jabatan'];
             if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
                 $_SESSION['role'] = 'pimpinan';
-                header("Location: pimpinan_dashboard.php");
+                header("Location: pimpinan_beranda.php");
             } else {
                 $_SESSION['role'] = 'dosen';
-                header("Location: dosen_dashboard.php");
+                header("Location: dosen_beranda.php");
             }
             exit;
         }
@@ -101,7 +101,7 @@ include "koneksi.php";
             $_SESSION['id_pb2'] = $dataMhs['id_pb2'];
             $_SESSION['semester'] = $dataMhs['semester'];
             $_SESSION['role'] = 'mahasiswa';
-            header("Location: mhs_dashboard.php");
+            header("Location: mhs_beranda.php");
             exit;
         }
 
@@ -117,7 +117,7 @@ include "koneksi.php";
             $_SESSION['id_pembina'] = $dataOrmawa['id_pembina'];
             $_SESSION['id_prodi'] = $dataOrmawa['id_prodi'];
             $_SESSION['role'] = 'ormawa';
-            header("Location: ormawa_dashboard.php");
+            header("Location: ormawa_beranda.php");
             exit;
         }
 
