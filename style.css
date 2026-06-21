@@ -914,100 +914,12 @@ body.swal2-shown {
   }
 }
 
-/*form permohonan surat*/
-.permintaan {
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 30px;
-  max-width: 98%;
-  margin: auto;
-  margin-bottom: 50px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.permintaan .row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.permintaan .align-items-center {
-  align-items: center;
-}
-
-.permintaan .col-sm-3 {
-  flex: 0 0 20%;
-  max-width: 20%;
-  padding-right: 15px;
-}
-
-.permintaan .col-sm-9 {
-  flex: 0 0 80%;
-  max-width: 80%;
-}
-
-.permintaan .col-form-label {
-  font-size: 1rem;
-  color: #333;
-  font-weight: normal;
-  margin-bottom: 0;
-}
-
-.permintaan .form-control {
-  width: 100%;
-  padding: 10px 15px;
-  font-size: 1rem;
-  color: #333;
-  background-color: #ffffff;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  box-sizing: border-box;
-  transition: border-color 0.15s ease-in-out;
-}
-
-.permintaan .form-control[readonly] {
-  background-color: #ffffff;
-  cursor: default;
-}
-
-.permintaan .form-control:focus {
-  border-color: #86b7fe;
-  outline: 0;
-}
-
-.form-isolated {
-  width: 100%;
-}
-
-.btn-input {
-  min-width: 90px;
-  border: none;
-  background-color: #0f2038;
-  color: #ffffff;
-  border-radius: 5px;
-  padding: 8px 20px;
-  font-size: 1rem;
-  font-weight: normal;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.btn-input:hover {
-  background-color: #ffcc00;
-}
-
-.submit-container {
-  text-align: right;
-  width: 100%;
-  margin-top: 15px;
-}
-
+/*halaman riwayat permohonan mahasiswa - start*/
 .riwayat-permohonan {
   padding-top: 130px;
-  width: 95%; /* Mengambil 95% dari lebar layar agar ada sisa ruang */
-  max-width: 1200px; /* Batas maksimal lebar agar di layar monitor besar tidak terlalu memanjang */
-  margin: 40px auto; /* 'auto' akan membuat kotak berada tepat di tengah layar */
+  width: 95%;
+  max-width: 1200px;
+  margin: 40px auto;
 }
 
 .riwayat-permohonan-header {
@@ -1023,80 +935,167 @@ body.swal2-shown {
   display: inline-block;
   position: relative;
 }
+/*halaman riwayat permohonan mahasiswa - end*/
 
-/*generet surat surat*/
-
+/*form pengajuan surat - start*/
 .generate-wrapper {
-  min-height: 100vh;
-  background: #f4f7fb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 30px;
+  padding-top: 130px;
+  padding-bottom: 50px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.page-header h2 {
+  font-size: 32px;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  color: #6b7280;
+  font-size: 16px;
 }
 
 .generate-card {
-  background: #ffffff;
-  width: 100%;
-  max-width: 650px;
-  padding: 35px;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.generate-card h2 {
-  color: #2c4664;
-  margin-bottom: 10px;
-  font-size: 2rem;
-}
-
-.generate-card p {
-  color: #6b7280;
+.section-title {
+  font-size: 18px;
+  color: #374151;
   margin-bottom: 25px;
 }
 
 .form-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   margin-bottom: 20px;
 }
 
+.form-group.align-top {
+  align-items: flex-start;
+}
+
 .form-group label {
-  display: block;
-  font-weight: 600;
+  flex: 0 0 25%;
+  max-width: 200px;
   color: #374151;
-  margin-bottom: 8px;
+  font-size: 15px;
+  padding-right: 15px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"],
+.form-group select,
+.form-group textarea {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.form-group input[type="text"]:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-group textarea {
-  width: 100%;
-  min-height: 140px;
+  min-height: 100px;
   resize: vertical;
-  padding: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 1rem;
+}
+
+.form-group input[type="file"] {
+  padding: 8px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 35px;
 }
 
 .btn-generate {
-  background: #ffcc00;
-  color: #2c4664;
+  min-width: 90px;
   border: none;
-  padding: 12px 22px;
-  border-radius: 10px;
-  font-weight: 700;
+  background-color: #0f2038;
+  color: #ffffff;
+  border-radius: 5px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  font-weight: normal;
   cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-generate:hover {
+  background-color: #ffcc00;
 }
 
 .btn-back-form {
-  display: inline-block;
-  margin-left: 10px;
-  background: #2c4664;
-  color: #fff;
-  padding: 12px 22px;
-  border-radius: 10px;
+  background-color: #ffffff;
+  color: #ef4444;
+  padding: 10px 24px;
   text-decoration: none;
+  border-radius: 6px;
+  font-size: 15px;
   font-weight: 600;
+  border: 1px solid #ef4444;
+  transition: all 0.3s ease;
 }
+
+.btn-back-form:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.footer-form-minimal {
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+  background-color: #0f2038;
+}
+
+.footer-form-minimal p {
+  color: #ffffff;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Mode HP (Responsif) */
+@media (max-width: 768px) {
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .form-group label {
+    flex: auto;
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+}
+/*form pengajuan surat - end*/
 
 /*review surat surat*/
 
