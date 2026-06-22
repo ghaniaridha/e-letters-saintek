@@ -79,20 +79,22 @@ if (isset($_POST['aksi'])) {
         }
 
         if ($data['status_akhir'] == 'Menunggu Wadek 1') {
-            mysqli_query($koneksi, "
-                UPDATE surat_pengajuan
-                SET 
-                    status_akhir = 'Menunggu Dekan',
-                    ttd_wadek1 = '$hash_ttd'
-                WHERE id_surat = '$id_surat'
-            ");
+    mysqli_query($koneksi, "
+        UPDATE surat_pengajuan
+        SET 
+            status_akhir = 'Menunggu Surat Balasan',
+            status_pimpinan = 'Disetujui',
+            status_balasan = 'Draft',
+            ttd_wadek1 = '$hash_ttd'
+        WHERE id_surat = '$id_surat'
+    ");
 
-            echo "<script>
-                alert('Surat berhasil disetujui dan diteruskan ke Dekan.');
-                window.location='pimpinan_verif.php';
-            </script>";
-            exit;
-        }
+    echo "<script>
+        alert('Surat disetujui. Silakan buat surat balasan fakultas.');
+        window.location='generate_balasan_fakultas.php?id=$id_surat';
+    </script>";
+    exit;
+}
 
         if ($data['status_akhir'] == 'Menunggu Wadek 2') {
             mysqli_query($koneksi, "
@@ -224,7 +226,7 @@ if (!empty($namaParts)) {
 
 <nav class="navbar">
     <a href="#" class="navbar-logo">
-        <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+        <img src="images/LOGO2.png" alt="navbar-logo">
     </a>
 
     <div class="navbar-nav">

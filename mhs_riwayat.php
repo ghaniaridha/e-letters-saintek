@@ -185,7 +185,7 @@ $query_riwayat = mysqli_query($koneksi, "
         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
          $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
         } else {
-         $linkUnduh = "preview_surat.php?id=" . $row['id_surat'];
+         $linkUnduh = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
         }
         ?>
 

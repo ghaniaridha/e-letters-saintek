@@ -109,7 +109,7 @@ if (!empty($namaParts)) {
 <body>
     <nav class="navbar">
         <a href="#" class="navbar-logo">
-            <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+            <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
@@ -131,13 +131,6 @@ if (!empty($namaParts)) {
                         <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
                         <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
                     </div>
-
-                    <div class="divider"></div>
-
-                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
-                        <span>Logout</span>
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </a>
                 </div>
             </div>
         </div>

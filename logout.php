@@ -9,8 +9,8 @@ session_destroy();
     document.addEventListener("DOMContentLoaded", function() {
         Swal.fire({
             icon: 'success',
-            title: 'Logout Berhasil!',
-            text: 'Anda telah berhasil logout dari sistem.',
+            title: 'Berhasil Berhasil!',
+            text: 'Anda telah berhasil Keluar dari sistem.',
             timer: 2000, 
             showConfirmButton: false,
             customClass: {

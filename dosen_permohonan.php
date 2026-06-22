@@ -95,7 +95,7 @@ $query = mysqli_query($koneksi, "
         </div>
 
         <br>
-        <a href="dosen_dashboard.php" class="btn btn-detail">Kembali</a>
+        <a href="dosen_beranda.php" class="btn btn-detail">Kembali</a>
 
     </main>
 </div>

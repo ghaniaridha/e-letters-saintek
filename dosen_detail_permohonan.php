@@ -123,26 +123,32 @@ if ($data['pembimbing_2'] == $id_dosen && $data['status_dospem1'] == 'Disetujui'
                     Preview Surat
                 </a>
 
-                <?php if (!empty($data['proposal_penelitian'])) { ?>
-                    <a href="#" class="btn btn-edit"
-                       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['proposal_penelitian']); ?>')">
-                        Proposal
-                    </a>
-                <?php } ?>
+<?php if (!empty($data['proposal_penelitian'])) { ?>
+    <a href="#" class="btn btn-edit"
+       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['proposal_penelitian']); ?>')">
+        Proposal
+    </a>
+<?php } else { ?>
+    <span class="btn btn-delete">Proposal Belum Ada</span>
+<?php } ?>
 
-                <?php if (!empty($data['khs'])) { ?>
-                    <a href="#" class="btn btn-edit"
-                       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['khs']); ?>')">
-                        KHS
-                    </a>
-                <?php } ?>
+<?php if (!empty($data['khs'])) { ?>
+    <a href="#" class="btn btn-edit"
+       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['khs']); ?>')">
+        KHS
+    </a>
+<?php } else { ?>
+    <span class="btn btn-delete">KHS Belum Ada</span>
+<?php } ?>
 
-                <?php if (!empty($data['bukti_ukt'])) { ?>
-                    <a href="#" class="btn btn-edit"
-                       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['bukti_ukt']); ?>')">
-                        Bukti UKT
-                    </a>
-                <?php } ?>
+<?php if (!empty($data['bukti_ukt'])) { ?>
+    <a href="#" class="btn btn-edit"
+       onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($data['bukti_ukt']); ?>')">
+        Bukti UKT
+    </a>
+<?php } else { ?>
+    <span class="btn btn-delete">Bukti UKT Belum Ada</span>
+<?php } ?>  
             </div>
 
             <?php if ($boleh_verifikasi) { ?>

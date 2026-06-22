@@ -10,6 +10,7 @@ if (!isset($koneksi)) {
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.id_surat,
+        sp.file_surat_final,
         m.npm,
         m.nama_mhs,
         m.prodi,
@@ -25,6 +26,7 @@ $query = mysqli_query($koneksi, "
         OR sp.status_akhir LIKE '%Dekan%'
         OR sp.status_akhir LIKE '%Ditolak Admin%'
         OR sp.status_akhir = 'Selesai'
+        OR sp.status_akhir = 'Menunggu Surat Balasan'
     )
     ORDER BY sp.tanggal_pengajuan DESC
 ");
@@ -45,7 +47,7 @@ $query = mysqli_query($koneksi, "
     <main class="main-content">
         <div class="page-title">
             <h1>Riwayat Review Admin</h1>
-            <p>Daftar surat yang sudah direview dan diteruskan oleh admin.</p>
+            <p>Daftar surat yang sudah direview admin beserta arsip surat balasan fakultas.</p>
         </div>
 
         <div class="table-card">
@@ -59,6 +61,7 @@ $query = mysqli_query($koneksi, "
                         <th>Jenis Surat</th>
                         <th>Tanggal</th>
                         <th>Status Akhir</th>
+                        <th>Surat Balasan Fakultas</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -66,6 +69,16 @@ $query = mysqli_query($koneksi, "
                 <tbody>
                 <?php if ($query && mysqli_num_rows($query) > 0) { ?>
                     <?php $no = 1; while ($row = mysqli_fetch_assoc($query)) { ?>
+                        <?php
+                        $namaSurat = strtolower($row['nama_surat']);
+
+                        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                            $linkBalasan = "generate_balasan_magang.php?id=" . $row['id_surat'];
+                        } else {
+                            $linkBalasan = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
+                        }
+                        ?>
+
                         <tr>
                             <td><?= $no++; ?></td>
                             <td><?= htmlspecialchars($row['npm']); ?></td>
@@ -78,6 +91,21 @@ $query = mysqli_query($koneksi, "
                                     <?= htmlspecialchars($row['status_akhir']); ?>
                                 </span>
                             </td>
+
+                            <td>
+                                <?php if (!empty($row['file_surat_final'])) { ?>
+                                    <a href="<?= $linkBalasan; ?>"
+                                       target="_blank"
+                                       class="btn btn-detail">
+                                        Lihat Surat
+                                    </a>
+                                <?php } else { ?>
+                                    <span style="color:#94a3b8; font-style:italic;">
+                                        Belum tersedia
+                                    </span>
+                                <?php } ?>
+                            </td>
+
                             <td>
                                 <a href="admin_permohonan.php?detail=<?= $row['id_surat']; ?>" class="btn btn-detail">
                                     Detail
@@ -87,7 +115,7 @@ $query = mysqli_query($koneksi, "
                     <?php } ?>
                 <?php } else { ?>
                     <tr>
-                        <td colspan="8" style="text-align:center;">
+                        <td colspan="9" style="text-align:center;">
                             Belum ada riwayat review admin.
                         </td>
                     </tr>
