@@ -19,7 +19,7 @@ include "koneksi.php";
 <body>
     <nav class="navbar">
         <a href="#" class="navbar-logo">
-            <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+            <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
@@ -86,20 +86,20 @@ include "koneksi.php";
                     <p>Ajukan kebutuhan surat Anda secara daring, mudah, dan dapat dilacak</p>
                 </div>
                 <div class="btn-right">
-                    <a href="daftar_surat_ormawa.php"><i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="ormawa_daftar_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="riwayat" class="riwayat-section">
+    <section id="status-info" class="status-info-section">
         <div class="wave-divider">
             <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
                 <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
             </svg>
         </div>
 
-        <div class="riwayat-header">
+        <div class="status-info-header">
             <h2>Informasi <span class="text-orange">Pengajuan</span></h2>
         </div>
 
@@ -139,7 +139,7 @@ include "koneksi.php";
                 <div class="action-icon">
                     <i class="fa-solid fa-magnifying-glass-location"></i>
                 </div>
-                <h3>Lacak Disposisi</h3>
+                <h3>Lacak Surat</h3>
                 <p>Pantau posisi terkini dan proses disposisi surat Anda secara real-time.</p>
                 <a href="mhs_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
@@ -154,7 +154,7 @@ include "koneksi.php";
         </div>
         <div class="footer-container">
             <div class="footer-col info-col">
-                <h3>Layanan Akademik FST</h3>
+                <h3>SIPATU FST</h3>
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
@@ -167,8 +167,8 @@ include "koneksi.php";
                 <ul>
                     <li><a href="#home">Beranda</a></li>
                     <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#riwayat">Lacak</a></li>
-                    <li><a href="#kalender">Riwayat Permohonan</a></li>
+                    <li><a href="#status-info">Lacak Surat</a></li>
+                    <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
                 </ul>
             </div>
 
@@ -190,7 +190,7 @@ include "koneksi.php";
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 Layanan Akademik FST UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
+            <p>&copy; 2026 Fakultas Sains dan Teknologi UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
         </div>
     </footer>
 

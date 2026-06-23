@@ -118,7 +118,7 @@ include "koneksi.php";
 
             <a class="layanan-card" href="mhs_form_surat_magang.php?id_jenis=4">
                 <div class="layanan-content">
-                    <h3>Permohonan<br>Magang</h3>
+                    <h3>Izin<br>Magang</h3>
                 </div>
             </a>
 
@@ -127,8 +127,6 @@ include "koneksi.php";
                     <h3>Keterangan<br>Aktif Kuliah Kembali</h3>
                 </div>
             </a>
-
-
         </div>
     </section>
 

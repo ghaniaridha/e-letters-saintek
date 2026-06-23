@@ -2,11 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
-$query = mysqli_query($koneksi, "SELECT * FROM surat_pengajuan
-                                 WHERE id_mhs = '$id_mhs' 
-                                 AND posisi_sekarang NOT IN ('Selesai', 'Ditolak') 
-                                 ORDER BY tanggal_pengajuan DESC");
+$query = mysqli_query($koneksi, "
+    SELECT * FROM jenis_surat
+    WHERE file_template IS NOT NULL
+    AND file_template != ''
+    ORDER BY nama_surat ASC
+");
 ?>
 
 <!DOCTYPE html>
@@ -15,7 +16,7 @@ $query = mysqli_query($koneksi, "SELECT * FROM surat_pengajuan
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lacak Surat</title>
+    <title>Format Surat</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
@@ -65,59 +66,46 @@ $query = mysqli_query($koneksi, "SELECT * FROM surat_pengajuan
 
     <section id="daftar-surat" class="daftar-surat">
         <div class="daftar-surat-header">
-            <h2>Lacak Surat</h2>
+            <h2>Templat Surat Akademik FST</h2>
         </div>
 
-        <div class="table-wrapper">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Tanggal Pengajuan</th>
-                        <th>Jenis Surat</th>
-                        <th>Keterangan</th>
-                        <th>Posisi Terkini</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    // Cek apakah ada data yang dikembalikan oleh query
-                    if ($query && mysqli_num_rows($query) > 0) {
-                        $no = 1; // Variabel untuk nomor urut
-
-                        while ($row = mysqli_fetch_assoc($query)) {
-                            // Mengubah format tanggal dari YYYY-MM-DD ke format yang lebih mudah dibaca (misal: 14-05-2026)
-                            $tanggal_format = date('d-m-Y', strtotime($row['tanggal_pengajuan']));
-                    ?>
+        <?php if ($query && mysqli_num_rows($query) > 0) { ?>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Jenis Surat</th>
+                            <th>Keterangan</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = mysqli_fetch_assoc($query)) { ?>
                             <tr>
-                                <td><?= $no++; ?></td>
+                                <td><?= htmlspecialchars($row['nama_surat']); ?></td>
 
-                                <td><?= htmlspecialchars($tanggal_format); ?></td>
-
-                                <td><?= htmlspecialchars($row['jenis_surat']); ?></td>
-
-                                <td><?= htmlspecialchars($row['keterangan'] ?? '-'); ?></td>
+                                <td><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
 
                                 <td>
-                                    <span class="status-badge status-<?= strtolower(str_replace(' ', '-', $row['posisi_terkini'])); ?>">
-                                        <?= htmlspecialchars($row['posisi_terkini']); ?>
-                                    </span>
+                                    <a href="uploads/template_surat/<?= htmlspecialchars($row['file_template']); ?>"
+                                        download
+                                        class="btn-download-blue">
+                                        Download
+                                    </a>
                                 </td>
                             </tr>
-                        <?php
-                        } // Akhir dari perulangan while
-                    } else {
-                        ?>
+                        <?php } ?>
+                    <?php } else { ?>
                         <tr>
-                            <td colspan="5" class="empty-table-cell">
+                            <td colspan="3" class="empty-table-cell">
                                 <i class="fa-solid fa-folder-open"></i>
-                                <p>Belum ada surat yang diajukan.</p>
+                                <p>Belum ada template surat.</p>
                             </td>
                         </tr>
                     <?php } ?>
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
     </section>
 
     <footer class="footer-section">
@@ -187,7 +175,6 @@ $query = mysqli_query($koneksi, "SELECT * FROM surat_pengajuan
             });
         });
     </script>
-
 </body>
 
 </html>

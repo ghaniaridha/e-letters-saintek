@@ -103,7 +103,7 @@ include "koneksi.php";
                     <p>Unduh dokumen baku surat akademik untuk mempermudah berbagai keperluan administrasi Anda.</p>
                 </div>
                 <div class="btn-right">
-                    <a href="template_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="mhs_template_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
