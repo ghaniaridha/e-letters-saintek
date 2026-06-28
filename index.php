@@ -1,6 +1,94 @@
 <?php
 session_start();
 include "koneksi.php";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $login_id = $_POST['login_id'];
+    $password = $_POST['password'];
+
+    $queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
+    $resultAdmin = mysqli_query($koneksi, $queryAdmin);
+    $dataAdmin = mysqli_fetch_assoc($resultAdmin);
+
+    if ($dataAdmin && password_verify($password, $dataAdmin['password'])) {
+        $_SESSION['id_admin'] = $dataAdmin['id_admin'];
+        $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
+        $_SESSION['nama'] = $dataAdmin['npa'];
+        $_SESSION['role'] = 'admin';
+        header("Location:adm_dashboard.php");
+        exit;
+    }
+
+    $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";
+    $resultDosen = mysqli_query($koneksi, $queryDosen);
+    $dataDosen = mysqli_fetch_assoc($resultDosen);
+
+    if ($dataDosen && password_verify($password, $dataDosen['password'])) {
+        $_SESSION['id_dosen'] = $dataDosen['id_dosen'];
+        $_SESSION['nama_lengkap'] = $dataDosen['nama_dosen'];
+        $_SESSION['nama'] = $dataDosen['nip'];
+        $_SESSION['nip'] = $dataDosen['nip'];
+        $_SESSION['jabatan'] = $dataDosen['jabatan'];
+        if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
+            $_SESSION['role'] = 'pimpinan';
+            header("Location: pimpinan_beranda.php");
+        } else {
+            $_SESSION['role'] = 'dosen';
+            header("Location: dosen_beranda.php");
+        }
+        exit;
+    }
+
+    $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
+    $resultMhs = mysqli_query($koneksi, $queryMhs);
+    $dataMhs = mysqli_fetch_assoc($resultMhs);
+
+    if ($dataMhs && password_verify($password, $dataMhs['password'])) {
+
+        if ($dataMhs['status'] == 1) {
+            $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
+            $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
+            $_SESSION['nama'] = $dataMhs['npm'];
+            $_SESSION['npm'] = $dataMhs['npm'];
+            $_SESSION['prodi'] = $dataMhs['prodi'];
+            $_SESSION['id_pa'] = $dataMhs['id_pa'];
+            $_SESSION['id_pb1'] = $dataMhs['id_pb1'];
+            $_SESSION['id_pb2'] = $dataMhs['id_pb2'];
+            $_SESSION['semester'] = $dataMhs['semester'];
+            $_SESSION['role'] = 'mahasiswa';
+            header("Location: mhs_beranda.php");
+            exit;
+        } else {
+            $_SESSION['error'] = "Akun Anda belum disetujui oleh Admin. Silakan tunggu.";
+            header("Location: index.php");
+            exit;
+        }
+    } else {
+        $_SESSION['error'] = "NPM atau kata sandi tidak sesuai.";
+        header("Location: index.php");
+        exit;
+    }
+
+    $queryOrmawa = "SELECT * FROM ormawa WHERE username='$login_id'";
+    $resultOrmawa = mysqli_query($koneksi, $queryOrmawa);
+    $dataOrmawa = mysqli_fetch_assoc($resultOrmawa);
+
+    if ($dataOrmawa && password_verify($password, $dataOrmawa['password'])) {
+        $_SESSION['id_ormawa'] = $dataOrmawa['id_ormawa'];
+        $_SESSION['nama_lengkap'] = $dataOrmawa['nama_ormawa'];
+        $_SESSION['nama'] = $dataOrmawa['username'];
+        $_SESSION['username'] = $dataOrmawa['username'];
+        $_SESSION['id_pembina'] = $dataOrmawa['id_pembina'];
+        $_SESSION['id_prodi'] = $dataOrmawa['id_prodi'];
+        $_SESSION['role'] = 'ormawa';
+        header("Location: ormawa_beranda.php");
+        exit;
+    }
+
+    $_SESSION['error'] = "Gagal masuk! Identitas pengguna atau kata sandi tidak sesuai.";
+    header("Location: index.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -14,9 +102,26 @@ include "koneksi.php";
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="index.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
+    <?php if (isset($_SESSION['success'])): ?>
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '<?= $_SESSION['success']; ?>',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php unset($_SESSION['success']);
+        ?>
+    <?php endif; ?>
+
     <form class="login-form" method="POST" action="">
         <div class="form-container">
             <div class="form-image">
@@ -44,88 +149,14 @@ include "koneksi.php";
                 </div>
 
                 <button type="submit" class="btn-input">Masuk</button>
+
+                <div class="register-link">
+                    Belum punya akun? <a href="mhs_register.php">Daftar di sini</a>
+                </div>
+
             </div>
         </div>
     </form>
-
-    <?php
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $login_id = $_POST['login_id'];
-        $password = $_POST['password'];
-
-        $queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
-        $resultAdmin = mysqli_query($koneksi, $queryAdmin);
-        $dataAdmin = mysqli_fetch_assoc($resultAdmin);
-
-        if ($dataAdmin && password_verify($password, $dataAdmin['password'])) {
-            $_SESSION['id_admin'] = $dataAdmin['id_admin'];
-            $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
-            $_SESSION['nama'] = $dataAdmin['npa'];
-            $_SESSION['role'] = 'admin';
-            header("Location:adm_dashboard.php");
-            exit;
-        }
-
-        $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";
-        $resultDosen = mysqli_query($koneksi, $queryDosen);
-        $dataDosen = mysqli_fetch_assoc($resultDosen);
-
-        if ($dataDosen && password_verify($password, $dataDosen['password'])) {
-            $_SESSION['id_dosen'] = $dataDosen['id_dosen'];
-            $_SESSION['nama_lengkap'] = $dataDosen['nama_dosen'];
-            $_SESSION['nama'] = $dataDosen['nip'];
-            $_SESSION['nip'] = $dataDosen['nip'];
-            $_SESSION['jabatan'] = $dataDosen['jabatan'];
-            if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
-                $_SESSION['role'] = 'pimpinan';
-                header("Location: pimpinan_beranda.php");
-            } else {
-                $_SESSION['role'] = 'dosen';
-                header("Location: dosen_beranda.php");
-            }
-            exit;
-        }
-
-        $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
-        $resultMhs = mysqli_query($koneksi, $queryMhs);
-        $dataMhs = mysqli_fetch_assoc($resultMhs);
-
-        if ($dataMhs && password_verify($password, $dataMhs['password'])) {
-            $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
-            $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
-            $_SESSION['nama'] = $dataMhs['npm'];
-            $_SESSION['npm'] = $dataMhs['npm'];
-            $_SESSION['prodi'] = $dataMhs['prodi'];
-            $_SESSION['id_pa'] = $dataMhs['id_pa'];
-            $_SESSION['id_pb1'] = $dataMhs['id_pb1'];
-            $_SESSION['id_pb2'] = $dataMhs['id_pb2'];
-            $_SESSION['semester'] = $dataMhs['semester'];
-            $_SESSION['role'] = 'mahasiswa';
-            header("Location: mhs_beranda.php");
-            exit;
-        }
-
-        $queryOrmawa = "SELECT * FROM ormawa WHERE username='$login_id'";
-        $resultOrmawa = mysqli_query($koneksi, $queryOrmawa);
-        $dataOrmawa = mysqli_fetch_assoc($resultOrmawa);
-
-        if ($dataOrmawa && password_verify($password, $dataOrmawa['password'])) {
-            $_SESSION['id_ormawa'] = $dataOrmawa['id_ormawa'];
-            $_SESSION['nama_lengkap'] = $dataOrmawa['nama_ormawa'];
-            $_SESSION['nama'] = $dataOrmawa['username'];
-            $_SESSION['username'] = $dataOrmawa['username'];
-            $_SESSION['id_pembina'] = $dataOrmawa['id_pembina'];
-            $_SESSION['id_prodi'] = $dataOrmawa['id_prodi'];
-            $_SESSION['role'] = 'ormawa';
-            header("Location: ormawa_beranda.php");
-            exit;
-        }
-
-        $_SESSION['error'] = "Gagal masuk! Identitas pengguna atau kata sandi tidak sesuai.";
-        header("Location: index.php");
-        exit;
-    }
-    ?>
 
     <script>
         const togglePassword = document.getElementById("toggle-password");

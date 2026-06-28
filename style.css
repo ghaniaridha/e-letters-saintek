@@ -1322,14 +1322,12 @@ body.swal2-shown {
   border-right: none;
 }
 
-/*header tabel*/
 .custom-table th {
   background-color: #f9f9f9;
   font-weight: bold;
   font-size: 15px;
 }
 
-/*menghilangkan garis bawah pada baris paling akhir*/
 .custom-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -1344,13 +1342,11 @@ body.swal2-shown {
 }
 /*pengaturan warna tabel selang seling - end*/
 
-/*efek hover*/
 .custom-table tbody tr:hover {
   background-color: #e2eef6 !important;
   transition: background-color 0.2s ease;
 }
 
-/*button download*/
 .btn-download-blue {
   display: inline-block;
   background-color: #175a80;
@@ -1368,10 +1364,9 @@ body.swal2-shown {
   color: #ffffff;
 }
 
-/* styling jika data kosong */
 .empty-table-cell {
   text-align: center;
-  padding: 40px 20px !important; /* Padding lebih besar agar luas */
+  padding: 40px 20px !important;
   color: #666;
   background-color: #ffffff;
 }
