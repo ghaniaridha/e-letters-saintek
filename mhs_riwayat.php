@@ -47,22 +47,22 @@ $query_riwayat = mysqli_query($koneksi, "
 
 <body>
 
-    <?php
-    if (isset($_SESSION['pesan'])) {
-        $alertType = ($_SESSION['status'] == "success") ? "success" : "error";
-        echo "<script>
-        Swal.fire({
-            icon: '$alertType',
-            title: '" . ($_SESSION['status'] == "success" ? "Berhasil!" : "Gagal!") . "',
-            text: '" . $_SESSION['pesan'] . "',
-            timer: 2000,
-            showConfirmButton: false
-        });
-    </script>";
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
         unset($_SESSION['pesan']);
         unset($_SESSION['status']);
-    }
-    ?>
+        ?>
+    <?php endif; ?>
 
     <nav class="navbar">
         <a href="#" class="navbar-logo">
@@ -176,34 +176,34 @@ $query_riwayat = mysqli_query($koneksi, "
                                     <?php } ?>
                                 </td>
 
-                              <td>
-    <?php if (!empty($row['file_surat_final'])) { ?>
+                                <td>
+                                    <?php if (!empty($row['file_surat_final'])) { ?>
 
-        <?php
-        $namaSurat = strtolower($row['nama_surat']);
+                                        <?php
+                                        $namaSurat = strtolower($row['nama_surat']);
 
-        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-         $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
-        } else {
-         $linkUnduh = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
-        }
-        ?>
+                                        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                                            $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
+                                        } else {
+                                            $linkUnduh = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
+                                        }
+                                        ?>
 
-        <a href="<?= $linkUnduh; ?>"
-           target="_blank"
-           class="btn-aksi"
-           style="background-color:#10b981; color:white; border-color:#10b981;">
-            Unduh
-        </a>
+                                        <a href="<?= $linkUnduh; ?>"
+                                            target="_blank"
+                                            class="btn-aksi"
+                                            style="background-color:#10b981; color:white; border-color:#10b981;">
+                                            Unduh
+                                        </a>
 
-    <?php } else { ?>
+                                    <?php } else { ?>
 
-        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
-            Belum Tersedia
-        </span>
+                                        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
+                                            Belum Tersedia
+                                        </span>
 
-    <?php } ?>
-</td>
+                                    <?php } ?>
+                                </td>
 
                                 <td>
                                     <a href="detail_pengajuan.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">

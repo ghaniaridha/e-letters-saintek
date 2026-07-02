@@ -63,9 +63,29 @@ $query_string = $query_string ? '&' . $query_string : '';
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="admin_style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
+
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
+
     <div class="admin-wrapper">
         <?php include "admin_sidebar.php"; ?>
 
@@ -286,17 +306,17 @@ $query_string = $query_string ? '&' . $query_string : '';
         //fungsi button reset password -start
         function konfirmasiReset(npm) {
             Swal.fire({
-                title: 'Reset Sandi?',
-                text: "Sandi akan diubah menjadi default (npm/123456).",
-                icon: 'question',
+                title: 'Atur Ulang Kata Sandi?',
+                text: "Kata sandi akan diubah kembali menjadi NPM: " + npm + ". Apakah Anda yakin?",
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#6c757d',
+                confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Reset',
+                confirmButtonText: 'Ya, Atur Ulang',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = 'adm_reset_password.php?npm=' + npm;
+                    window.location.href = 'adm_reset_pw_mhs.php?npm=' + npm;
                 }
             });
         }
