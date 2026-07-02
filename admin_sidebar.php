@@ -45,10 +45,7 @@
 
 <script>
     document.querySelector('.dropdown-btn').addEventListener('click', function() {
-        // Toggle menu
         this.nextElementSibling.classList.toggle('show');
-
-        // Toggle rotasi panah
         this.querySelector('.dropdown-arrow').classList.toggle('rotate-arrow');
     });
 </script>

@@ -307,6 +307,90 @@ table td {
 }
 
 /*halaman kelola pengguna -start-*/
+.filter-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.filter-section input,
+.filter-section select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-section input:focus,
+.filter-section select:focus {
+  border-color: #0d6efd;
+}
+
+.btn-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 20px;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-filter:hover {
+  background-color: #0b5ed7;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.btn {
+  width: 100%;
+  padding: 5px 2px;
+  font-size: 11px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+.btn:hover {
+  opacity: 0.8;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 20px;
+  background-color: #6c757d;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: #5c636a;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -343,19 +427,164 @@ table tbody td {
   font-weight: bold;
 }
 
-.status-menunggu {
-  color: orange;
-  font-weight: bold;
-}
-
 .status-nonaktif {
   color: red;
   font-weight: bold;
 }
 
+.status-menunggu {
+  color: orange;
+  font-weight: bold;
+}
+
+.action-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  max-width: 160px;
+  margin: 0 auto;
+}
+
+.btn-detail {
+  background-color: #17a2b8;
+  color: white;
+}
+.btn-edit {
+  background-color: #ffc107;
+  color: #000;
+}
+.btn-reset {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-nonaktif {
+  background-color: #dc3545;
+  color: white;
+}
+
 .empty-table {
   text-align: center;
   padding: 20px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 5px;
+}
+
+.pagination li a,
+.pagination li span {
+  display: block;
+  padding: 8px 14px;
+  text-decoration: none;
+  color: #0d6efd;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.pagination li a:hover {
+  background-color: #f8f9fa;
+  border-color: #0d6efd;
+}
+
+.pagination li.active span {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+.pagination li.disabled span {
+  color: #adb5bd;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+}
+
+.text-muted {
+  color: #999;
+  font-style: italic;
+}
+
+.badge-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-block;
+}
+.badge-aktif {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+.badge-menunggu {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-nonaktif {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.swal-scroll-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  text-align: left;
+}
+
+.swal-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+.swal-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+
+.section-title {
+  font-weight: bold;
+  color: #0d6efd;
+  margin: 15px 0 10px 0;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #0d6efd;
+  display: inline-block;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+}
+
+.detail-label {
+  width: 140px;
+  font-weight: 600;
+  color: #555;
+}
+
+.detail-value {
+  flex: 1;
+}
+
+.swal-action-box {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 .swal-btn {
@@ -389,17 +618,6 @@ table tbody td {
 .swal-btn-batal {
   background: #6c757d;
 }
-.swal-detail-box {
-  text-align: left;
-  line-height: 1.9;
-}
-
-.swal-action-box {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
 
 .swal-status-aktif {
   margin-top: 20px;
@@ -409,64 +627,27 @@ table tbody td {
   border-radius: 5px;
 }
 
-.action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
+.swal2-close {
+  color: #dc3545 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 50% !important;
+  font-size: 20px !important;
 }
 
-.action-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  max-width: 160px;
-  margin: 0 auto;
+.swal2-close:hover {
+  color: #ffffff !important;
+  background-color: #dc3545 !important;
+  opacity: 1 !important;
+  transform: rotate(90deg);
 }
 
-.btn {
-  width: 100%;
-  padding: 5px 2px;
-  font-size: 11px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: white;
-  font-weight: 600;
-  text-align: center;
-}
-
-.btn:hover {
-  opacity: 0.8;
-}
-
-.btn-detail {
-  background-color: #17a2b8;
-  color: white;
-}
-.btn-edit {
-  background-color: #ffc107;
-  color: #000;
-}
-.btn-reset {
-  background-color: #6c757d;
-  color: white;
-}
-.btn-nonaktif {
-  background-color: #dc3545;
-  color: white;
-}
-/*halaman kelola pengguna -end-*/
-
-/* Sembunyikan menu dropdown secara default */
 .dropdown-menu {
   display: none;
   list-style: none;
-  padding-left: 20px; /* Memberikan efek menjorok ke dalam */
-  background: rgba(0, 0, 0, 0.05); /* Sedikit warna beda untuk pembeda */
+  padding-left: 20px;
+  background: rgba(0, 0, 0, 0.05);
 }
 
-/* Style link di dalam dropdown */
 .dropdown-menu li a {
   display: block;
   padding: 10px;
@@ -479,14 +660,12 @@ table tbody td {
   color: #0d6efd;
 }
 
-/* Mengatur panah agar berputar saat aktif */
 .dropdown-arrow {
   float: right;
   font-size: 12px;
   transition: transform 0.3s;
 }
 
-/* Class untuk JS (saat menu dibuka) */
 .show {
   display: block !important;
 }
@@ -494,3 +673,4 @@ table tbody td {
 .rotate-arrow {
   transform: rotate(180deg);
 }
+/*halaman kelola pengguna -end-*/

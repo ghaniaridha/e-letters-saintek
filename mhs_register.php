@@ -9,6 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $npm = $_POST['npm'];
     $nama_mhs = $_POST['nama_mhs'];
     $id_prodi = $_POST['id_prodi'];
+    $id_pa = $_POST['id_pa'];
     $email = $_POST['email'];
     $password = $_POST['password'];
     $konfirmasi_password = $_POST['konfirmasi_password'];
@@ -32,9 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt_insert = $koneksi->prepare("INSERT INTO mahasiswa (npm, nama_mhs, id_prodi, email, password, status) 
-                VALUES (?, ?, ?, ?, ?, 0)");
-    $stmt_insert->bind_param("sssss", $npm, $nama_mhs, $id_prodi, $email, $hashed_password);
+    $stmt_insert = $koneksi->prepare("INSERT INTO mahasiswa (npm, nama_mhs, id_prodi, id_pa, email, password, status) 
+            VALUES (?, ?, ?, ?, ?, ?, 0)");
+    $stmt_insert->bind_param("ssssss", $npm, $nama_mhs, $id_prodi, $id_pa, $email, $hashed_password);
 
     if ($stmt_insert->execute()) {
         $_SESSION['success'] = "Pendaftaran berhasil! Silakan tunggu persetujuan Admin.";
@@ -90,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="box-input-data">
                     <i class="fa-solid fa-graduation-cap"></i>
-                    <select name="id_prodi" class="select-field" required>
+                    <select name="id_prodi" id="id_prodi" class="select-field" required>
                         <option value="" disabled selected>Pilih Program Studi</option>
                         <?php while ($row = mysqli_fetch_assoc($resultProdi)) {
                             echo "<option value='" . $row['id_prodi'] . "'>" . $row['nama_prodi'] . "</option>";
@@ -99,6 +100,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
 
                 <div class="box-input-data">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <select name="id_pa" id="id_pa" class="select-field" required>
+                        <option value="" disabled selected>Pilih Prodi Terlebih Dahulu</option>
+                    </select>
+                </div>
+
+                <div class="box-input-data span-2">
                     <i class="fa-regular fa-envelope"></i>
                     <input type="email" name="email" placeholder="Email Mahasiswa" required>
                 </div>
@@ -124,6 +132,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 
     <script>
+        document.getElementById('id_prodi').addEventListener('change', function() {
+            var prodiId = this.value;
+            var dosenSelect = document.getElementById('id_pa');
+
+            dosenSelect.innerHTML = '<option value="" disabled selected>Memuat data dosen...</option>';
+
+            fetch('get_dosen.php?prodi=' + prodiId)
+                .then(response => response.text())
+                .then(data => {
+                    dosenSelect.innerHTML = data;
+                })
+                .catch(error => {
+                    dosenSelect.innerHTML = '<option value="" disabled selected>Gagal memuat data</option>';
+                });
+        });
+
         function togglePass(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);
