@@ -1,6 +1,11 @@
 <?php
 include "koneksi.php";
 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
+
 if (isset($_GET['npm'])) {
     $npm = $_GET['npm'];
 

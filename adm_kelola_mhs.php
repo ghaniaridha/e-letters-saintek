@@ -2,6 +2,11 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
+
 $sql = "SELECT mahasiswa.*, prodi.nama_prodi,
                d1.nama_dosen AS nama_pa,
                d2.nama_dosen AS nama_dosbing1,
@@ -121,9 +126,6 @@ $query_string = $query_string ? '&' . $query_string : '';
                         <i class="fa-solid fa-search"></i> Cari
                     </button>
 
-                    <a href="adm_kelola_mhs.php" class="btn btn-secondary">
-                        <i class="fa-solid fa-rotate-left"></i> Atur Ulang
-                    </a>
                 </form>
                 <table>
                     <thead>
@@ -172,11 +174,11 @@ $query_string = $query_string ? '&' . $query_string : '';
                                                     '<?= htmlspecialchars($row['nama_dosbing1'] ?? '', ENT_QUOTES); ?>',
                                                     '<?= htmlspecialchars($row['nama_dosbing2'] ?? '', ENT_QUOTES); ?>'   
                                                 )">
-                                                Rincian
+                                                Detail
                                             </button>
 
-                                            <button type="button" class="btn btn-edit" onclick="window.location='adm_edit_mhs.php?npm=<?= $row['npm'] ?>'">Ubah</button>
-                                            <button type="button" class="btn btn-reset" onclick="konfirmasiReset('<?= $row['npm'] ?>')">Reset</button>
+                                            <button type="button" class="btn btn-edit" onclick="window.location='adm_edit_mhs.php?npm=<?= $row['npm'] ?>'">Edit</button>
+                                            <button type="button" class="btn btn-reset" onclick="konfirmasiReset('<?= $row['npm'] ?>')">Atur Sandi</button>
                                             <button type="button" class="btn btn-nonaktif" onclick="konfirmasiNonaktif('<?= $row['npm'] ?>')">Nonaktif</button>
                                         </div>
                                     </td>
@@ -216,10 +218,8 @@ $query_string = $query_string ? '&' . $query_string : '';
             </div>
 
         </main>
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         //fungsi button rincian data - start
         function lihatDetail(npm, nama, prodi, email, status, nama_pa, nama_dosbing1, nama_dosbing2) {

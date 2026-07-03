@@ -5,6 +5,12 @@ include "koneksi.php";
 $queryProdi = "SELECT id_prodi, nama_prodi FROM prodi ORDER BY nama_prodi ASC";
 $resultProdi = mysqli_query($koneksi, $queryProdi);
 
+$queryDosenGlobal = mysqli_query($koneksi, "SELECT id_dosen, nama_dosen FROM dosen WHERE role_akses = 'dosen' ORDER BY nama_dosen ASC");
+$daftar_dosen = [];
+while ($d = mysqli_fetch_assoc($queryDosenGlobal)) {
+    $daftar_dosen[] = $d;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $npm = $_POST['npm'];
     $nama_mhs = $_POST['nama_mhs'];
@@ -60,6 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="register.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 
 <body>
@@ -101,8 +111,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="box-input-data">
                     <i class="fa-solid fa-chalkboard-user"></i>
-                    <select name="id_pa" id="id_pa" class="select-field" required>
-                        <option value="" disabled selected>Pilih Prodi Terlebih Dahulu</option>
+                    <select name="id_pa" id="id_pa" class="select-field select-cari-dosen" required>
+                        <option value="" disabled selected>Pilih Pembimbing Akademik (PA)</option>
+                        <?php foreach ($daftar_dosen as $dosen): ?>
+                            <option value="<?= $dosen['id_dosen']; ?>">
+                                <?= htmlspecialchars($dosen['nama_dosen'], ENT_QUOTES); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -132,22 +147,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 
     <script>
-        document.getElementById('id_prodi').addEventListener('change', function() {
-            var prodiId = this.value;
-            var dosenSelect = document.getElementById('id_pa');
-
-            dosenSelect.innerHTML = '<option value="" disabled selected>Memuat data dosen...</option>';
-
-            fetch('get_dosen.php?prodi=' + prodiId)
-                .then(response => response.text())
-                .then(data => {
-                    dosenSelect.innerHTML = data;
-                })
-                .catch(error => {
-                    dosenSelect.innerHTML = '<option value="" disabled selected>Gagal memuat data</option>';
-                });
+        $(document).ready(function() {
+            $('.select-cari-dosen').select2({
+                placeholder: "-- Pilih Dosen --",
+                allowClear: true,
+                width: '100%'
+            });
         });
 
+        //fungsi toggle show/hide password
         function togglePass(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);

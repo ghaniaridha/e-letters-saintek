@@ -1,7 +1,7 @@
 <div class="sidebar">
     <div class="sidebar-logo">
-        <h2>Admin FST</h2>
-        <p>Layanan Akademik</p>
+        <h2>Admin SIPATU FST UIN RIL</h2>
+        <p>Sistem Informasi Pengajuan Surat Terpadu</p>
     </div>
 
     <a href="adm_dashboard.php">
