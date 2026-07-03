@@ -1307,96 +1307,467 @@ body.swal2-shown {
   display: inline-block;
   position: relative;
 }
-/*tabel riwayat permohonan - end*/
 
-/*tabel templat surat akademik* - start*/
-.table-wrapper {
-  width: 90%;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  overflow-x: auto;
-  background-color: #ffffff;
-  margin: 0 auto 20px auto;
+/* ==========================================================
+   HALAMAN LACAK SURAT
+========================================================== */
+
+body {
+  background: #f5f7fb;
+  font-family: "Poppins", sans-serif;
 }
 
-.custom-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
+.container-lacak {
+  max-width: 1200px;
+  margin: 120px auto 50px;
+  padding: 20px;
 }
 
-.custom-table th,
-.custom-table td {
-  padding: 14px 20px;
-  border-bottom: 1px solid #e0e0e0;
-  border-right: 1px solid #e0e0e0;
-  vertical-align: middle;
-  color: #333;
+/* ==========================================================
+   HEADER HALAMAN
+========================================================== */
+
+.page-header {
+  margin-bottom: 30px;
 }
 
-.custom-table th:last-child,
-.custom-table td:last-child {
-  border-right: none;
+.page-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 10px;
 }
 
-.custom-table th {
-  background-color: #f9f9f9;
-  font-weight: bold;
+.page-header p {
+  color: #64748b;
   font-size: 15px;
 }
 
-.custom-table tbody tr:last-child td {
-  border-bottom: none;
+/* ==========================================================
+   CARD SURAT
+========================================================== */
+
+.card-surat {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  transition: 0.3s;
 }
 
-/*pengaturan warna tabel selang seling - start*/
-.custom-table tbody tr:nth-child(odd) {
-  background-color: #ffffff;
+.card-surat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
 
-.custom-table tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-/*pengaturan warna tabel selang seling - end*/
+/* ==========================================================
+   HEADER CARD
+========================================================== */
 
-.custom-table tbody tr:hover {
-  background-color: #e2eef6 !important;
-  transition: background-color 0.2s ease;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
 }
 
-.btn-download-blue {
-  display: inline-block;
-  background-color: #175a80;
-  color: #ffffff;
+.card-info h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.card-info h3 i {
+  color: #2563eb;
+}
+
+.tanggal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.tanggal i {
+  color: #2563eb;
+}
+
+/* ==========================================================
+   BADGE STATUS
+========================================================== */
+
+.badge-status {
   padding: 8px 18px;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: normal;
-  transition: background-color 0.2s ease;
-}
-
-.btn-download-blue:hover {
-  background-color: #124666;
+  border-radius: 30px;
   color: #ffffff;
-}
-
-.empty-table-cell {
-  text-align: center;
-  padding: 40px 20px !important;
-  color: #666;
-  background-color: #ffffff;
-}
-
-.empty-table-cell i {
-  font-size: 24px;
-  margin-bottom: 8px;
-  color: #888;
-}
-
-.empty-table-cell p {
-  margin: 0;
   font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-menunggu {
+  background: #f59e0b;
+}
+
+.badge-proses {
+  background: #2563eb;
+}
+
+.badge-selesai {
+  background: #16a34a;
+}
+
+.badge-ditolak {
+  background: #dc2626;
+}
+
+/* ==========================================================
+   STATUS SAAT INI
+========================================================== */
+
+.status-sekarang {
+  background: #f8fafc;
+  border-left: 5px solid #2563eb;
+  border-radius: 10px;
+  padding: 15px 18px;
+  margin-bottom: 20px;
+}
+
+.status-sekarang h4 {
+  font-size: 16px;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.status-sekarang p {
+  color: #475569;
+  font-size: 15px;
+}
+
+/* ==========================================================
+   PROGRESS BAR
+========================================================== */
+
+.progress {
+  width: 100%;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 100px;
+  overflow: hidden;
+  margin: 20px 0 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  text-align: right;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+/* ==========================================================
+   TIMELINE
+========================================================== */
+
+.timeline {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-top: 35px;
+
+  position: relative;
+
+  gap: 10px;
+}
+
+.step {
+  flex: 1;
+
+  text-align: center;
+}
+
+.circle {
+  width: 55px;
+
+  height: 55px;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin: auto;
+
+  color: white;
+
+  font-size: 18px;
+
+  margin-bottom: 12px;
+
+  transition: 0.3s;
+}
+
+.step span {
+  display: block;
+
+  font-size: 14px;
+
+  color: #475569;
+
+  line-height: 20px;
+}
+
+/* selesai */
+
+.step.done .circle {
+  background: #16a34a;
+}
+
+/* sedang */
+
+.step.active .circle {
+  background: #f59e0b;
+
+  transform: scale(1.08);
+}
+
+/* belum */
+
+.step.pending .circle {
+  background: #cbd5e1;
+}
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+.aksi {
+  margin-top: 30px;
+
+  display: flex;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+}
+
+.btn-detail,
+.btn-verifikasi {
+  padding: 12px 20px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  border: none;
+
+  cursor: pointer;
+
+  font-size: 15px;
+
+  transition: 0.3s;
+}
+
+.btn-detail {
+  background: #2563eb;
+
+  color: white;
+}
+
+.btn-detail:hover {
+  background: #1d4ed8;
+}
+
+.btn-verifikasi {
+  background: #16a34a;
+
+  color: white;
+}
+
+.btn-verifikasi:hover {
+  background: #15803d;
+}
+
+/* ==========================================================
+   CARD KOSONG
+========================================================== */
+
+.card-kosong {
+  background: white;
+
+  padding: 50px;
+
+  text-align: center;
+
+  border-radius: 18px;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-kosong i {
+  font-size: 70px;
+
+  color: #94a3b8;
+
+  margin-bottom: 20px;
+}
+
+.card-kosong h3 {
+  color: #334155;
+
+  margin-bottom: 10px;
+}
+
+.card-kosong p {
+  color: #64748b;
+}
+
+/* ==========================================================
+   MODAL DETAIL
+========================================================== */
+
+.modal {
+  display: none;
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  z-index: 9999;
+}
+
+.modal.show {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.modal-content {
+  width: 600px;
+
+  max-width: 95%;
+
+  background: white;
+
+  border-radius: 15px;
+
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 18px 25px;
+
+  background: #2563eb;
+
+  color: white;
+}
+
+.btn-close {
+  background: none;
+
+  border: none;
+
+  color: white;
+
+  font-size: 22px;
+
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.table-detail {
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+.table-detail td {
+  padding: 12px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-detail td:first-child {
+  width: 180px;
+
+  font-weight: 600;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+  }
+
+  .timeline {
+    flex-direction: column;
+
+    gap: 25px;
+  }
+
+  .step {
+    display: flex;
+
+    align-items: center;
+
+    text-align: left;
+
+    gap: 15px;
+  }
+
+  .circle {
+    margin: 0;
+  }
+
+  .aksi {
+    flex-direction: column;
+  }
+
+  .btn-detail,
+  .btn-verifikasi {
+    width: 100%;
+
+    text-align: center;
+  }
 }
 /*tabel templat surat akademik - end*/
 
