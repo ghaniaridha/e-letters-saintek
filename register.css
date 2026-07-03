@@ -123,7 +123,6 @@ img {
   padding: 6px 4px;
   font-size: 14px;
   color: #333;
-  font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
   height: 32px;
 }
@@ -185,6 +184,7 @@ img {
   .select2-selection--single
   .select2-selection__placeholder {
   color: #757575 !important;
+  font-size: 14px !important;
 }
 
 .box-input-data .select2-container {
@@ -218,7 +218,6 @@ img {
 
 .select2-results__option {
   font-size: 14px;
-  font-family: Arial, Helvetica, sans-serif;
   padding: 8px 12px !important;
 }
 

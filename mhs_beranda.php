@@ -48,10 +48,12 @@ include "koneksi.php";
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link">
+                        <div class="user-info">
+                            <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
                     <div class="divider"></div>
                     <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
                         <span>Keluar</span>
@@ -213,6 +215,7 @@ include "koneksi.php";
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // mengelola dropdown menu pengguna
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
@@ -231,6 +234,7 @@ include "koneksi.php";
             });
         });
 
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
         function confirmLogout(event, url) {
             event.preventDefault();
             Swal.fire({
