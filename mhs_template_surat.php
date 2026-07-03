@@ -1,6 +1,13 @@
 <?php
 session_start();
 include "koneksi.php";
+
+$query = mysqli_query($koneksi, "
+    SELECT * FROM jenis_surat
+    WHERE file_template IS NOT NULL
+    AND file_template != ''
+    ORDER BY nama_surat ASC
+");
 ?>
 
 <!DOCTYPE html>
@@ -9,7 +16,7 @@ include "koneksi.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Surat Akademik</title>
+    <title>Format Surat</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
@@ -59,75 +66,46 @@ include "koneksi.php";
 
     <section id="daftar-surat" class="daftar-surat">
         <div class="daftar-surat-header">
-            <h2>Pengajuan Surat Daring</h2>
+            <h2>Templat Surat Akademik FST</h2>
         </div>
 
-        <div class="jadwal-container">
-            <div class="jadwal-info">
-                <div class="jadwal-row header-row">
-                    <span class="icon-box color-orange">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                    </span>
-                    <span class="jadwal-title">Jadwal Operasional Layanan Akademik</span>
-                </div>
+        <?php if ($query && mysqli_num_rows($query) > 0) { ?>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Jenis Surat</th>
+                            <th>Keterangan</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = mysqli_fetch_assoc($query)) { ?>
+                            <tr>
+                                <td><?= htmlspecialchars($row['nama_surat']); ?></td>
 
-                <div class="jadwal-row">
-                    <span class="icon-box">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </span>
-                    <span class="jadwal-text">Setiap Senin s/d Jumat</span>
-                </div>
+                                <td><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
 
-                <div class="jadwal-row">
-                    <span class="icon-box">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </span>
-                    <span class="jadwal-text">Mulai 08.00 -15.00 WIB</span>
-                </div>
-
-                <div class="jadwal-row">
-                    <span class="icon-box">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </span>
-                    <span class="jadwal-text">TUTUP Sabtu, Minggu & Libur Nasional</span>
-                </div>
+                                <td>
+                                    <a href="uploads/template_surat/<?= htmlspecialchars($row['file_template']); ?>"
+                                        download
+                                        class="btn-download-blue">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="3" class="empty-table-cell">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <p>Belum ada template surat.</p>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                    </tbody>
+                </table>
             </div>
-
-            <div class="jadwal-illustration">
-                <img src="images/jadwal pelayanan.PNG" alt="Ilustrasi Jadwal">
-            </div>
-        </div>
-
-        <div class="layanan-container">
-            <a class="layanan-card" href="mhs_form_surat_riset.php?id_jenis=1">
-                <div class="layanan-content">
-                    <h3>Permohonan<br>Riset</h3>
-                </div>
-            </a>
-
-            <a class="layanan-card" href="mhs_form_surat_magang.php?id_jenis=4">
-                <div class="layanan-content">
-                    <h3>Izin<br>Magang</h3>
-                </div>
-            </a>
-
-            <a class="layanan-card" href="mhs_form_sk_aktif_kuliah.php">
-                <div class="layanan-content">
-                    <h3>Keterangan<br>Aktif Kuliah Kembali</h3>
-                </div>
-            </a>
-        </div>
     </section>
 
     <footer class="footer-section">

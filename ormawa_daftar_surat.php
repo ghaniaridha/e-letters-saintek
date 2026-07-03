@@ -108,13 +108,13 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="form_generate_surat.php?id_jenis=1">
+            <a class="layanan-card" href="form_peminjaman_gedung.php?id_jenis=1">
                 <div class="layanan-content">
                     <h3>Peminjaman<br>Gedung</h3>
                 </div>
             </a>
 
-            <a class="layanan-card" href="pengajuan_cuti.php">
+            <a class="layanan-card" href="form_pengajuan .php">
                 <div class="layanan-content">
                     <h3>Pengajuan<br>Dana</h3>
                 </div>

@@ -90,19 +90,19 @@ if (!$surat) {
                     <input type="text" name="semester" placeholder="Contoh: Semester 6" required>
                 </div>
 
-                     <div class="form-group">
-                        <label>Tanggal Mulai Magang</label>
-                        <input type="date"
-                            name="tanggal_mulai_magang"
-                            required>
-                    </div>
+                <div class="form-group">
+                    <label>Tanggal Mulai Magang</label>
+                    <input type="date"
+                        name="tanggal_mulai_magang"
+                        required>
+                </div>
 
-                    <div class="form-group">
-                        <label>Tanggal Selesai Magang</label>
-                        <input type="date"
-                            name="tanggal_selesai_magang"
-                            required>
-                    </div>
+                <div class="form-group">
+                    <label>Tanggal Selesai Magang</label>
+                    <input type="date"
+                        name="tanggal_selesai_magang"
+                        required>
+                </div>
 
                 <div class="form-group">
                     <label>Lokasi Magang</label>
@@ -119,18 +119,18 @@ if (!$surat) {
                 <h3 class="section-title">Dokumen Pendukung</h3>
 
                 <div class="form-group">
-                    <label>Upload KTM</label>
+                    <label>Kartu Tanda Mahasiswa (KTM)</label>
                     <input type="file" name="ktm" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Upload KHS Semester Terakhir</label>
-                    <input type="file" name="khs" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <label>Slip pembayaran SPP Terakhir</label>
+                    <input type="file" name="bukti_ukt" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Upload Slip Pembayaran UKT</label>
-                    <input type="file" name="bukti_ukt" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <label>KHS Semester yang Lalu</label>
+                    <input type="file" name="khs" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-actions">
