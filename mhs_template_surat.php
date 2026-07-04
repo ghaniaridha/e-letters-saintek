@@ -6,6 +6,7 @@ $query = mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE file_template IS NOT NULL
     AND file_template != ''
+    AND status = 1
     ORDER BY nama_surat ASC
 ");
 ?>
@@ -70,7 +71,12 @@ $query = mysqli_query($koneksi, "
         </div>
 
         <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-            <div class="table-wrapper">
+            <div class="table-wrapper" id="template-surat">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchSurat" class="search-input" placeholder="Cari jenis surat...">
+                </div>
+
                 <table class="custom-table">
                     <thead>
                         <tr>
@@ -83,14 +89,12 @@ $query = mysqli_query($koneksi, "
                         <?php while ($row = mysqli_fetch_assoc($query)) { ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-
                                 <td><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
-
                                 <td>
                                     <a href="uploads/template_surat/<?= htmlspecialchars($row['file_template']); ?>"
                                         download
                                         class="btn-download-blue">
-                                        Download
+                                        <i class="fa-solid fa-download"></i> Unduh
                                     </a>
                                 </td>
                             </tr>
@@ -157,6 +161,7 @@ $query = mysqli_query($koneksi, "
     </footer>
 
     <script>
+        //fungsi dropdown menu user
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
@@ -173,6 +178,30 @@ $query = mysqli_query($koneksi, "
                     }
                 }
             });
+        });
+
+        //fungsi search surat
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchSurat');
+            const tableRows = document.querySelectorAll('#template-surat .custom-table tbody tr');
+
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function(e) {
+                    const term = e.target.value.toLowerCase();
+
+                    tableRows.forEach(row => {
+                        if (row.querySelector('.empty-table-cell')) return;
+                        const jenisSurat = row.cells[0].textContent.toLowerCase();
+                        const keterangan = row.cells[1].textContent.toLowerCase();
+
+                        if (jenisSurat.includes(term) || keterangan.includes(term)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>
