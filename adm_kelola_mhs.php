@@ -66,7 +66,7 @@ $query_string = $query_string ? '&' . $query_string : '';
     <title>Kelola Mahasiswa</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="admin_style.css">
+    <link rel="stylesheet" href="adm.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

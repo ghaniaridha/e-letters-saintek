@@ -6,14 +6,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Admin</title>
-    <link rel="stylesheet" href="admin_style.css">
+    <link rel="stylesheet" href="adm.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
 
 <body>
 
     <div class="admin-wrapper">
-        <?php include "admin_sidebar.php"; ?>
+        <?php include "adm_sidebar.php"; ?>
 
         <main class="main-content">
             <div class="page-title">

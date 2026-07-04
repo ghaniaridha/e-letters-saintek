@@ -64,7 +64,7 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
     <title>Edit Data Mahasiswa</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="admin_style.css">
+    <link rel="stylesheet" href="adm.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
@@ -74,7 +74,7 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
 </head>
 
 <body>
-    <?php include "admin_sidebar.php"; ?>
+    <?php include "adm_sidebar.php"; ?>
 
     <div class="edit-container">
         <div class="edit-card-header">

@@ -1,6 +1,6 @@
 <div class="sidebar">
     <div class="sidebar-logo">
-        <h2>Admin SIPATU FST UIN RIL</h2>
+        <h2>ADMIN SIPATU<br>FST UIN RIL</h2>
         <p>Sistem Informasi Pengajuan Surat Terpadu</p>
     </div>
 
@@ -8,11 +8,11 @@
         <i class="fa-solid fa-house"></i> Dashboard
     </a>
 
-    <a href="admin_template_surat.php">
+    <a href="adm_template_surat.php">
         <i class="fa-solid fa-file-word"></i> Template Surat
     </a>
 
-    <a href="admin_permohonan.php">
+    <a href="adm_permohonan.php">
         <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
     </a>
 
@@ -29,12 +29,12 @@
         </ul>
     </div>
 
-    <a href="admin_riwayat_review.php">
+    <a href="adm_riwayat_review.php">
         <i class="fa-solid fa-clock-rotate-left"></i>
         Riwayat Review
     </a>
 
-    <a href="admin_laporan_surat.php">
+    <a href="adm_laporan_surat.php">
         <i class="fa-solid fa-file-export"></i> Laporan Surat Keluar
     </a>
 
@@ -44,6 +44,7 @@
 </div>
 
 <script>
+    //fungsi dropdown menu sidebar
     document.querySelector('.dropdown-btn').addEventListener('click', function() {
         this.nextElementSibling.classList.toggle('show');
         this.querySelector('.dropdown-arrow').classList.toggle('rotate-arrow');
