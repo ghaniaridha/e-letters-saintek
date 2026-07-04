@@ -54,6 +54,8 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -120,10 +122,12 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                     <label>Semester / Program Studi</label>
 
                     <div class="input-group-flex">
-                        <input type="text"
+                        <input type="number"
                             name="semester"
+                            placeholder="Contoh: 6"
                             class="form-control flex-1"
-                            placeholder="Semester (Contoh: 8)"
+                            min="3"
+                            max="14"
                             required>
 
                         <input type="text"
@@ -142,7 +146,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
 
                 <div class="form-group">
                     <label>Lokasi Penelitian</label>
-                    <input type="text" name="lokasi_penelitian" placeholder="Contoh: Kantor Fakultas Sains dan Teknologi" required>
+                    <input type="text" name="lokasi_penelitian" placeholder="Contoh: Fakultas Sains dan Teknologi" required>
                 </div>
 
                 <div class="form-group">
@@ -194,13 +198,13 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                 </div>
 
                 <div class="form-group">
-                    <label>KHS Semester Terakhir</label>
-                    <input type="file" name="khs" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <label>Bukti Pembayaran UKT Terakhir</label>
+                    <input type="file" name="bukti_ukt" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Bukti Pembayaran UKT</label>
-                    <input type="file" name="bukti_ukt" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <label>KHS Semester Lalu</label>
+                    <input type="file" name="khs" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-actions">
@@ -215,7 +219,6 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
         <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');

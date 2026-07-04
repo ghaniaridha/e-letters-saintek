@@ -7,12 +7,20 @@ if (!isset($_SESSION['id_mhs'])) {
     exit;
 }
 
+$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_GET['id_jenis'] ?? 4;
 
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE id_jenis = '$id_jenis'
 "));
+
+$mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
+    SELECT * FROM mahasiswa
+    WHERE id_mhs = '$id_mhs'
+"));
+
+$id_prodi = $mhs['id_prodi'];
 
 if (!$surat) {
     echo "<script>alert('Jenis surat tidak ditemukan'); window.location='mhs_daftar_surat.php';</script>";
@@ -86,8 +94,40 @@ if (!$surat) {
                 <input type="hidden" name="id_jenis" value="<?= htmlspecialchars($id_jenis); ?>">
 
                 <div class="form-group">
+                    <label>Nama</label>
+                    <input type="text"
+                        class="form-control input-readonly"
+                        value="<?= htmlspecialchars($mhs['nama_mhs']); ?>"
+                        readonly>
+                    <input type="hidden" name="nama" value="<?= htmlspecialchars($mhs['nama_mhs']); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label>NPM</label>
+                    <input type="text"
+                        class="form-control input-readonly"
+                        value="<?= htmlspecialchars($mhs['npm']); ?>"
+                        readonly>
+                    <input type="hidden" name="npm" value="<?= htmlspecialchars($mhs['npm']); ?>">
+                </div>
+
+                <div class="form-group">
                     <label>Semester</label>
-                    <input type="text" name="semester" placeholder="Contoh: Semester 6" required>
+                    <input type="number"
+                        name="semester"
+                        placeholder="Contoh: 6"
+                        min="3"
+                        max="14" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Program Studi</label>
+                    <input type="text"
+                        class="form-control input-readonly flex-2"
+                        value="<?= htmlspecialchars($mhs['nama_prodi'] ?? 'Sistem Informasi'); ?>"
+                        readonly>
+
+                    <input type="hidden" name="id_prodi" value="<?= $data_mhs['id_prodi'] ?? ''; ?>">
                 </div>
 
                 <div class="form-group">
@@ -124,12 +164,12 @@ if (!$surat) {
                 </div>
 
                 <div class="form-group">
-                    <label>Slip pembayaran SPP Terakhir</label>
+                    <label>Bukti Pembayaran UKT Terakhir</label>
                     <input type="file" name="bukti_ukt" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-group">
-                    <label>KHS Semester yang Lalu</label>
+                    <label>KHS Semester Lalu</label>
                     <input type="file" name="khs" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
