@@ -77,7 +77,7 @@ if (!$surat) {
     <div class="generate-wrapper">
 
         <div class="page-header">
-            <h2><?= htmlspecialchars($surat['nama_surat']); ?></h2>
+            <h1><?= htmlspecialchars($surat['nama_surat']); ?></h1>
             <p>Silakan lengkapi data berikut untuk membuat permohonan izin magang.</p>
         </div>
 

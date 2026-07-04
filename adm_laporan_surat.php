@@ -1,7 +1,6 @@
 <?php
-include "adm_header.php";
-
-/** @var mysqli $koneksi */
+session_start();
+include "koneksi.php";
 
 $jenis = $_GET['jenis'] ?? '';
 $prodi = $_GET['prodi'] ?? '';
@@ -43,10 +42,11 @@ $query = mysqli_query($koneksi, "
         sp.file_surat_final,
         m.npm,
         m.nama_mhs,
-        m.prodi,
+        p.nama_prodi,
         js.nama_surat
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    JOIN prodi p ON m.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     $where
     ORDER BY sp.tanggal_pengajuan DESC
@@ -58,7 +58,10 @@ $query = mysqli_query($koneksi, "
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Surat Keluar</title>
+
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="adm.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
@@ -129,7 +132,7 @@ $query = mysqli_query($koneksi, "
                                     <td><?= htmlspecialchars($row['nomor_surat']); ?></td>
                                     <td><?= htmlspecialchars($row['npm']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                    <td><?= htmlspecialchars($row['prodi']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                     <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
                                     <td>

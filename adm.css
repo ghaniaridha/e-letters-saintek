@@ -177,6 +177,7 @@ table td {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 .chart-container {
   margin-top: 30px;
   background: #fff;
@@ -277,7 +278,6 @@ table td {
 }
 
 /*detail dosen*/
-
 .modal-preview {
   display: none;
   position: fixed;
@@ -433,14 +433,17 @@ table tbody td {
   background-color: #17a2b8;
   color: white;
 }
+
 .btn-edit {
   background-color: #ffc107;
   color: #000;
 }
+
 .btn-reset {
   background-color: #6c757d;
   color: white;
 }
+
 .btn-nonaktif {
   background-color: #dc3545;
   color: white;
@@ -509,10 +512,12 @@ table tbody td {
   font-weight: 600;
   display: inline-block;
 }
+
 .badge-aktif {
   background: #d1e7dd;
   color: #0f5132;
 }
+
 .badge-menunggu {
   background: #fff3cd;
   color: #856404;
@@ -533,6 +538,7 @@ table tbody td {
 .swal-scroll-container::-webkit-scrollbar {
   width: 6px;
 }
+
 .swal-scroll-container::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 10px;
@@ -705,6 +711,7 @@ table tbody td {
   gap: 25px;
   margin-top: 20px;
 }
+
 .form-section-title {
   font-size: 16px;
   font-weight: 600;
@@ -714,32 +721,38 @@ table tbody td {
   margin-bottom: 15px;
   grid-column: span 1;
 }
+
 .form-group {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column;
 }
+
 .form-group label {
   font-size: 13px;
   font-weight: 600;
   color: #444;
   margin-bottom: 6px;
 }
+
 .form-control {
   padding: 10px 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
 }
+
 .form-control:focus {
   border-color: #0d6efd;
   outline: none;
 }
+
 .readonly-input {
   background-color: #e9ecef;
   color: #6c757d;
   cursor: not-allowed;
 }
+
 .form-actions {
   grid-column: span 2;
   display: flex;
@@ -749,6 +762,7 @@ table tbody td {
   border-top: 1px solid #eee;
   padding-top: 20px;
 }
+
 .btn-cancel {
   padding: 10px 20px;
   background: #6c757d;
@@ -816,3 +830,328 @@ table tbody td {
   width: calc(100% - 260px);
 }
 /*section footer - end*/
+
+/*halaman kelola template surat - start*/
+#kelola-templat-surat {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+}
+
+#kelola-templat-surat .table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+#kelola-templat-surat .toolbar-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+#kelola-templat-surat .search-box {
+  position: relative;
+  width: 300px;
+}
+
+#kelola-templat-surat .search-box input {
+  width: 100%;
+  padding: 10px 15px 10px 35px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
+#kelola-templat-surat .search-box input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#kelola-templat-surat .search-box i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+#kelola-templat-surat .btn-add {
+  margin-top: 15px;
+  width: 200px;
+  background: #10b981;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#kelola-templat-surat .btn-add:hover {
+  background: #059669;
+}
+
+#kelola-templat-surat input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+#kelola-templat-surat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+#kelola-templat-surat th,
+#kelola-templat-surat td {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+#kelola-templat-surat .status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#kelola-templat-surat .status-badge.aktif {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+#kelola-templat-surat .status-badge.nonaktif {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+#kelola-templat-surat .btn-action-download {
+  color: #10b981;
+  font-size: 1.2rem;
+  text-decoration: none;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+#kelola-templat-surat .btn-action-download:hover {
+  color: #059669;
+  transform: scale(1.1);
+}
+
+#kelola-templat-surat .action-container {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+#kelola-templat-surat .btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+#kelola-templat-surat .btn-action.edit {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+#kelola-templat-surat .btn-action.edit:hover {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+#kelola-templat-surat .btn-action.delete {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+#kelola-templat-surat .btn-action.delete:hover {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+#kelola-templat-surat .empty-table-row {
+  text-align: center;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal.show {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.3s ease-out;
+  margin: auto !important;
+  position: relative;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-modal {
+  font-size: 24px;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: 0.2s;
+}
+
+.close-modal:hover {
+  color: #ef4444;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+#kelola-templat-surat select {
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.modal .file-info-text {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+}
+
+.modal .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.modal .btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.modal .btn-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.modal .btn-secondary:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.modal .btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.modal .btn-primary:hover {
+  background-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.modal .btn-success {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.modal .btn-success:hover {
+  background-color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+}
+/*halaman kelola template surat - end*/
+
+/*section sweetalert2*/
+.swal2-container {
+  z-index: 99999 !important;
+}
+/*section sweetalert2*/

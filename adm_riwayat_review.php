@@ -1,7 +1,6 @@
 <?php
-include "adm_header.php";
-
-/** @var mysqli $koneksi */
+session_start();
+include "koneksi.php";
 
 if (!isset($koneksi)) {
     include "koneksi.php";
@@ -13,13 +12,14 @@ $query = mysqli_query($koneksi, "
         sp.file_surat_final,
         m.npm,
         m.nama_mhs,
-        m.prodi,
+        p.nama_prodi,
         js.nama_surat,
         sp.tanggal_pengajuan,
         sp.status_akhir
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    JOIN prodi p ON m.id_prodi = p.id_prodi
     WHERE sp.status_akhir != 'Menunggu Admin'
     AND (
         sp.status_akhir LIKE '%Wadek%'
@@ -37,14 +37,20 @@ $query = mysqli_query($koneksi, "
 
 <head>
     <meta charset="UTF-8">
-    <title>Riwayat Review Admin</title>
-    <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Review</title>
+
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="adm.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
 
     <div class="adm-wrapper">
-        <?php include "admin_sidebar.php"; ?>
+        <?php include "adm_sidebar.php"; ?>
 
         <main class="main-content">
             <div class="page-title">
@@ -86,7 +92,7 @@ $query = mysqli_query($koneksi, "
                                     <td><?= $no++; ?></td>
                                     <td><?= htmlspecialchars($row['npm']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                    <td><?= htmlspecialchars($row['prodi']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                     <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
                                     <td>

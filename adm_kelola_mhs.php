@@ -92,7 +92,7 @@ $query_string = $query_string ? '&' . $query_string : '';
     <?php endif; ?>
 
     <div class="admin-wrapper">
-        <?php include "admin_sidebar.php"; ?>
+        <?php include "adm_sidebar.php"; ?>
 
         <main class="main-content">
             <div class="page-title">

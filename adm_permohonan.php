@@ -1,7 +1,6 @@
 <?php
-include "adm_header.php";
-
-/** @var mysqli $koneksi */
+session_start();
+include "koneksi.php";
 
 $prodi = $_GET['prodi'] ?? '';
 $id_jenis_filter = $_GET['id_jenis'] ?? '';
@@ -95,12 +94,13 @@ $query = mysqli_query($koneksi, "
         sp.id_jenis,
         m.npm,
         m.nama_mhs,
-        m.prodi,
+        p.nama_prodi,
         js.nama_surat,
         sp.tanggal_pengajuan,
         sp.status_akhir
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    JOIN prodi p ON m.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     $where
     ORDER BY sp.tanggal_pengajuan DESC
@@ -116,10 +116,11 @@ if ($detail_id != "") {
             sp.*,
             m.npm,
             m.nama_mhs,
-            m.prodi,
+            p.nama_prodi,
             js.nama_surat
         FROM surat_pengajuan sp
         JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+        JOIN prodi p ON m.id_prodi = p.id_prodi
         JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
         WHERE sp.id_surat = '$detail_id'
     "));
@@ -131,11 +132,12 @@ if ($detail_id != "") {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Permohonan Surat</title>
 
-    <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="adm.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-
     <style>
         .review-box {
             background: #fff;
@@ -210,7 +212,7 @@ if ($detail_id != "") {
                         </tr>
                         <tr>
                             <th>Program Studi</th>
-                            <td><?= htmlspecialchars($detail['prodi']); ?></td>
+                            <td><?= htmlspecialchars($detail['nama_prodi']); ?></td>
                         </tr>
                         <tr>
                             <th>Jenis Surat</th>
@@ -338,7 +340,7 @@ if ($detail_id != "") {
                                     <td><?= $no++; ?></td>
                                     <td><?= htmlspecialchars($row['npm']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                    <td><?= htmlspecialchars($row['prodi']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                     <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
                                     <td>

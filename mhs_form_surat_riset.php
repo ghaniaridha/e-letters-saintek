@@ -7,8 +7,8 @@ if (!isset($_SESSION['id_mhs'])) {
     exit;
 }
 
-$id_jenis = $_GET['id_jenis'] ?? 1;
 $id_mhs = $_SESSION['id_mhs'];
+$id_jenis = $_GET['id_jenis'] ?? 1;
 
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
@@ -32,21 +32,14 @@ if (!$mhs || empty($mhs['id_prodi'])) {
 
 $id_prodi = $mhs['id_prodi'];
 
-$dosen1 = mysqli_query($koneksi, "
-    SELECT *
-    FROM dosen
-    WHERE role_akses = 'Dosen'
-    AND id_prodi = '$id_prodi'
-    ORDER BY nama_dosen ASC
-");
+$id_pb1 = $mhs['id_pb1'];
+$id_pb2 = $mhs['id_pb2'];
 
-$dosen2 = mysqli_query($koneksi, "
-    SELECT *
-    FROM dosen
-    WHERE role_akses = 'Dosen'
-    AND id_prodi = '$id_prodi'
-    ORDER BY nama_dosen ASC
-");
+$q_pb1 = mysqli_query($koneksi, "SELECT id_dosen, nama_dosen, nip FROM dosen WHERE id_dosen = '$id_pb1'");
+$pb1 = mysqli_fetch_assoc($q_pb1);
+
+$q_pb2 = mysqli_query($koneksi, "SELECT id_dosen, nama_dosen, nip FROM dosen WHERE id_dosen = '$id_pb2'");
+$pb2 = mysqli_fetch_assoc($q_pb2);
 ?>
 
 <!DOCTYPE html>
@@ -106,8 +99,8 @@ $dosen2 = mysqli_query($koneksi, "
     <div class="generate-wrapper">
 
         <div class="page-header">
-            <h2><?= htmlspecialchars($surat['nama_surat']); ?></h2>
-            <p>Silakan lengkapi data berikut untuk membuat surat riset.</p>
+            <h1><?= htmlspecialchars($surat['nama_surat']); ?></h1>
+            <p>Silakan lengkapi data berikut untuk membuat surat izin riset.</p>
         </div>
 
         <div class="generate-card">
@@ -115,8 +108,31 @@ $dosen2 = mysqli_query($koneksi, "
                 <input type="hidden" name="id_jenis" value="<?= htmlspecialchars($id_jenis); ?>">
 
                 <div class="form-group">
-                    <label>Semester</label>
-                    <input type="text" name="semester" placeholder="Contoh: Semester 8" required>
+                    <label>Nama/NPM</label>
+                    <input type="text"
+                        class="form-control input-readonly"
+                        value="<?= htmlspecialchars($mhs['nama_mhs'] . ' / ' . $mhs['npm']); ?>"
+                        readonly>
+                    <input type="hidden" name="nama" value="<?= htmlspecialchars($mhs['nama_mhs']); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label>Semester / Program Studi</label>
+
+                    <div class="input-group-flex">
+                        <input type="text"
+                            name="semester"
+                            class="form-control flex-1"
+                            placeholder="Semester (Contoh: 8)"
+                            required>
+
+                        <input type="text"
+                            class="form-control input-readonly flex-2"
+                            value="<?= htmlspecialchars($mhs['nama_prodi'] ?? 'Sistem Informasi'); ?>"
+                            readonly>
+
+                        <input type="hidden" name="id_prodi" value="<?= $data_mhs['id_prodi'] ?? ''; ?>">
+                    </div>
                 </div>
 
                 <div class="form-group align-top">
@@ -136,42 +152,36 @@ $dosen2 = mysqli_query($koneksi, "
 
                 <div class="form-group">
                     <label>Pembimbing I</label>
-                    <select name="pembimbing_1" required>
-                        <option value="">-- Pilih Pembimbing I --</option>
-                        <?php if ($dosen1 && mysqli_num_rows($dosen1) > 0) { ?>
-                            <?php while ($d1 = mysqli_fetch_assoc($dosen1)) { ?>
-                                <option value="<?= $d1['id_dosen']; ?>">
-                                    <?= htmlspecialchars($d1['nama_dosen']); ?>
-                                    - NIP.
-                                    <?= htmlspecialchars($d1['nip']); ?>
-                                </option>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <option value="" disabled>
-                                Belum ada dosen untuk prodi ini
-                            </option>
-                        <?php } ?>
-                    </select>
+                    <?php if ($pb1) { ?>
+                        <input type="text"
+                            class="form-control input-readonly"
+                            value="<?= htmlspecialchars($pb1['nama_dosen']); ?>"
+                            readonly>
+                        <input type="hidden" name="pembimbing_1" value="<?= $pb1['id_dosen']; ?>">
+                    <?php } else { ?>
+                        <input type="text"
+                            class="form-control input-error-readonly"
+                            value="Belum ada Pembimbing I"
+                            readonly>
+                        <input type="hidden" name="pembimbing_1" value="">
+                    <?php } ?>
                 </div>
 
                 <div class="form-group">
                     <label>Pembimbing II</label>
-                    <select name="pembimbing_2" required>
-                        <option value="">-- Pilih Pembimbing II --</option>
-                        <?php if ($dosen2 && mysqli_num_rows($dosen2) > 0) { ?>
-                            <?php while ($d2 = mysqli_fetch_assoc($dosen2)) { ?>
-                                <option value="<?= $d2['id_dosen']; ?>">
-                                    <?= htmlspecialchars($d2['nama_dosen']); ?>
-                                    - NIP.
-                                    <?= htmlspecialchars($d2['nip']); ?>
-                                </option>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <option value="" disabled>
-                                Belum ada dosen untuk prodi ini
-                            </option>
-                        <?php } ?>
-                    </select>
+                    <?php if ($pb2) { ?>
+                        <input type="text"
+                            class="form-control input-readonly"
+                            value="<?= htmlspecialchars($pb2['nama_dosen']); ?>"
+                            readonly>
+                        <input type="hidden" name="pembimbing_2" value="<?= $pb2['id_dosen']; ?>">
+                    <?php } else { ?>
+                        <input type="text"
+                            class="form-control input-error-readonly"
+                            value="Belum ada Pembimbing II"
+                            readonly>
+                        <input type="hidden" name="pembimbing_2" value="">
+                    <?php } ?>
                 </div>
 
                 <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb;">
