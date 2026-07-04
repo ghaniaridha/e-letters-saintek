@@ -2,6 +2,11 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['nama']) || $_SESSION['role'] !== 'mahasiswa') {
+    header("Location: index.php");
+    exit;
+}
+
 $npm_login = $_SESSION['nama'];
 
 $query_profil = "
@@ -38,15 +43,34 @@ $teks_pb2    = $data['nama_pb2'] ?? 'Belum Ada';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil Mahasiswa</title>
+    <title>Profil Saya</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
+
     <nav class="navbar">
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
