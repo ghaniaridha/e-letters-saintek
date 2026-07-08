@@ -14,10 +14,15 @@ $query_tracking = mysqli_query($koneksi, "
         sp.*,
         m.nama_mhs,
         m.npm,
-        js.nama_surat
+        js.nama_surat,
+        -- Gunakan COALESCE agar jika tidak ada data (bukan riset), tampil '-'
+        COALESCE(dsr.status_pb1, '-') AS status_pb1,
+        COALESCE(dsr.status_pb2, '-') AS status_pb2
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    -- JOIN ke tabel detail untuk mengambil status
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
     ORDER BY sp.tanggal_pengajuan DESC
 ");
 
@@ -55,7 +60,7 @@ if (!empty($namaParts)) {
             background: #fff;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
             overflow-x: auto;
         }
 
@@ -154,7 +159,8 @@ if (!empty($namaParts)) {
 
                 <tbody>
                     <?php if ($query_tracking && mysqli_num_rows($query_tracking) > 0) { ?>
-                        <?php $no = 1; while ($row = mysqli_fetch_assoc($query_tracking)) { ?>
+                        <?php $no = 1;
+                        while ($row = mysqli_fetch_assoc($query_tracking)) { ?>
                             <?php
                             $warna = '#f59e0b';
 
@@ -171,8 +177,8 @@ if (!empty($namaParts)) {
                                 <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
                                 <td><?= htmlspecialchars($row['npm']); ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-                                <td><?= htmlspecialchars($row['status_dospem1'] ?? '-'); ?></td>
-                                <td><?= htmlspecialchars($row['status_dospem2'] ?? '-'); ?></td>
+                                <td><?= htmlspecialchars($row['status_pb1'] ?? '-'); ?></td>
+                                <td><?= htmlspecialchars($row['status_pb2'] ?? '-'); ?></td>
                                 <td><?= htmlspecialchars($row['status_pimpinan'] ?? '-'); ?></td>
                                 <td>
                                     <span class="badge-track" style="background:<?= $warna; ?>;">
@@ -215,4 +221,5 @@ if (!empty($namaParts)) {
     </script>
 
 </body>
+
 </html>

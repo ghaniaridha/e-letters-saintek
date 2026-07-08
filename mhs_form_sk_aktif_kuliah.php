@@ -143,26 +143,17 @@ $pa = mysqli_fetch_assoc($q_pa);
 
                 <div class="form-group">
                     <label>Lama Cuti</label>
-                    <input type="text"
-                        name="lama-cuti"
-                        placeholder="Contoh: 1 Semester"
-                        required>
+                    <input type="text" name="lama_cuti" placeholder="Contoh: 1 Semester" required>
                 </div>
 
                 <div class="form-group">
                     <label>Tahun Ajaran Mulai Cuti</label>
-                    <input type="text"
-                        name="lama-cuti"
-                        placeholder="Contoh: 2025/2026"
-                        required>
+                    <input type="text" name="tahun_akademik_ganjil_cuti" placeholder="Contoh: 2025/2026" required>
                 </div>
 
                 <div class="form-group">
                     <label>Tahun Ajaran Selesai Cuti</label>
-                    <input type="text"
-                        name="lama-cuti"
-                        placeholder="Contoh: 2026/2027"
-                        required>
+                    <input type="text" name="tahun_akademik_genap_cuti" placeholder="Contoh: 2026/2027" required>
                 </div>
 
                 <div class="form-group">
@@ -174,29 +165,28 @@ $pa = mysqli_fetch_assoc($q_pa);
                             <option value="Genap">Semester Genap</option>
                         </select>
 
-                        <input type="text"
-                            name="tahun_akademik"
-                            class="form-control flex-1"
-                            placeholder="Contoh: 2026/2027"
-                            required>
+                        <input type="text" name="tahun_akademik" class="form-control flex-1" placeholder="Contoh: 2026/2027" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Pembimbing Akademik</label>
                     <?php if ($pa) { ?>
-                        <input type="text"
-                            class="form-control input-readonly"
-                            value="<?= htmlspecialchars($pa['nama_dosen']); ?>"
-                            readonly>
-                        <input type="hidden" name="pembimbing_1" value="<?= $pa['id_dosen']; ?>">
+                        <input type="text" class="form-control input-readonly" value="<?= htmlspecialchars($pa['nama_dosen']); ?>" readonly>
+                        <input type="hidden" name="id_pa" value="<?= $pa['id_dosen']; ?>">
                     <?php } else { ?>
-                        <input type="text"
-                            class="form-control input-error-readonly"
-                            value="Belum ada Pembimbing I"
-                            readonly>
-                        <input type="hidden" name="pembimbing_1" value="">
+                        <input type="text" class="form-control input-error-readonly" value="Belum ada Pembimbing I" readonly>
+                        <input type="hidden" name="id_pa" value="">
                     <?php } ?>
+                </div>
+
+                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb;">
+
+                <h3 class="section-title">Dokumen Pendukung</h3>
+
+                <div class="form-group">
+                    <label>Surat Keterangan Cuti</label>
+                    <input type="file" name="sk_cuti" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
 
                 <div class="form-actions">

@@ -7,6 +7,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     exit;
 }
 
+$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Pimpinan';
+$idLogin = $_SESSION['nama'] ?? '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Pimpinan';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
 $id_dosen = $_SESSION['id_dosen'] ?? 0;
 
 $pimpinan = mysqli_fetch_assoc(mysqli_query($koneksi, "
@@ -17,13 +27,17 @@ $pimpinan = mysqli_fetch_assoc(mysqli_query($koneksi, "
 
 $jabatan = strtolower($pimpinan['jabatan'] ?? '');
 
-if (strpos($jabatan, 'dekan') !== false) {
-    $status_target = 'Menunggu Dekan';
-} elseif (strpos($jabatan, 'wadek 1') !== false || strpos($jabatan, 'wakil dekan 1') !== false) {
+if (strpos($jabatan, 'wadek 1') !== false || strpos($jabatan, 'wakil dekan 1') !== false) {
+
     $status_target = 'Menunggu Wadek 1';
 } elseif (strpos($jabatan, 'wadek 2') !== false || strpos($jabatan, 'wakil dekan 2') !== false) {
+
     $status_target = 'Menunggu Wadek 2';
+} elseif (strpos($jabatan, 'dekan') !== false) {
+
+    $status_target = 'Menunggu Dekan';
 } elseif (strpos($jabatan, 'kasubag') !== false) {
+
     $status_target = 'Menunggu Kasubag';
 } else {
     $status_target = '';
@@ -37,24 +51,15 @@ $query = mysqli_query($koneksi, "
         sp.status_akhir,
         m.nama_mhs,
         m.npm,
-        m.prodi,
+        p.nama_prodi, /* <-- PERBAIKAN 1: Ganti m.prodi menjadi p.nama_prodi */
         js.nama_surat
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    JOIN prodi p ON m.id_prodi = p.id_prodi /* <-- PERBAIKAN 2: Tambahkan tabel prodi */
     WHERE sp.status_akhir = '$status_target'
     ORDER BY sp.tanggal_pengajuan DESC
 ");
-
-$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Pimpinan';
-$idLogin = $_SESSION['nama'] ?? '';
-$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Pimpinan';
-
-$inisial = '';
-$namaParts = explode(' ', $namaLengkap);
-if (!empty($namaParts)) {
-    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-}
 ?>
 
 <!DOCTYPE html>
@@ -67,7 +72,7 @@ if (!empty($namaParts)) {
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
-    <link rel="stylesheet" href="admin_style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
     <style>
@@ -81,7 +86,7 @@ if (!empty($namaParts)) {
             background: #fff;
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
         }
 
         .pimpinan-header h2 {
@@ -96,12 +101,12 @@ if (!empty($namaParts)) {
         }
 
         .badge-warning {
-            background:#fef3c7;
-            color:#92400e;
-            padding:6px 12px;
-            border-radius:20px;
-            font-size:12px;
-            font-weight:600;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -139,7 +144,6 @@ if (!empty($namaParts)) {
     <section class="pimpinan-content">
         <div class="pimpinan-header">
             <h2>Disposisi & Verifikasi Permohonan</h2>
-            <p>Daftar surat dengan status: <strong><?= htmlspecialchars($status_target ?: 'Jabatan tidak dikenali'); ?></strong></p>
         </div>
 
         <div class="pimpinan-card">
@@ -159,13 +163,14 @@ if (!empty($namaParts)) {
 
                 <tbody>
                     <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-                        <?php $no = 1; while ($row = mysqli_fetch_assoc($query)) { ?>
+                        <?php $no = 1;
+                        while ($row = mysqli_fetch_assoc($query)) { ?>
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
                                 <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
                                 <td><?= htmlspecialchars($row['npm']); ?></td>
-                                <td><?= htmlspecialchars($row['prodi']); ?></td>
+                                <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                 <td>
                                     <span class="badge-warning"><?= htmlspecialchars($row['status_akhir']); ?></span>

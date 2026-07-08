@@ -2,14 +2,16 @@
 session_start();
 include "koneksi.php";
 
-$prodi = $_GET['prodi'] ?? '';
+$prodi           = $_GET['prodi'] ?? '';
 $id_jenis_filter = $_GET['id_jenis'] ?? '';
-$detail_id = $_GET['detail'] ?? '';
+$detail_id       = $_GET['detail'] ?? '';
 
-/* PROSES ADMIN LANJUTKAN / TOLAK */
+/* =======================================================================
+   1. PROSES ADMIN (LANJUTKAN / TOLAK)
+   ======================================================================= */
 if (isset($_POST['aksi_admin'])) {
     $id_surat = (int) $_POST['id_surat'];
-    $aksi = $_POST['aksi_admin'];
+    $aksi     = $_POST['aksi_admin'];
 
     $dataSurat = mysqli_fetch_assoc(mysqli_query($koneksi, "
         SELECT sp.*, js.nama_surat
@@ -22,14 +24,13 @@ if (isset($_POST['aksi_admin'])) {
         if ($aksi == 'lanjut') {
             $namaSurat = strtolower($dataSurat['nama_surat']);
 
-            if (strpos($namaSurat, 'riset') !== false) {
-                $statusBaru = 'Menunggu Wadek 1';
-            } elseif (strpos($namaSurat, 'aktif') !== false) {
+            // Menentukan arah surat selanjutnya berdasarkan jenisnya
+            if (strpos($namaSurat, 'riset') !== false || strpos($namaSurat, 'aktif') !== false) {
                 $statusBaru = 'Menunggu Wadek 1';
             } elseif (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                 $statusBaru = 'Menunggu Dekan';
             } else {
-                $statusBaru = 'Menunggu Dekan';
+                $statusBaru = 'Menunggu Dekan'; // Default jika tidak masuk kategori
             }
 
             mysqli_query($koneksi, "
@@ -55,25 +56,29 @@ if (isset($_POST['aksi_admin'])) {
     }
 }
 
-/* HAPUS DATA */
+/* =======================================================================
+   2. PROSES HAPUS DATA
+   ======================================================================= */
 if (isset($_GET['hapus'])) {
     $id = (int) $_GET['hapus'];
 
-    mysqli_query($koneksi, "
-        DELETE FROM surat_pengajuan
-        WHERE id_surat = $id
-    ");
+    // Catatan: Jika database Anda menggunakan relasi tanpa ON DELETE CASCADE, 
+    // Anda mungkin perlu menghapus data di tabel detail dan lampiran terlebih dahulu.
+    mysqli_query($koneksi, "DELETE FROM surat_pengajuan WHERE id_surat = $id");
 
     echo "<script>alert('Permohonan berhasil dihapus'); window.location='adm_permohonan.php';</script>";
     exit;
 }
 
-/* FILTER */
+/* =======================================================================
+   3. FILTER PENCARIAN DATA
+   ======================================================================= */
 $where = "WHERE sp.status_akhir = 'Menunggu Admin'";
 
 if ($prodi != "") {
     $prodiAman = mysqli_real_escape_string($koneksi, $prodi);
-    $where .= " AND m.prodi = '$prodiAman'";
+    // PERBAIKAN: Menggunakan m.id_prodi (Asumsi form select option valuenya adalah ID Prodi)
+    $where .= " AND m.id_prodi = '$prodiAman'";
 }
 
 if ($id_jenis_filter != "") {
@@ -81,13 +86,12 @@ if ($id_jenis_filter != "") {
     $where .= " AND sp.id_jenis = '$idJenisAman'";
 }
 
-/* DATA JENIS SURAT UNTUK FILTER */
-$jenisSurat = mysqli_query($koneksi, "
-    SELECT * FROM jenis_surat
-    ORDER BY nama_surat ASC
-");
+// Data untuk dropdown filter
+$jenisSurat = mysqli_query($koneksi, "SELECT * FROM jenis_surat ORDER BY nama_surat ASC");
 
-/* DATA TABEL */
+/* =======================================================================
+   4. QUERY DATA TABEL UTAMA
+   ======================================================================= */
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.id_surat,
@@ -106,24 +110,79 @@ $query = mysqli_query($koneksi, "
     ORDER BY sp.tanggal_pengajuan DESC
 ");
 
-/* DETAIL REVIEW */
+/* =======================================================================
+   5. QUERY DETAIL REVIEW (Jika tombol review diklik)
+   ======================================================================= */
 $detail = null;
+$lampiran = [];
+
 if ($detail_id != "") {
     $detail_id = (int) $detail_id;
 
-    $detail = mysqli_fetch_assoc(mysqli_query($koneksi, "
+    // Menarik semua data yang dibutuhkan, dari Riset, Magang, maupun Aktif Kuliah
+    $query_detail = mysqli_query($koneksi, "
         SELECT 
-            sp.*,
-            m.npm,
-            m.nama_mhs,
-            p.nama_prodi,
-            js.nama_surat
+            sp.*, 
+            m.nama_mhs, 
+            m.npm, 
+            p.nama_prodi, 
+            js.nama_surat,
+            
+            -- Detail Riset
+            dsr.judul_skripsi, 
+            dsr.lokasi_penelitian, 
+            
+            -- Detail Magang
+            dsm.lokasi_magang,
+            dsm.tanggal_mulai_magang,
+            dsm.tanggal_selesai_magang,
+            
+            -- Detail Aktif Kuliah
+            dak.lama_cuti,
+            dak.ta_mulai_cuti,
+            dak.ta_selesai_cuti,
+            dak.tahun_akademik,
+            
+            -- Menggabungkan kolom sejenis
+            COALESCE(dsm.surat_ditujukan, dsr.surat_ditujukan) AS surat_ditujukan,
+            COALESCE(dsr.semester, dsm.semester, dak.semester) AS semester
         FROM surat_pengajuan sp
         JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
         JOIN prodi p ON m.id_prodi = p.id_prodi
         JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+        LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+        LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat
+        LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
         WHERE sp.id_surat = '$detail_id'
-    "));
+    ");
+
+    $detail = mysqli_fetch_assoc($query_detail);
+
+    // Mengambil data lampiran dari tabel lampiran_pengajuan
+    if ($detail) {
+        $q_lampiran = mysqli_query($koneksi, "
+            SELECT ms.nama_syarat, lp.file_upload 
+            FROM lampiran_pengajuan lp
+            JOIN master_syarat ms ON lp.id_syarat = ms.id_syarat
+            WHERE lp.id_surat = '$detail_id'
+        ");
+
+        while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
+            $nama_syarat = strtolower($row_lamp['nama_syarat']);
+
+            if (strpos($nama_syarat, 'proposal') !== false) {
+                $lampiran['proposal'] = $row_lamp['file_upload'];
+            } elseif (strpos($nama_syarat, 'khs') !== false) {
+                $lampiran['khs'] = $row_lamp['file_upload'];
+            } elseif (strpos($nama_syarat, 'ukt') !== false) {
+                $lampiran['ukt'] = $row_lamp['file_upload'];
+            } elseif (strpos($nama_syarat, 'ktm') !== false) {
+                $lampiran['ktm'] = $row_lamp['file_upload'];
+            } elseif (strpos($nama_syarat, 'cuti') !== false) {
+                $lampiran['sk_cuti'] = $row_lamp['file_upload'];
+            }
+        }
+    }
 }
 ?>
 
@@ -196,7 +255,9 @@ if ($detail_id != "") {
                 <p>Permohonan yang sudah disetujui dosen dan menunggu verifikasi admin.</p>
             </div>
 
-            <?php if ($detail) { ?>
+            <?php if ($detail) {
+                $namaSurat = strtolower($detail['nama_surat']);
+            ?>
                 <div class="review-box">
                     <h2>Review Permohonan Surat</h2>
                     <br>
@@ -219,194 +280,244 @@ if ($detail_id != "") {
                             <td><?= htmlspecialchars($detail['nama_surat']); ?></td>
                         </tr>
                         <tr>
-                            <th>Judul Skripsi</th>
-                            <td><?= htmlspecialchars($detail['judul_skripsi'] ?? '-'); ?></td>
+                            <th>Semester</th>
+                            <td><?= htmlspecialchars($detail['semester'] ?? '-'); ?></td>
                         </tr>
+
+                        <?php if (strpos($namaSurat, 'riset') !== false) { ?>
+                            <tr>
+                                <th>Judul Skripsi</th>
+                                <td><?= htmlspecialchars($detail['judul_skripsi'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Lokasi Penelitian</th>
+                                <td><?= htmlspecialchars($detail['lokasi_penelitian'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Ditujukan Kepada</th>
+                                <td><?= htmlspecialchars($detail['surat_ditujukan'] ?? '-'); ?></td>
+                            </tr>
+
+                        <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) { ?>
+                            <tr>
+                                <th>Lokasi Magang</th>
+                                <td><?= htmlspecialchars($detail['lokasi_magang'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Tanggal Magang</th>
+                                <td>
+                                    <?= htmlspecialchars($detail['tanggal_mulai_magang'] ?? '-'); ?> s/d <?= htmlspecialchars($detail['tanggal_selesai_magang'] ?? '-'); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Ditujukan Kepada</th>
+                                <td><?= htmlspecialchars($detail['surat_ditujukan'] ?? '-'); ?></td>
+                            </tr>
+
+                        <?php } else if (strpos($namaSurat, 'aktif') !== false) { ?>
+                            <tr>
+                                <th>Lama Cuti</th>
+                                <td><?= htmlspecialchars($detail['lama_cuti'] ?? '-'); ?> Semester</td>
+                            </tr>
+                            <tr>
+                                <th>Periode Masa Cuti</th>
+                                <td>
+                                    Gasal: <?= htmlspecialchars($detail['ta_mulai_cuti'] ?? '-'); ?> <br>
+                                    Genap: <?= htmlspecialchars($detail['ta_selesai_cuti'] ?? '-'); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tahun Akademik Aktif</th>
+                                <td><?= htmlspecialchars($detail['tahun_akademik'] ?? '-'); ?></td>
+                            </tr>
+                        <?php } ?>
+
                         <tr>
-                            <th>Lokasi Penelitian</th>
-                            <td><?= htmlspecialchars($detail['lokasi_penelitian'] ?? '-'); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Ditujukan Kepada</th>
-                            <td><?= htmlspecialchars($detail['surat_ditujukan'] ?? '-'); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Status</th>
+                            <th>Status Saat Ini</th>
                             <td><?= htmlspecialchars($detail['status_akhir']); ?></td>
                         </tr>
                     </table>
 
-                    <div class="review-actions">
-
+                    <div class="review-actions" style="margin-top: 20px;">
                         <?php
-                        if ($detail['id_jenis'] == 4) {
+                        // Penentuan halaman preview
+                        $filePreview = "preview_surat.php?id=" . $detail['id_surat'];
+                        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                             $filePreview = "preview_magang.php?id=" . $detail['id_surat'];
-                        } else {
-                            $filePreview = "preview_surat.php?id=" . $detail['id_surat'];
+                        } else if (strpos($namaSurat, 'aktif') !== false) {
+                            $filePreview = "mhs_preview_sk_aktif.php?id=" . $detail['id_surat'];
                         }
                         ?>
 
-                        <a href="#" class="btn btn-detail"
-                            onclick="bukaPreview('<?= $filePreview; ?>')">
+                        <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
                             Review Surat
                         </a>
 
-                        <?php if (!empty($detail['proposal_penelitian'])) { ?>
-                            <a href="#" class="btn btn-edit"
-                                onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($detail['proposal_penelitian']); ?>')">
-                                Proposal
-                            </a>
-                        <?php } ?>
-
-                        <?php if (!empty($detail['khs'])) { ?>
-                            <a href="#" class="btn btn-edit"
-                                onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($detail['khs']); ?>')">
-                                KHS
-                            </a>
-                        <?php } ?>
-
-                        <?php if (!empty($detail['bukti_ukt'])) { ?>
-                            <a href="#" class="btn btn-edit"
-                                onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($detail['bukti_ukt']); ?>')">
-                                Bukti UKT
-                            </a>
-                        <?php } ?>
-                    </div>
-
-                    <form method="POST" class="review-actions">
-                        <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
-
-                        <button type="submit" name="aksi_admin" value="lanjut" class="btn btn-edit">
-                            Lanjutkan ke Pimpinan
-                        </button>
-
-                        <button type="submit" name="aksi_admin" value="tolak" class="btn btn-delete"
-                            onclick="return confirm('Yakin ingin menolak surat ini?')">
-                            Tolak
-                        </button>
-
-                        <a href="adm_permohonan.php" class="btn btn-detail">
-                            Kembali
-                        </a>
-                    </form>
-                </div>
-            <?php } ?>
-
-            <div class="filter-container">
-                <form method="GET">
-                    <select name="prodi">
-                        <option value="">Semua Prodi</option>
-                        <option value="Sistem Informasi" <?= $prodi == 'Sistem Informasi' ? 'selected' : ''; ?>>Sistem Informasi</option>
-                        <option value="Kimia" <?= $prodi == 'Kimia' ? 'selected' : ''; ?>>Kimia</option>
-                        <option value="Biologi" <?= $prodi == 'Biologi' ? 'selected' : ''; ?>>Biologi</option>
-                        <option value="Sains Data" <?= $prodi == 'Sains Data' ? 'selected' : ''; ?>>Sains Data</option>
-                    </select>
-
-                    <select name="id_jenis">
-                        <option value="">Semua Jenis Surat</option>
-                        <?php while ($js = mysqli_fetch_assoc($jenisSurat)) { ?>
-                            <option value="<?= $js['id_jenis']; ?>" <?= $id_jenis_filter == $js['id_jenis'] ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($js['nama_surat']); ?>
-                            </option>
-                        <?php } ?>
-                    </select>
-
-                    <button type="submit" class="btn btn-detail">Filter</button>
-
-                    <a href="adm_permohonan.php" class="btn btn-delete">Reset</a>
-                </form>
-            </div>
-
-            <div class="table-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>NPM</th>
-                            <th>Nama Mahasiswa</th>
-                            <th>Program Studi</th>
-                            <th>Jenis Surat</th>
-                            <th>Tanggal Diajukan</th>
-                            <th>Status</th>
-                            <th width="180">Aksi</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-                            <?php $no = 1;
-                            while ($row = mysqli_fetch_assoc($query)) { ?>
-                                <tr>
-                                    <td><?= $no++; ?></td>
-                                    <td><?= htmlspecialchars($row['npm']); ?></td>
-                                    <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                    <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
-                                    <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-                                    <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
-                                    <td>
-                                        <span class="badge-warning">
-                                            <?= htmlspecialchars($row['status_akhir']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="adm_permohonan.php?detail=<?= $row['id_surat']; ?>"
-                                            class="btn btn-detail">
-                                            Review
-                                        </a>
-
-                                        <a href="#" class="btn btn-delete"
-                                            onclick="hapusData(<?= $row['id_surat']; ?>)">
-                                            Hapus
-                                        </a>
-                                    </td>
-                                </tr>
+                        <?php if (strpos($namaSurat, 'riset') !== false) { ?>
+                            <?php if (!empty($lampiran['proposal'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['proposal']); ?>')">Proposal</a>
                             <?php } ?>
-                        <?php } else { ?>
-                            <tr>
-                                <td colspan="8" style="text-align:center;">
-                                    Data permohonan yang menunggu admin tidak ditemukan.
-                                </td>
-                            </tr>
+                            <?php if (!empty($lampiran['khs'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['khs']); ?>')">KHS</a>
+                            <?php } ?>
+                            <?php if (!empty($lampiran['ukt'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ukt']); ?>')">Bukti UKT</a>
+                            <?php } ?>
+
+                        <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) { ?>
+                            <?php if (!empty($lampiran['ktm'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ktm']); ?>')">KTM</a>
+                            <?php } ?>
+                            <?php if (!empty($lampiran['ukt'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ukt']); ?>')">Bukti UKT</a>
+                            <?php } ?>
+                            <?php if (!empty($lampiran['khs'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['khs']); ?>')">KHS</a>
+                            <?php } ?>
+
+                        <?php } else if (strpos($namaSurat, 'aktif') !== false) { ?>
+                            <?php if (!empty($lampiran['sk_cuti'])) { ?>
+                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['sk_cuti']); ?>')">SK Cuti</a>
+                            <?php } ?>
                         <?php } ?>
-                    </tbody>
-                </table>
-            </div>
 
-        </main>
+                    </div>
+                </div>
+
+                <form method="POST" class="review-actions">
+                    <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
+
+                    <button type="submit" name="aksi_admin" value="lanjut" class="btn btn-edit">
+                        Lanjutkan ke Pimpinan
+                    </button>
+
+                    <button type="submit" name="aksi_admin" value="tolak" class="btn btn-delete"
+                        onclick="return confirm('Yakin ingin menolak surat ini?')">
+                        Tolak
+                    </button>
+
+                    <a href="adm_permohonan.php" class="btn btn-detail">
+                        Kembali
+                    </a>
+                </form>
     </div>
+<?php } ?>
 
-    <div id="modalPreview" class="modal-preview">
-        <div class="modal-content-preview">
-            <span class="close-preview" onclick="tutupPreview()">&times;</span>
+<div class="filter-container">
+    <form method="GET">
+        <select name="prodi">
+            <option value="">Semua Prodi</option>
+            <option value="Sistem Informasi" <?= $prodi == 'Sistem Informasi' ? 'selected' : ''; ?>>Sistem Informasi</option>
+            <option value="Kimia" <?= $prodi == 'Kimia' ? 'selected' : ''; ?>>Kimia</option>
+            <option value="Biologi" <?= $prodi == 'Biologi' ? 'selected' : ''; ?>>Biologi</option>
+            <option value="Sains Data" <?= $prodi == 'Sains Data' ? 'selected' : ''; ?>>Sains Data</option>
+        </select>
 
-            <iframe id="previewFrame" width="100%" height="620px" style="border:none;"></iframe>
-        </div>
+        <select name="id_jenis">
+            <option value="">Semua Jenis Surat</option>
+            <?php while ($js = mysqli_fetch_assoc($jenisSurat)) { ?>
+                <option value="<?= $js['id_jenis']; ?>" <?= $id_jenis_filter == $js['id_jenis'] ? 'selected' : ''; ?>>
+                    <?= htmlspecialchars($js['nama_surat']); ?>
+                </option>
+            <?php } ?>
+        </select>
+
+        <button type="submit" class="btn btn-detail">Filter</button>
+
+        <a href="adm_permohonan.php" class="btn btn-delete">Reset</a>
+    </form>
+</div>
+
+<div class="table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>NPM</th>
+                <th>Nama Mahasiswa</th>
+                <th>Program Studi</th>
+                <th>Jenis Surat</th>
+                <th>Tanggal Diajukan</th>
+                <th>Status</th>
+                <th width="180">Aksi</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <?php if ($query && mysqli_num_rows($query) > 0) { ?>
+                <?php $no = 1;
+                while ($row = mysqli_fetch_assoc($query)) { ?>
+                    <tr>
+                        <td><?= $no++; ?></td>
+                        <td><?= htmlspecialchars($row['npm']); ?></td>
+                        <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
+                        <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
+                        <td><?= htmlspecialchars($row['nama_surat']); ?></td>
+                        <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
+                        <td>
+                            <span class="badge-warning">
+                                <?= htmlspecialchars($row['status_akhir']); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="adm_permohonan.php?detail=<?= $row['id_surat']; ?>"
+                                class="btn btn-detail">
+                                Review
+                            </a>
+
+                            <a href="#" class="btn btn-delete"
+                                onclick="hapusData(<?= $row['id_surat']; ?>)">
+                                Hapus
+                            </a>
+                        </td>
+                    </tr>
+                <?php } ?>
+            <?php } else { ?>
+                <tr>
+                    <td colspan="8" style="text-align:center;">
+                        Data permohonan yang menunggu admin tidak ditemukan.
+                    </td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+
+</main>
+</div>
+
+<div id="modalPreview" class="modal-preview">
+    <div class="modal-content-preview">
+        <span class="close-preview" onclick="tutupPreview()">&times;</span>
+
+        <iframe id="previewFrame" width="100%" height="620px" style="border:none;"></iframe>
     </div>
+</div>
 
-    <script>
-        function bukaPreview(file) {
-            document.getElementById('previewFrame').src = file;
-            document.getElementById('modalPreview').style.display = 'flex';
-        }
+<script>
+    function bukaPreview(file) {
+        document.getElementById('previewFrame').src = file;
+        document.getElementById('modalPreview').style.display = 'flex';
+    }
 
-        function tutupPreview() {
-            document.getElementById('modalPreview').style.display = 'none';
-            document.getElementById('previewFrame').src = '';
-        }
+    function tutupPreview() {
+        document.getElementById('modalPreview').style.display = 'none';
+        document.getElementById('previewFrame').src = '';
+    }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalPreview');
-            if (event.target == modal) {
-                tutupPreview();
-            }
+    window.onclick = function(event) {
+        const modal = document.getElementById('modalPreview');
+        if (event.target == modal) {
+            tutupPreview();
         }
+    }
 
-        function hapusData(id) {
-            if (confirm('Yakin ingin menghapus permohonan ini?')) {
-                window.location.href = 'adm_permohonan.php?hapus=' + id;
-            }
+    function hapusData(id) {
+        if (confirm('Yakin ingin menghapus permohonan ini?')) {
+            window.location.href = 'adm_permohonan.php?hapus=' + id;
         }
-    </script>
+    }
+</script>
 
 </body>
 

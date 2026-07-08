@@ -8,26 +8,55 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
 }
 
 $id_dosen = $_SESSION['id_dosen'];
+$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
+$idLogin = $_SESSION['nama'] ?? '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
 
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+// PERBAIKAN: Menambahkan LEFT JOIN ke detail_surat_riset (dsr) 
+// dan mengganti kolom pencarian ke id_pb1 / id_pb2
+// PERBAIKAN: Menambahkan LEFT JOIN jamak dan kondisi untuk Pembimbing Akademik
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.*,
         m.nama_mhs,
         m.npm,
-        m.prodi,
-        js.nama_surat
+        p.nama_prodi,
+        js.nama_surat,
+        dsr.id_pb1,
+        dsr.id_pb2,
+        dsr.status_pb1,
+        dsr.status_pb2,
+        dak.id_pa,          -- TAMBAHAN: Tarik ID Pembimbing Akademik
+        dak.status_pa       -- TAMBAHAN: Tarik Status verifikasi PA
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    JOIN prodi p ON m.id_prodi = p.id_prodi
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat -- TAMBAHAN: Join tabel aktif kuliah
     WHERE
     (
-        sp.pembimbing_1 = '$id_dosen'
-        AND sp.status_dospem1 != 'Menunggu'
+        -- Skenario A: Dosen adalah PB2 dan sudah tidak 'Menunggu'
+        dsr.id_pb2 = '$id_dosen'
+        AND dsr.status_pb2 != 'Menunggu'
     )
     OR
     (
-        sp.pembimbing_2 = '$id_dosen'
-        AND sp.status_dospem2 != 'Menunggu'
+        -- Skenario B: Dosen adalah PB1 dan sudah tidak 'Menunggu'
+        dsr.id_pb1 = '$id_dosen'
+        AND dsr.status_pb1 != 'Menunggu'
+    )
+    OR
+    (
+        -- Skenario C: Dosen adalah Pembimbing Akademik dan sudah tidak 'Menunggu'
+        dak.id_pa = '$id_dosen'
+        AND dak.status_pa != 'Menunggu'
     )
     ORDER BY sp.tanggal_pengajuan DESC
 ");
@@ -35,24 +64,59 @@ $query = mysqli_query($koneksi, "
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <title>Riwayat Verifikasi Dosen</title>
-    <link rel="stylesheet" href="admin_style.css?v=<?= time(); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Verifikasi</title>
+
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 </head>
 
 <body class="dosen-page">
+    <nav class="navbar">
+        <a href="#" class="navbar-logo">
+            <img src="images/LOGO2.png" alt="navbar-logo">
+        </a>
 
-<div class="admin-wrapper">
-    <main class="main-content">
-
-        <div class="page-title">
-            <h1>Riwayat Verifikasi</h1>
-            <p>Daftar permohonan surat yang sudah Anda verifikasi.</p>
+        <div class="navbar-nav">
+            <a href="dosen_beranda.php">Beranda</a>
+            <a href="dosen_permohonan.php">Verifikasi Permohonan</a>
+            <a href="dosen_beranda.php#riwayat">Informasi</a>
+            <a href="dosen_riwayat.php">Riwayat Verifikasi</a>
         </div>
 
-        <div class="table-card">
-            <table>
+        <div class="navbar-extra">
+            <div class="user-menu-container">
+                <button id="user-btn" class="user-btn">
+                    <span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span>
+                </button>
+
+                <div id="user-dropdown" class="dropdown-menu">
+                    <div class="user-info">
+                        <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
+                        <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="daftar-surat" class="daftar-surat">
+        <div class="riwayat-permohonan-header">
+            <h2>Riwayat Verifikasi</h2>
+            <p>Daftar permohonan surat yang sudah diverifikasi.</p>
+        </div>
+
+        <div class="table-wrapper" id="template-surat">
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchSurat" class="search-input" placeholder="Cari Permohonan surat...">
+            </div>
+
+            <table class="custom-table">
                 <thead>
                     <tr>
                         <th>No</th>
@@ -65,51 +129,70 @@ $query = mysqli_query($koneksi, "
                         <th>Aksi</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-                    <?php $no = 1; while ($row = mysqli_fetch_assoc($query)) { ?>
+                    <?php if ($query && mysqli_num_rows($query) > 0) { ?>
+                        <?php $no = 1;
+                        while ($row = mysqli_fetch_assoc($query)) { ?>
 
-                        <?php
-                        if ($row['pembimbing_1'] == $id_dosen) {
-                            $statusAnda = $row['status_dospem1'];
-                        } else {
-                            $statusAnda = $row['status_dospem2'];
-                        }
-                        ?>
-
+                            <?php
+                            // PERBAIKAN: Penentuan "Status Anda" yang lebih dinamis dan aman
+                            if (isset($row['id_pb1']) && $row['id_pb1'] == $id_dosen) {
+                                $statusAnda = $row['status_pb1'];
+                            } elseif (isset($row['id_pb2']) && $row['id_pb2'] == $id_dosen) {
+                                $statusAnda = $row['status_pb2'];
+                            } elseif (isset($row['id_pa']) && $row['id_pa'] == $id_dosen) {
+                                $statusAnda = $row['status_pa']; // Tangkap status milik Pembimbing Akademik
+                            } else {
+                                $statusAnda = '-'; // Default jika tidak ada yang cocok
+                            }
+                            ?>
+                            <tr>
+                                <td><?= $no++; ?></td>
+                                <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
+                                <td><?= htmlspecialchars($row['npm']); ?></td>
+                                <td><?= htmlspecialchars($row['nama_surat']); ?></td>
+                                <td><?= htmlspecialchars($statusAnda); ?></td>
+                                <td><?= htmlspecialchars($row['status_akhir']); ?></td>
+                                <td>
+                                    <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
+                                        Detail
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
                         <tr>
-                            <td><?= $no++; ?></td>
-                            <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
-                            <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                            <td><?= htmlspecialchars($row['npm']); ?></td>
-                            <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-                            <td><?= htmlspecialchars($statusAnda); ?></td>
-                            <td><?= htmlspecialchars($row['status_akhir']); ?></td>
-                            <td>
-                                <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
-                                    Detail
-                                </a>
+                            <td colspan="8" class="empty-table-cell">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <p>Belum ada riwayat verifikasi.</p>
                             </td>
                         </tr>
-
                     <?php } ?>
-                <?php } else { ?>
-                    <tr>
-                        <td colspan="8" style="text-align:center;">
-                            Belum ada riwayat verifikasi.
-                        </td>
-                    </tr>
-                <?php } ?>
                 </tbody>
             </table>
         </div>
+    </section>
 
-        <br>
-        <a href="dosen_beranda.php" class="btn btn-detail">Kembali</a>
 
-    </main>
-</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const userBtn = document.getElementById("user-btn");
+            const dropdown = document.getElementById("user-dropdown");
+
+            userBtn.addEventListener("click", function(e) {
+                dropdown.classList.toggle("show");
+                e.stopPropagation();
+            });
+
+            window.addEventListener("click", function(e) {
+                if (!e.target.closest(".user-menu-container")) {
+                    dropdown.classList.remove("show");
+                }
+            });
+        });
+    </script>
 
 </body>
+
 </html>

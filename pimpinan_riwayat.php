@@ -14,16 +14,15 @@ $query_riwayat = mysqli_query($koneksi, "
         sp.*,
         m.nama_mhs,
         m.npm,
-        m.prodi,
+        p.nama_prodi, /* Mengambil nama prodi dari tabel prodi */
         js.nama_surat
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    JOIN prodi p ON m.id_prodi = p.id_prodi /* JOIN ke tabel prodi */
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     WHERE
-        sp.ttd_dekan = '$id_dosen'
-        OR sp.ttd_wadek1 = '$id_dosen'
-        OR sp.ttd_wadek2 = '$id_dosen'
-        OR sp.ttd_kasubag = '$id_dosen'
+        -- Filter berdasarkan status pimpinan atau kondisi TTD
+        (sp.ttd_pimpinan IS NOT NULL AND sp.ttd_pimpinan != '')
         OR sp.status_pimpinan = 'Disetujui'
         OR sp.status_akhir LIKE '%Ditolak Pimpinan%'
     ORDER BY sp.tanggal_pengajuan DESC
@@ -73,7 +72,7 @@ if (!empty($namaParts)) {
             background: #fff;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
             overflow-x: auto;
         }
 
@@ -160,7 +159,8 @@ if (!empty($namaParts)) {
 
                 <tbody>
                     <?php if ($query_riwayat && mysqli_num_rows($query_riwayat) > 0) { ?>
-                        <?php $no = 1; while ($row = mysqli_fetch_assoc($query_riwayat)) { ?>
+                        <?php $no = 1;
+                        while ($row = mysqli_fetch_assoc($query_riwayat)) { ?>
                             <?php
                             $warna = '#10b981';
 
@@ -186,7 +186,7 @@ if (!empty($namaParts)) {
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
                                 <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
                                 <td><?= htmlspecialchars($row['npm']); ?></td>
-                                <td><?= htmlspecialchars($row['prodi']); ?></td>
+                                <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                 <td>
                                     <span class="badge-riwayat" style="background:<?= $warna; ?>;">

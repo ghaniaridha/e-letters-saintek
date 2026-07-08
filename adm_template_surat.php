@@ -24,6 +24,7 @@ if ($id_edit > 0) {
 if (isset($_POST['tambah'])) {
     $nama_surat = mysqli_real_escape_string($koneksi, $_POST['nama_surat']);
     $kode_surat = mysqli_real_escape_string($koneksi, $_POST['kode_surat']);
+    $deskripsi = mysqli_real_escape_string($koneksi, $_POST['deskripsi']);
     $status     = (int) $_POST['status'];
 
     $file_template = "";
@@ -37,8 +38,8 @@ if (isset($_POST['tambah'])) {
     }
 
     mysqli_query($koneksi, "
-        INSERT INTO jenis_surat (nama_surat, kode_surat, file_template, status)
-        VALUES ('$nama_surat', '$kode_surat', '$file_template', $status)
+        INSERT INTO jenis_surat (nama_surat, kode_surat, deskripsi, file_template, status)
+        VALUES ('$nama_surat', '$kode_surat', '$deskripsi', '$file_template', $status)
     ");
 
     $_SESSION['pesan'] = 'Templat surat berhasil ditambahkan.';
@@ -52,6 +53,7 @@ if (isset($_POST['update'])) {
     $id_jenis = (int) $_POST['id_jenis'];
     $nama_surat = mysqli_real_escape_string($koneksi, $_POST['nama_surat']);
     $kode_surat = mysqli_real_escape_string($koneksi, $_POST['kode_surat']);
+    $deskripsi = mysqli_real_escape_string($koneksi, $_POST['deskripsi']);
     $status     = (int) $_POST['status'];
 
     $sqlFile = "";
@@ -82,6 +84,7 @@ if (isset($_POST['update'])) {
         SET 
             nama_surat = '$nama_surat',
             kode_surat = '$kode_surat',
+            deskripsi = '$deskripsi',
             status = $status
             $sqlFile
         WHERE id_jenis = $id_jenis
@@ -184,6 +187,7 @@ $query = mysqli_query($koneksi, "
                             <tr>
                                 <th>No</th>
                                 <th>Jenis Surat</th>
+                                <th>Deskripsi</th>
                                 <th>Status</th>
                                 <th>File</th>
                                 <th>Aksi</th>
@@ -196,7 +200,11 @@ $query = mysqli_query($koneksi, "
                                 while ($row = mysqli_fetch_assoc($query)) { ?>
                                     <tr>
                                         <td><?= $no++; ?></td>
-                                        <td><strong><?= htmlspecialchars($row['nama_surat']); ?></strong><br><small><?= htmlspecialchars($row['kode_surat']); ?></small></td>
+                                        <td>
+                                            <strong><?= htmlspecialchars($row['nama_surat']); ?></strong><br>
+                                            <small><?= htmlspecialchars($row['kode_surat']); ?></small>
+                                        </td>
+                                        <td><?= htmlspecialchars($row['deskripsi'] ?? '-'); ?></td>
                                         <td>
                                             <a href="?id=<?= $row['id_jenis']; ?>&status=<?= $row['status'] == 1 ? 0 : 1; ?>"
                                                 class="status-badge <?= $row['status'] == 1 ? 'aktif' : 'nonaktif'; ?>">
@@ -253,6 +261,11 @@ $query = mysqli_query($koneksi, "
                             <div class="form-group">
                                 <label>Kode Surat</label>
                                 <input type="text" name="kode_surat" placeholder="Contoh: B-/Un.16/" value="<?= htmlspecialchars($dataEdit['kode_surat'] ?? ''); ?>" required class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Deskripsi</label>
+                                <textarea name="deskripsi" placeholder="Tambahkan keterangan fungsi atau kegunaan surat ini..." required class="form-control" style="min-height: 80px; resize: vertical;"><?= htmlspecialchars($dataEdit['deskripsi'] ?? ''); ?></textarea>
                             </div>
 
                             <div class="form-group">

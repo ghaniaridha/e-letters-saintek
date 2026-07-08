@@ -10,16 +10,19 @@ if (!isset($_SESSION['role'])) {
 $id_surat = $_GET['id'] ?? '';
 
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT
+    SELECT 
         sp.*,
         m.nama_mhs,
         m.npm,
         p.nama_prodi,
-        js.nama_surat
+        js.nama_surat,
+        dsr.judul_skripsi,       /* Tambahkan ini */
+        dsr.lokasi_penelitian    /* Tambahkan ini */
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN prodi p ON m.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat /* Tambahkan baris ini */
     WHERE sp.id_surat = '$id_surat'
 "));
 
@@ -36,7 +39,7 @@ if (isset($_POST['kirim_balasan'])) {
         SET
             status_akhir = 'Selesai',
             status_balasan = 'Disetujui',
-            file_surat_balasan = '$nama_file',
+            file_surat_final = '$nama_file',
             file_surat_final = '$nama_file'
         WHERE id_surat = '$id_surat'
     ");
@@ -294,8 +297,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             <?php } ?>
 
             <p>
-                <strong>Dr. SOVIA MAS AYU, MA</strong><br>
-                NIP. 197611302005012006
+                <strong>Rosida Rakhmawati. M, S.Pd., M.Pd.,Ph.D</strong><br>
+                NIP. 198704042015032005
             </p>
         </div>
 

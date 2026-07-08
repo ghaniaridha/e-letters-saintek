@@ -2,15 +2,19 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['id_mhs'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
+    exit;
+}
+
+$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_POST['id_jenis'];
 $semester = mysqli_real_escape_string($koneksi, $_POST['semester']);
 $judul_skripsi = mysqli_real_escape_string($koneksi, $_POST['judul_skripsi']);
 $lokasi_penelitian = mysqli_real_escape_string($koneksi, $_POST['lokasi_penelitian']);
 $surat_ditujukan = mysqli_real_escape_string($koneksi, $_POST['surat_ditujukan']);
 $pembimbing_1 = $_POST['pembimbing_1'];
-$pembimbing_2 = $_POST['pembimbing_2'];
-
-$id_mhs = $_SESSION['id_mhs'];
+$pembimbing_2 = !empty($_POST['pembimbing_2']) ? $_POST['pembimbing_2'] : 'NULL';
 
 $folder_upload = "uploads/dokumen_hss/";
 
@@ -50,82 +54,85 @@ $proposal_penelitian = uploadFile('proposal_penelitian', $folder_upload);
 $khs = uploadFile('khs', $folder_upload);
 $bukti_ukt = uploadFile('bukti_ukt', $folder_upload);
 
-$mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM mahasiswa
-    WHERE id_mhs = '$id_mhs'
-"));
-
-$jenis = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM jenis_surat
-    WHERE id_jenis = '$id_jenis'
-"));
-
-$dospem1 = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM dosen
-    WHERE id_dosen = '$pembimbing_1'
-"));
-
-$dospem2 = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM dosen
-    WHERE id_dosen = '$pembimbing_2'
-"));
-
 $tanggal = date('Y-m-d H:i:s');
 
-mysqli_query($koneksi, "
-    INSERT INTO surat_pengajuan
-    (
-        id_mhs,
-        id_jenis,
-        nomor_surat,
-        tanggal_pengajuan,
-        status_akhir,
-        judul_skripsi,
-        lokasi_penelitian,
-        surat_ditujukan,
-        pembimbing_1,
-        pembimbing_2,
-        status_dospem1,
-        status_dospem2,
-        status_pimpinan,
-        proposal_penelitian,
-        khs,
-        bukti_ukt
-    )
-    VALUES
-    (
-        '$id_mhs',
-        '$id_jenis',
-        '',
-        '$tanggal',
-        'Menunggu Dospem 1',
-        '$judul_skripsi',
-        '$lokasi_penelitian',
-        '$surat_ditujukan',
-        '$pembimbing_1',
-        '$pembimbing_2',
-        'Menunggu',
-        'Menunggu',
-        'Menunggu',
-        '$proposal_penelitian',
-        '$khs',
-        '$bukti_ukt'
-    )
-");
+$query_utama = "
+    INSERT INTO surat_pengajuan 
+    (id_mhs, id_jenis, nomor_surat, tanggal_pengajuan, status_akhir, status_pimpinan)
+    VALUES 
+    ('$id_mhs', '$id_jenis', '', '$tanggal', 'Menunggu Dospem 2', 'Menunggu')
+";
 
-$id_surat = mysqli_insert_id($koneksi);
+if (mysqli_query($koneksi, $query_utama)) {
+    // Ambil ID Surat yang baru saja digenerate oleh tabel utama
+    $id_surat = mysqli_insert_id($koneksi);
 
-$dokumen_hash = hash('sha256', $id_surat . $id_mhs . time());
+    // Generate dan Update Dokumen Hash untuk keperluan validasi QR Code
+    $dokumen_hash = hash('sha256', $id_surat . $id_mhs . time());
+    mysqli_query($koneksi, "UPDATE surat_pengajuan SET dokumen_hash = '$dokumen_hash' WHERE id_surat = '$id_surat'");
 
-mysqli_query($koneksi, "
-    UPDATE surat_pengajuan
-    SET dokumen_hash = '$dokumen_hash'
-    WHERE id_surat = '$id_surat'
-");
+    /* =======================================================================
+       TAHAP 2: INSERT DATA KE TABEL DETAIL (detail_surat_riset)
+       Memasukkan data spesifik permohonan riset menggunakan id_surat sebagai kunci relasi.
+       ======================================================================= */
+    $pembimbing_1_val = ($pembimbing_1 === 'NULL') ? "NULL" : "'$pembimbing_1'";
 
-$link_verifikasi = "http://192.168.1.4/e-letters-saintek/verifikasi_surat.php?hash=" . $dokumen_hash;
+    $query_detail = "
+    INSERT INTO detail_surat_riset 
+    (id_surat, semester, judul_skripsi, lokasi_penelitian, surat_ditujukan, id_pb2, id_pb1, status_pb1, status_pb2)
+    VALUES 
+    ('$id_surat', '$semester', '$judul_skripsi', '$lokasi_penelitian', '$surat_ditujukan', '$pembimbing_2', $pembimbing_1_val, 'Menunggu', 'Menunggu')
+    ";
+    mysqli_query($koneksi, $query_detail);
 
-$qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_verifikasi);
+    /* =======================================================================
+       TAHAP 3: INSERT DATA BERKAS KE TABEL LAMPIRAN (lampiran_pengajuan)
+       Fungsi pembantu di bawah bertugas mencari id_syarat secara dinamis 
+       dari master_syarat agar sinkron dengan file yang diunggah.
+       ======================================================================= */
+    function getIdSyarat($koneksi, $nama_syarat)
+    {
+        $nama_syarat_clean = mysqli_real_escape_string($koneksi, $nama_syarat);
+        $q = mysqli_query($koneksi, "SELECT id_syarat FROM master_syarat WHERE nama_syarat LIKE '%$nama_syarat_clean%' LIMIT 1");
+        $row = mysqli_fetch_assoc($q);
+        return $row['id_syarat'] ?? null;
+    }
+
+    // Dapatkan masing-masing id_syarat dari tabel master_syarat
+    $id_syarat_proposal = getIdSyarat($koneksi, 'Proposal Penelitian');
+    $id_syarat_khs      = getIdSyarat($koneksi, 'KHS Semester Lalu');
+    $id_syarat_ukt      = getIdSyarat($koneksi, 'Bukti Pembayaran UKT Terakhir');
+
+    // Susun query insert jamak untuk tabel lampiran_pengajuan
+    $lampiran_values = [];
+    if ($id_syarat_proposal) {
+        $lampiran_values[] = "('$id_surat', '$id_syarat_proposal', '$proposal_penelitian')";
+    }
+    if ($id_syarat_khs) {
+        $lampiran_values[] = "('$id_surat', '$id_syarat_khs', '$khs')";
+    }
+    if ($id_syarat_ukt) {
+        $lampiran_values[] = "('$id_surat', '$id_syarat_ukt', '$bukti_ukt')";
+    }
+
+    if (count($lampiran_values) > 0) {
+        $query_lampiran = "INSERT INTO lampiran_pengajuan (id_surat, id_syarat, file_upload) VALUES " . implode(", ", $lampiran_values);
+        mysqli_query($koneksi, $query_lampiran);
+    }
+
+    // Persiapan data tautan verifikasi QR Code seperti rancangan awal Anda
+    $link_verifikasi = "http://192.168.1.4/e-letters-saintek/verifikasi_surat.php?hash=" . $dokumen_hash;
+    $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_verifikasi);
+
+    echo "<script>
+            alert('Surat permohonan izin riset berhasil diajukan dan sedang menunggu review.'); 
+            window.location='preview_surat.php?id=$id_surat';
+          </script>";
+    exit;
+} else {
+    echo "<script>alert('Sistem gagal memproses pengajuan surat.'); history.back();</script>";
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -133,7 +140,10 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preview Surat</title>
+
+    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
 </head>
 
@@ -166,7 +176,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <tr>
                     <td>Semester / Program Studi</td>
                     <td>:</td>
-                    <td><?= htmlspecialchars($semester); ?> / <?= htmlspecialchars($mhs['prodi']); ?></td>
+                    <td><?= htmlspecialchars($semester); ?> / <?= htmlspecialchars($mhs['nama_prodi']); ?></td>
                 </tr>
                 <tr>
                     <td>Judul Skripsi</td>
@@ -236,7 +246,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
         </div>
 
         <div class="preview-actions">
-            <p>Status surat: <strong>Menunggu Dospem 1</strong></p>
+            <p>Status surat: <strong>Menunggu Dospem 2</strong></p>
             <p>Dokumen pendukung dan QR pemohon sudah dibuat.</p>
 
             <div class="btn-group">

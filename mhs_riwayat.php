@@ -10,23 +10,29 @@ if (!isset($_SESSION['id_mhs'])) {
 $id_mhs = $_SESSION['id_mhs'];
 
 $query_riwayat = mysqli_query($koneksi, "
-    SELECT 
-        sp.id_surat,
-        sp.nomor_surat,
-        sp.tanggal_pengajuan,
-        sp.status_akhir,
-        sp.status_dospem1,
-        sp.status_dospem2,
-        sp.status_pimpinan,
-        sp.posisi_sekarang,
-        sp.urutan_sekarang,
-        sp.file_surat_final,
-        sp.dokumen_hash,
-        js.nama_surat
-    FROM surat_pengajuan sp
-    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    WHERE sp.id_mhs = '$id_mhs'
-    ORDER BY sp.tanggal_pengajuan DESC
+SELECT
+    sp.id_surat,
+    sp.id_jenis, /* <-- TAMBAHKAN BARIS INI */
+    sp.nomor_surat,
+    sp.tanggal_pengajuan,
+    sp.status_akhir,
+    COALESCE(dsr.status_pb1, 'N/A') AS status_pb1,
+    COALESCE(dsr.status_pb2, 'N/A') AS status_pb2,
+    COALESCE(dak.status_pa, 'N/A') AS status_pa,
+    sp.status_pimpinan,
+    sp.file_surat_final,
+    sp.dokumen_hash,
+    js.nama_surat
+FROM surat_pengajuan sp
+JOIN jenis_surat js ON js.id_jenis = sp.id_jenis
+LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
+WHERE sp.id_mhs = '$id_mhs'
+AND (
+    sp.status_akhir = 'Selesai' 
+    OR sp.status_akhir LIKE 'Ditolak%'
+)
+ORDER BY sp.tanggal_pengajuan DESC
 ");
 ?>
 
@@ -152,9 +158,30 @@ $query_riwayat = mysqli_query($koneksi, "
 
                                 <td>
                                     <div style="font-size:0.85rem; line-height:1.8;">
-                                        <div>Dospem 1: <?= htmlspecialchars($row['status_dospem1']); ?></div>
-                                        <div>Dospem 2: <?= htmlspecialchars($row['status_dospem2']); ?></div>
-                                        <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
+                                        <?php
+                                        $namaSurat = strtolower($row['nama_surat']);
+
+                                        // 1. Kondisi untuk Surat Magang atau PKL
+                                        if ($row['id_jenis'] == 4 || strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                                        ?>
+                                            <div>Pimpinan: <?= htmlspecialchars($row['status_pimpinan'] ?? 'Menunggu'); ?></div>
+                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
+
+                                        <?php
+                                            // 2. PERBAIKAN: Kondisi khusus untuk SK Aktif Kuliah Kembali
+                                        } else if (strpos($namaSurat, 'aktif') !== false) {
+                                        ?>
+                                            <div>Pembimbing Akademik: <?= htmlspecialchars($row['status_pa'] ?? 'Menunggu'); ?></div>
+                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
+
+                                        <?php
+                                            // 3. Kondisi Default untuk Surat Izin Riset/Penelitian
+                                        } else {
+                                        ?>
+                                            <div>Dospem 1: <?= htmlspecialchars($row['status_pb1'] ?? '-'); ?></div>
+                                            <div>Dospem 2: <?= htmlspecialchars($row['status_pb2'] ?? '-'); ?></div>
+                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
+                                        <?php } ?>
                                     </div>
                                 </td>
 
@@ -182,9 +209,16 @@ $query_riwayat = mysqli_query($koneksi, "
                                         <?php
                                         $namaSurat = strtolower($row['nama_surat']);
 
+                                        // 1. Kondisi untuk Surat Magang
                                         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                                             $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
-                                        } else {
+                                        }
+                                        // 2. PERBAIKAN: Kondisi untuk SK Aktif Kuliah Kembali
+                                        elseif (strpos($namaSurat, 'aktif') !== false) {
+                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'];
+                                        }
+                                        // 3. Kondisi Default untuk Surat Riset / Lainnya
+                                        else {
                                             $linkUnduh = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
                                         }
                                         ?>
@@ -195,6 +229,12 @@ $query_riwayat = mysqli_query($koneksi, "
                                             style="background-color:#10b981; color:white; border-color:#10b981;">
                                             Unduh
                                         </a>
+
+                                    <?php } elseif (strpos(strtolower($row['status_akhir']), 'tolak') !== false) { ?>
+
+                                        <span style="color:#ef4444; font-weight:600; font-size:0.85rem;">
+                                            Pengajuan Ditolak
+                                        </span>
 
                                     <?php } else { ?>
 
