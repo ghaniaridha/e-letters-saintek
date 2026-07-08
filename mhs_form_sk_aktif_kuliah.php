@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
+$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
-$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_GET['id_jenis'] ?? 3;
 
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "

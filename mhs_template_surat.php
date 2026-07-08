@@ -2,6 +2,22 @@
 session_start();
 include "koneksi.php";
 
+$id_mhs = $_SESSION['id_mhs'];
+if (!isset($_SESSION['id_mhs'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
+    exit;
+}
+
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
 $query = mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE file_template IS NOT NULL
@@ -41,17 +57,6 @@ $query = mysqli_query($koneksi, "
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -74,7 +79,7 @@ $query = mysqli_query($koneksi, "
             <div class="table-wrapper" id="template-surat">
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="searchSurat" class="search-input" placeholder="Cari jenis surat...">
+                    <input type="text" id="searchSurat" class="search-input" placeholder="Cari surat...">
                 </div>
 
                 <table class="custom-table">
@@ -124,29 +129,35 @@ $query = mysqli_query($koneksi, "
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
-                    <span>Jl. Letkol H. Endro Suratmin, Sukarame, Bandar Lampung.</span>
+                    <span>Jl. Endro Suratmin No.38, Sukarame, Kec. Sukarame, Kota Bandar Lampung, Lampung 35131</span>
                 </div>
             </div>
 
-            <div class="footer-col links-col">
-                <h4>Tautan Cepat</h4>
-                <ul>
-                    <li><a href="#home">Beranda</a></li>
-                    <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#status-info">Lacak Surat</a></li>
-                    <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
-                </ul>
+            <div class="footer-col map-col">
+                <h4>Lokasi Kami</h4>
+                <div class="map-wrapper">
+                    <iframe
+                        src="https://maps.google.com/maps?q=Gedung%20Fakultas%20Sains%20dan%20Teknologi%20Tower%201%20UIN%20Raden%20Intan%20Lampung&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
             </div>
 
             <div class="footer-col contact-col">
-                <h4>Pusat Bantuan</h4>
+                <h4>INFORMASI & KONTAK</h4>
                 <div class="contact-item">
-                    <i class="fa-solid fa-envelope"></i>
-                    <span>akademik.fst@radenintan.ac.id</span>
+                    <i class="fa-brands fa-instagram"></i>
+                    <a href="https://www.instagram.com/saintek.radenintan" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan</span>
+                    </a>
                 </div>
                 <div class="contact-item">
-                    <i class="fa-solid fa-phone"></i>
-                    <span>(0721) 1234567</span>
+                    <i class="fa-solid fa-globe"></i>
+                    <a href="https://saintek.radenintan.ac.id" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan.ac.id</span>
+                    </a>
                 </div>
                 <div class="contact-item">
                     <i class="fa-solid fa-clock"></i>

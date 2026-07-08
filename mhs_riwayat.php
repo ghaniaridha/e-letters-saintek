@@ -2,38 +2,62 @@
 session_start();
 include "koneksi.php";
 
+$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
-    echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
-$id_mhs = $_SESSION['id_mhs'];
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+// Query search dan pagination
+$search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
+$page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit  = 3;
+$offset = ($page - 1) * $limit;
+
+$whereClause = "WHERE sp.id_mhs = '$id_mhs'";
+if ($search != '') {
+    $whereClause .= " AND (js.nama_surat LIKE '%$search%' OR sp.status_akhir LIKE '%$search%' OR sp.tanggal_pengajuan LIKE '%$search%')";
+}
+
+$count_query = mysqli_query($koneksi, "
+    SELECT COUNT(*) AS total 
+    FROM surat_pengajuan sp 
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis 
+    $whereClause
+");
+$count_row = mysqli_fetch_assoc($count_query);
+$total_data = $count_row['total'];
+$total_pages = ceil($total_data / $limit);
 
 $query_riwayat = mysqli_query($koneksi, "
-SELECT
-    sp.id_surat,
-    sp.id_jenis, /* <-- TAMBAHKAN BARIS INI */
-    sp.nomor_surat,
-    sp.tanggal_pengajuan,
-    sp.status_akhir,
-    COALESCE(dsr.status_pb1, 'N/A') AS status_pb1,
-    COALESCE(dsr.status_pb2, 'N/A') AS status_pb2,
-    COALESCE(dak.status_pa, 'N/A') AS status_pa,
-    sp.status_pimpinan,
-    sp.file_surat_final,
-    sp.dokumen_hash,
-    js.nama_surat
-FROM surat_pengajuan sp
-JOIN jenis_surat js ON js.id_jenis = sp.id_jenis
-LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
-LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
-WHERE sp.id_mhs = '$id_mhs'
-AND (
-    sp.status_akhir = 'Selesai' 
-    OR sp.status_akhir LIKE 'Ditolak%'
-)
-ORDER BY sp.tanggal_pengajuan DESC
+    SELECT 
+        sp.*, 
+        js.nama_surat,
+        dsr.status_pb1, 
+        dsr.status_pb2,
+        dak.status_pa
+    FROM surat_pengajuan sp
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
+    $whereClause
+    ORDER BY sp.tanggal_pengajuan DESC
+    LIMIT $limit OFFSET $offset
 ");
+
+$halaman = $page;
+$total_halaman = $total_pages;
+$query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 ?>
 
 <!DOCTYPE html>
@@ -42,7 +66,7 @@ ORDER BY sp.tanggal_pengajuan DESC
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Permohonan</title>
+    <title>Riwayat Pengajuan</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
@@ -85,17 +109,6 @@ ORDER BY sp.tanggal_pengajuan DESC
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -104,30 +117,32 @@ ORDER BY sp.tanggal_pengajuan DESC
                         <span class="user-name"><?= ($namaLengkap) ?></span>
                         <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
                     </div>
-                    <div class="divider"></div>
-                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
-                        <span>Keluar</span>
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <section id="riwayat-permohonan" class="riwayat-permohonan">
-        <div class="riwayat-permohonan-header">
-            <h2>Riwayat Permohonan</h2>
+    <section id="daftar-surat" class="daftar-surat">
+        <div class="daftar-surat-header">
+            <h2>Riwayat Pengajuan Surat</h2>
         </div>
 
-        <div class="table-responsive">
-            <table class="table-riwayat">
+        <div class="table-wrapper" id="template-surat">
+            <form method="GET" action="" class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" id="searchSurat" class="search-input"
+                    placeholder="Cari jenis surat, status, atau tanggal..."
+                    value="<?= htmlspecialchars($search); ?>">
+                <button type="submit" style="display: none;"></button>
+            </form>
+
+            <table class="custom-table">
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Tanggal Pengajuan</th>
+                        <th>Tanggal & Waktu</th>
                         <th>Jenis Surat</th>
-                        <th>Progres</th>
-                        <th>Status Pengajuan</th>
+                        <th>Status Akhir</th>
                         <th>Verifikasi</th>
                         <th>File Final</th>
                         <th>Aksi</th>
@@ -150,40 +165,10 @@ ORDER BY sp.tanggal_pengajuan DESC
                                 $badge_class = 'status-proses';
                             }
                             ?>
-
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= $tanggal; ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-
-                                <td>
-                                    <div style="font-size:0.85rem; line-height:1.8;">
-                                        <?php
-                                        $namaSurat = strtolower($row['nama_surat']);
-
-                                        // 1. Kondisi untuk Surat Magang atau PKL
-                                        if ($row['id_jenis'] == 4 || strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                        ?>
-                                            <div>Pimpinan: <?= htmlspecialchars($row['status_pimpinan'] ?? 'Menunggu'); ?></div>
-                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
-
-                                        <?php
-                                            // 2. PERBAIKAN: Kondisi khusus untuk SK Aktif Kuliah Kembali
-                                        } else if (strpos($namaSurat, 'aktif') !== false) {
-                                        ?>
-                                            <div>Pembimbing Akademik: <?= htmlspecialchars($row['status_pa'] ?? 'Menunggu'); ?></div>
-                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
-
-                                        <?php
-                                            // 3. Kondisi Default untuk Surat Izin Riset/Penelitian
-                                        } else {
-                                        ?>
-                                            <div>Dospem 1: <?= htmlspecialchars($row['status_pb1'] ?? '-'); ?></div>
-                                            <div>Dospem 2: <?= htmlspecialchars($row['status_pb2'] ?? '-'); ?></div>
-                                            <div>Posisi: <?= htmlspecialchars($row['status_akhir']); ?></div>
-                                        <?php } ?>
-                                    </div>
-                                </td>
 
                                 <td>
                                     <span class="badge-status <?= $badge_class; ?>">
@@ -261,10 +246,40 @@ ORDER BY sp.tanggal_pengajuan DESC
                     <?php } ?>
                 </tbody>
             </table>
-        </div>
+
+            <?php if ($total_halaman > 1): ?>
+                <div class="pagination-container">
+                    <ul class="pagination">
+                        <?php if ($halaman > 1): ?>
+                            <li><a href="?page=<?= $halaman - 1 ?><?= $query_string ?>">Sebelumnya</a></li>
+                        <?php else: ?>
+                            <li class="disabled"><span>Sebelumnya</span></li>
+                        <?php endif; ?>
+
+                        <?php for ($i = 1; $i <= $total_halaman; $i++): ?>
+                            <?php if ($i == $halaman): ?>
+                                <li class="active"><span><?= $i ?></span></li>
+                            <?php else: ?>
+                                <li><a href="?page=<?= $i ?><?= $query_string ?>"><?= $i ?></a></li>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($halaman < $total_halaman): ?>
+                            <li><a href="?page=<?= $halaman + 1 ?><?= $query_string ?>">Selanjutnya</a></li>
+                        <?php else: ?>
+                            <li class="disabled"><span>Selanjutnya</span></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
     </section>
 
+    <footer class="footer-form-minimal">
+        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
+    </footer>
+
     <script>
+        //fungsi dropdown menu user
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');

@@ -438,7 +438,7 @@ body.swal2-shown {
 /*riwayat section - start*/
 .status-info-section {
   position: relative;
-  padding: 120px 20px 80px 20px;
+  padding: 40px 20px 80px 20px;
   font-family: "Montserrat", sans-serif;
   background-image:
     linear-gradient(rgba(44, 70, 100, 0.85), rgba(44, 70, 100, 0.85)),
@@ -486,7 +486,7 @@ body.swal2-shown {
 
 .status-info-header {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 
 .status-info-header h2 {
@@ -534,9 +534,11 @@ body.swal2-shown {
   transform: translateY(-5px);
 }
 
-.status-box i {
-  font-size: 2rem;
-  margin-bottom: 10px;
+.status-box h4 {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
 }
 
 .status-count {
@@ -546,11 +548,20 @@ body.swal2-shown {
   margin-bottom: 5px;
 }
 
-.status-box h4 {
-  font-size: 0.9rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin: 0;
+.count-menunggu {
+  color: #f59e0b;
+}
+
+.count-disetujui {
+  color: #10b981;
+}
+
+.count-ditolak {
+  color: #ef4444;
+}
+
+.count-selesai {
+  color: #3b82f6;
 }
 
 .action-box {
@@ -694,18 +705,38 @@ body.swal2-shown {
   margin-top: 3px;
 }
 
-.links-col ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.map-wrapper {
+  width: 100%;
+  height: 200px;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #1e293b;
+  background-color: #1e293b;
 }
 
-.links-col ul li {
-  margin-bottom: 15px;
+.map-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  filter: contrast(1.1) opacity(0.9);
+  transition: filter 0.3s ease;
 }
 
-.links-col ul li a {
-  color: #9ca3af;
+.map-wrapper iframe:hover {
+  filter: contrast(1) opacity(1);
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+  font-size: 0.95rem;
+}
+
+.footer-clickable-link {
+  color: inherit;
   text-decoration: none;
   transition:
     color 0.3s ease,
@@ -713,9 +744,9 @@ body.swal2-shown {
   display: inline-block;
 }
 
-.links-col ul li a:hover {
+.footer-clickable-link:hover {
   color: #ffcc00;
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .footer-bottom {
@@ -728,6 +759,19 @@ body.swal2-shown {
 }
 
 .footer-bottom p {
+  margin: 0;
+}
+
+.footer-form-minimal {
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+  background-color: #0f2038;
+}
+
+.footer-form-minimal p {
+  color: #ffffff;
+  font-size: 14px;
   margin: 0;
 }
 /*footer section - end*/
@@ -1144,7 +1188,7 @@ body.swal2-shown {
   padding-top: 130px;
   width: 95%;
   max-width: 1200px;
-  margin: 40px auto;
+  margin: 10px auto;
 }
 
 .riwayat-permohonan-header {
@@ -1159,6 +1203,28 @@ body.swal2-shown {
   margin: 0;
   display: inline-block;
   position: relative;
+}
+
+.btn-page {
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #334155;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-page:hover {
+  background-color: #f1f5f9;
+}
+
+.btn-page.active {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  font-weight: bold;
 }
 /*halaman riwayat permohonan mahasiswa - end*/
 
@@ -1324,19 +1390,6 @@ body.swal2-shown {
   background-color: #ef4444;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-}
-
-.footer-form-minimal {
-  text-align: center;
-  padding: 30px 20px;
-  margin-top: 40px;
-  background-color: #0f2038;
-}
-
-.footer-form-minimal p {
-  color: #ffffff;
-  font-size: 14px;
-  margin: 0;
 }
 
 /* Mode HP (Responsif) */
@@ -1517,8 +1570,8 @@ body.swal2-shown {
 }
 
 .status-ditolak {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #dc2626;
+  color: #fee2e2;
 }
 
 .disposisi-section {
@@ -2134,3 +2187,51 @@ body.swal2-shown {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 /*halaman edit profil - end*/
+
+/*pagination section - start*/
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 5px;
+}
+
+.pagination li a,
+.pagination li span {
+  display: block;
+  padding: 8px 14px;
+  text-decoration: none;
+  color: #0d6efd;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.pagination li a:hover {
+  background-color: #f8f9fa;
+  border-color: #0d6efd;
+}
+
+.pagination li.active span {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+.pagination li.disabled span {
+  color: #adb5bd;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+}
+/*pagination section - end*/

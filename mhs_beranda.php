@@ -1,6 +1,49 @@
 <?php
 session_start();
 include "koneksi.php";
+
+$id_mhs = $_SESSION['id_mhs'];
+if (!isset($_SESSION['id_mhs'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
+    exit;
+}
+
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+
+// Query untuk menghitung jumlah status (Grid Status - Informasi)
+$query_count = mysqli_query($koneksi, "
+    SELECT 
+        -- Kategori Menunggu (semua yang berawalan 'Menunggu' kecuali menunggu surat balasan)
+        SUM(CASE WHEN status_akhir LIKE 'Menunggu%' AND status_akhir != 'Menunggu Surat Balasan' THEN 1 ELSE 0 END) AS jml_menunggu,
+        
+        -- Kategori Disetujui (Surat sudah disetujui pimpinan, misal sedang 'Menunggu Surat Balasan')
+        SUM(CASE WHEN status_akhir = 'Menunggu Surat Balasan' THEN 1 ELSE 0 END) AS jml_disetujui,
+        
+        -- Kategori Ditolak
+        SUM(CASE WHEN status_akhir LIKE 'Ditolak%' THEN 1 ELSE 0 END) AS jml_ditolak,
+        
+        -- Kategori Selesai
+        SUM(CASE WHEN status_akhir = 'Selesai' THEN 1 ELSE 0 END) AS jml_selesai
+    FROM surat_pengajuan
+    WHERE id_mhs = '$id_mhs'
+");
+
+$count = mysqli_fetch_assoc($query_count);
+
+$menunggu = $count['jml_menunggu'] ?? 0;
+$disetujui = $count['jml_disetujui'] ?? 0;
+$ditolak = $count['jml_ditolak'] ?? 0;
+$selesai = $count['jml_selesai'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -33,17 +76,6 @@ include "koneksi.php";
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -66,9 +98,6 @@ include "koneksi.php";
 
     <section class="hero" id="home">
         <main class="content">
-            <?php
-            $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-            ?>
             <h2>Halo, <?= $namaLengkap ?></h2>
             <h1>Selamat Datang di Sistem Informasi Persuratan Terpadu FST UIN RIL</h1>
         </main>
@@ -119,28 +148,28 @@ include "koneksi.php";
         </div>
 
         <div class="status-info-header">
-            <h2>Informasi <span class="text-orange">Pengajuan</span></h2>
+            <h2><span class="text-orange">Informasi</span><br> Pengajuan Surat</h2>
         </div>
 
         <div class="dashboard-container">
             <div class="status-grid">
                 <div class="status-box">
-                    <span class="status-count" style="color: #f59e0b;">3</span>
+                    <span class="status-count count-menunggu"><?= $menunggu; ?></span>
                     <h4>Menunggu</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #10b981;">1</span>
+                    <span class="status-count count-disetujui"><?= $disetujui; ?></span>
                     <h4>Disetujui</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #ef4444;">0</span>
+                    <span class="status-count count-ditolak"><?= $ditolak; ?></span>
                     <h4>Ditolak</h4>
                 </div>
 
                 <div class="status-box">
-                    </i> <span class="status-count" style="color: #3b82f6;">5</span>
+                    <span class="status-count count-selesai"><?= $selesai; ?></span>
                     <h4>Selesai</h4>
                 </div>
             </div>
@@ -177,29 +206,35 @@ include "koneksi.php";
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
-                    <span>Jl. Letkol H. Endro Suratmin, Sukarame, Bandar Lampung.</span>
+                    <span>Jl. Endro Suratmin No.38, Sukarame, Kec. Sukarame, Kota Bandar Lampung, Lampung 35131</span>
                 </div>
             </div>
 
-            <div class="footer-col links-col">
-                <h4>Tautan Cepat</h4>
-                <ul>
-                    <li><a href="#home">Beranda</a></li>
-                    <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#status-info">Lacak Surat</a></li>
-                    <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
-                </ul>
+            <div class="footer-col map-col">
+                <h4>Lokasi Kami</h4>
+                <div class="map-wrapper">
+                    <iframe
+                        src="https://maps.google.com/maps?q=Gedung%20Fakultas%20Sains%20dan%20Teknologi%20Tower%201%20UIN%20Raden%20Intan%20Lampung&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
             </div>
 
             <div class="footer-col contact-col">
-                <h4>Pusat Bantuan</h4>
+                <h4>INFORMASI & KONTAK</h4>
                 <div class="contact-item">
-                    <i class="fa-solid fa-envelope"></i>
-                    <span>akademik.fst@radenintan.ac.id</span>
+                    <i class="fa-brands fa-instagram"></i>
+                    <a href="https://www.instagram.com/saintek.radenintan" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan</span>
+                    </a>
                 </div>
                 <div class="contact-item">
-                    <i class="fa-solid fa-phone"></i>
-                    <span>(0721) 1234567</span>
+                    <i class="fa-solid fa-globe"></i>
+                    <a href="https://saintek.radenintan.ac.id" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan.ac.id</span>
+                    </a>
                 </div>
                 <div class="contact-item">
                     <i class="fa-solid fa-clock"></i>
@@ -215,7 +250,7 @@ include "koneksi.php";
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // mengelola dropdown menu pengguna
+        // fungsi dropdown menu pengguna
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
