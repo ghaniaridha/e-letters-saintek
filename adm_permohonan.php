@@ -419,7 +419,7 @@ if ($detail_id != "") {
     </form>
 </div>
 
-<div class="table-card">
+<div class="table-card-table">
     <table>
         <thead>
             <tr>
