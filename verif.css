@@ -1,0 +1,89 @@
+body {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
+    url("images/gedung1.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  font-family: "Montserrat", sans-serif;
+}
+
+.verifikasi-card {
+  background: #ffffff;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.status-box {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.status-box i {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.status-box h2 {
+  margin: 10px 0;
+  font-size: 24px;
+}
+
+.status-box .status-message {
+  font-weight: bold;
+  color: #374151;
+  margin-top: 10px;
+}
+
+.status-message-resmi {
+  font-size: small;
+  color: #6b7280;
+  margin-top: 10px;
+}
+
+.status-box.valid i {
+  color: #22c55e;
+}
+.status-box.valid h2 {
+  color: #22c55e;
+}
+
+.status-box.invalid i {
+  color: #ef4444;
+}
+.status-box.invalid h2 {
+  color: #ef4444;
+}
+
+.info-group {
+  margin-bottom: 20px;
+}
+
+.info-group h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #374151;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.footer-meta {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.6;
+  border-top: 2px solid #f3f4f6;
+  padding-top: 15px;
+}

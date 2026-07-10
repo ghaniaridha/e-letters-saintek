@@ -2,29 +2,11 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
     exit;
 }
-
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
-
-$query_tracking = mysqli_query($koneksi, "
-    SELECT
-        sp.*,
-        m.nama_mhs,
-        m.npm,
-        js.nama_surat,
-        -- Gunakan COALESCE agar jika tidak ada data (bukan riset), tampil '-'
-        COALESCE(dsr.status_pb1, '-') AS status_pb1,
-        COALESCE(dsr.status_pb2, '-') AS status_pb2
-    FROM surat_pengajuan sp
-    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
-    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    -- JOIN ke tabel detail untuk mengambil status
-    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
-    ORDER BY sp.tanggal_pengajuan DESC
-");
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'pimpinan';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -35,6 +17,35 @@ $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
+
+$search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
+$search_sql = "";
+
+if (!empty($search)) {
+    $search_sql = " WHERE (
+        m.nama_mhs LIKE '%$search%' OR 
+        m.npm LIKE '%$search%' OR 
+        js.nama_surat LIKE '%$search%' OR 
+        sp.status_akhir LIKE '%$search%' OR 
+        sp.nomor_surat LIKE '%$search%'
+    )";
+}
+
+$query_tracking = mysqli_query($koneksi, "
+    SELECT
+        sp.*,
+        m.nama_mhs,
+        m.npm,
+        js.nama_surat,
+        COALESCE(dsr.status_pb1, '-') AS status_pb1,
+        COALESCE(dsr.status_pb2, '-') AS status_pb2
+    FROM surat_pengajuan sp
+    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    $search_sql 
+    ORDER BY sp.tanggal_pengajuan DESC
+");
 ?>
 
 <!DOCTYPE html>
@@ -46,61 +57,8 @@ if (!empty($namaParts)) {
     <title>Tracking Disposisi</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-
-    <style>
-        .tracking-wrapper {
-            padding: 120px 7% 60px;
-            background: #f3f4f6;
-            min-height: 100vh;
-        }
-
-        .tracking-card {
-            background: #fff;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
-            overflow-x: auto;
-        }
-
-        .tracking-title {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .tracking-title h2 {
-            color: #1e3a8a;
-            font-size: 2rem;
-        }
-
-        .tracking-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1200px;
-        }
-
-        .tracking-table th {
-            background: #f3f4f6;
-            padding: 12px;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .tracking-table td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }
-
-        .badge-track {
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-    </style>
 </head>
 
 <body>
@@ -133,15 +91,20 @@ if (!empty($namaParts)) {
         </div>
     </nav>
 
-    <section class="tracking-wrapper">
-        <div class="tracking-title">
+    <section id="daftar-surat" class="daftar-surat">
+        <div class="daftar-surat-header">
             <h2>Tracking Surat<br>Fakultas Sains dan Teknologi UINRIL</h2>
         </div>
 
-        <div class="tracking-card">
-            <h3 style="margin-bottom:20px;">Tracking Disposisi Surat</h3>
-
-            <table class="tracking-table">
+        <div class="table-wrapper" id="template-surat">
+            <form method="GET" action="" class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" id="searchSurat" class="search-input"
+                    placeholder="Cari..."
+                    value="<?= htmlspecialchars($search); ?>">
+                <button type="submit" style="display: none;"></button>
+            </form>
+            <table class="riwayat-table">
                 <thead>
                     <tr>
                         <th>No</th>
@@ -181,7 +144,7 @@ if (!empty($namaParts)) {
                                 <td><?= htmlspecialchars($row['status_pb2'] ?? '-'); ?></td>
                                 <td><?= htmlspecialchars($row['status_pimpinan'] ?? '-'); ?></td>
                                 <td>
-                                    <span class="badge-track" style="background:<?= $warna; ?>;">
+                                    <span class="badge-riwayat" style="background:<?= $warna; ?>;">
                                         <?= htmlspecialchars($row['status_akhir']); ?>
                                     </span>
                                 </td>
@@ -219,7 +182,6 @@ if (!empty($namaParts)) {
             });
         });
     </script>
-
 </body>
 
 </html>

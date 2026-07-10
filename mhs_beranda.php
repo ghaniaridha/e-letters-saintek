@@ -18,8 +18,6 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
-$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-
 // Query untuk menghitung jumlah status (Grid Status - Informasi)
 $query_count = mysqli_query($koneksi, "
     SELECT 

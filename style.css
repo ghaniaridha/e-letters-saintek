@@ -435,7 +435,7 @@ body.swal2-shown {
 }
 /*service section -end*/
 
-/*riwayat section - start*/
+/*status & informasi section - start*/
 .status-info-section {
   position: relative;
   padding: 40px 20px 80px 20px;
@@ -622,7 +622,7 @@ body.swal2-shown {
 .btn-action:hover {
   background-color: #ffcc00;
 }
-/*riwayat section -end*/
+/*status & informasi section -end*/
 
 /*footer section - start*/
 .footer-section {
@@ -772,11 +772,12 @@ body.swal2-shown {
 .footer-form-minimal p {
   color: #ffffff;
   font-size: 14px;
-  margin: 0;
+  margin-top: auto;
 }
 /*footer section - end*/
 /*halaman beranda pengguna - end*/
 
+/*unknow style page*/
 .top-action {
   max-width: 1200px;
   margin: 0 auto;
@@ -819,7 +820,30 @@ body.swal2-shown {
   background: #fff8dc;
 }
 
-/*daftar surat section - start*/
+.btn-page {
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #334155;
+  text-decoration: one;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-page:hover {
+  background-color: #f1f5f9;
+}
+
+.btn-page.active {
+  background-color: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  font-weight: bold;
+}
+/*unknow style page*/
+
+/*halaman daftar surat - start*/
 .daftar-surat {
   padding-top: 130px;
 }
@@ -974,7 +998,6 @@ body.swal2-shown {
   display: inline-block;
 }
 
-/* Responsive*/
 @media (max-width: 768px) {
   .jadwal-container {
     flex-direction: column-reverse;
@@ -1043,7 +1066,6 @@ body.swal2-shown {
   margin: 0;
 }
 
-/* Responsive untuk layar HP */
 @media (max-width: 480px) {
   .layanan-container {
     grid-template-columns: 1fr;
@@ -1054,7 +1076,7 @@ body.swal2-shown {
     min-height: 180px;
   }
 }
-/*daftar surat section - end*/
+/*halaman daftar surat - end*/
 
 /*halaman templat surat - start*/
 #template-surat .search-container {
@@ -1168,7 +1190,7 @@ body.swal2-shown {
   color: #ffffff;
   padding: 8px 16px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   border-radius: 6px;
   text-decoration: none;
   border: 1px solid #0d6efd;
@@ -1182,51 +1204,6 @@ body.swal2-shown {
   color: #ffffff;
 }
 /*halaman templat surat - end*/
-
-/*halaman riwayat permohonan mahasiswa - start*/
-.riwayat-permohonan {
-  padding-top: 130px;
-  width: 95%;
-  max-width: 1200px;
-  margin: 10px auto;
-}
-
-.riwayat-permohonan-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.riwayat-permohonan-header h2 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #353f4b;
-  margin: 0;
-  display: inline-block;
-  position: relative;
-}
-
-.btn-page {
-  padding: 8px 14px;
-  border: 1px solid #cbd5e1;
-  background-color: white;
-  color: #334155;
-  text-decoration: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.btn-page:hover {
-  background-color: #f1f5f9;
-}
-
-.btn-page.active {
-  background-color: #2563eb;
-  color: white;
-  border-color: #2563eb;
-  font-weight: bold;
-}
-/*halaman riwayat permohonan mahasiswa - end*/
 
 /*form pengajuan surat - start*/
 .generate-wrapper {
@@ -1265,6 +1242,12 @@ body.swal2-shown {
   font-size: 18px;
   color: #374151;
   margin-bottom: 25px;
+}
+
+.hr-separator {
+  margin: 30px 0;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .form-group {
@@ -1392,7 +1375,6 @@ body.swal2-shown {
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
-/* Mode HP (Responsif) */
 @media (max-width: 768px) {
   .form-group {
     flex-direction: column;
@@ -1406,7 +1388,7 @@ body.swal2-shown {
 }
 /*form pengajuan surat - end*/
 
-/*review surat surat* - start*/
+/*priview surat surat* - start*/
 .surat-preview {
   background: #f4f7fb;
   padding: 40px 20px;
@@ -1483,15 +1465,14 @@ body.swal2-shown {
   border-radius: 5px;
   font-weight: 500;
 }
-/*review surat surat* - end*/
+/*preview surat surat* - end*/
 
-/*tabel riwayat permohonan - start*/
+/*halaman riwayat permohonan - start*/
 .table-responsive {
   overflow-x: auto;
   width: 100%;
 }
 
-/*tabel utama */
 .table-riwayat {
   width: 100%;
   border-collapse: collapse;
@@ -1520,18 +1501,18 @@ body.swal2-shown {
   background-color: #f1f5f9;
 }
 
-/*penyesuaian khusus kolom */
 .text-left {
   text-align: left !important;
 }
+
 .text-center {
   text-align: center !important;
 }
+
 .col-judul {
   min-width: 250px;
 }
 
-/*styling badge status (bentuk oval/pill) */
 .badge-status {
   display: inline-block;
   padding: 6px 14px;
@@ -1546,12 +1527,11 @@ body.swal2-shown {
 }
 
 .status-proses {
-  background-color: #fef9c3;
-  color: #ca8a04;
+  background-color: #ca8a04;
+  color: #fef9c3;
   border: 1px solid #fde047;
 }
 
-/* Styling Tombol Aksi */
 .btn-aksi {
   background-color: transparent;
   color: #0d6efd;
@@ -1598,31 +1578,24 @@ body.swal2-shown {
 /*halaman lacak surat - start*/
 .container-lacak {
   max-width: 1200px;
-  margin: 120px auto 50px;
+  margin: 100px auto 50px;
   padding: 20px;
 }
 
-/*header halaman*/
-.page-header {
-  margin-bottom: 30px;
+.riwayat-permohonan-header {
+  text-align: center;
+  margin-bottom: 40px;
 }
 
-.page-header h2 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 30px;
+.riwayat-permohonan-header h2 {
+  font-size: 2.2rem;
   font-weight: 700;
-  color: #1e3a8a;
-  margin-bottom: 10px;
+  color: #353f4b;
+  margin: 0;
+  display: inline-block;
+  position: relative;
 }
 
-.page-header p {
-  color: #64748b;
-  font-size: 15px;
-}
-
-/*card surat*/
 .card-surat {
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -1638,7 +1611,6 @@ body.swal2-shown {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
 
-/*header card*/
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -1655,7 +1627,7 @@ body.swal2-shown {
   gap: 10px;
   font-size: 22px;
   color: #1e293b;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .card-info h3 i {
@@ -1665,16 +1637,17 @@ body.swal2-shown {
 .tanggal {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #64748b;
+  gap: 5px;
+  margin-bottom: 0;
+  color: #475569;
   font-size: 14px;
+  padding: 8px 14px;
 }
 
 .tanggal i {
   color: #2563eb;
 }
 
-/*badge status*/
 .badge-status {
   padding: 8px 18px;
   border-radius: 30px;
@@ -1700,7 +1673,6 @@ body.swal2-shown {
   background: #dc2626;
 }
 
-/*status saat ini*/
 .status-sekarang {
   background: #f8fafc;
   border-left: 5px solid #2563eb;
@@ -1720,7 +1692,6 @@ body.swal2-shown {
   font-size: 15px;
 }
 
-/*progres bar*/
 .progress {
   width: 100%;
   height: 10px;
@@ -1742,14 +1713,13 @@ body.swal2-shown {
   color: #64748b;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 25px;
+  margin-bottom: 10px;
 }
 
-/*timeline*/
 .timeline {
   display: flex;
   justify-content: space-between;
-  margin-top: 35px;
+  margin-top: 15px;
   position: relative;
   gap: 10px;
 }
@@ -1780,34 +1750,22 @@ body.swal2-shown {
   line-height: 20px;
 }
 
-/* selesai */
 .step.done .circle {
   background: #16a34a;
 }
 
-/* sedang */
 .step.active .circle {
   background: #f59e0b;
   transform: scale(1.08);
 }
 
-/* belum */
 .step.pending .circle {
   background: #cbd5e1;
 }
 
-/*button*/
-.aksi {
-  margin-top: 30px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.btn-detail,
-.btn-verifikasi {
-  padding: 12px 20px;
-  border-radius: 10px;
+.btn-detail {
+  padding: 8px 10px;
+  border-radius: 3px;
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -1824,16 +1782,6 @@ body.swal2-shown {
   background: #1d4ed8;
 }
 
-.btn-verifikasi {
-  background: #16a34a;
-  color: white;
-}
-
-.btn-verifikasi:hover {
-  background: #15803d;
-}
-
-/*card kosong*/
 .card-kosong {
   background: white;
   padding: 50px;
@@ -1858,87 +1806,6 @@ body.swal2-shown {
   color: #64748b;
 }
 
-/*modal detail*/
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 99999 !important;
-}
-
-.modal-backdrop {
-  z-index: 99998 !important;
-}
-
-.modal.show {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  width: 600px;
-  max-width: 95%;
-  background: white;
-  border-radius: 15px;
-  overflow: hidden;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 25px;
-  background: #2563eb;
-  color: white;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 25px;
-}
-
-.table-detail {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table-detail td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.95rem;
-}
-
-.table-detail tr:last-child td {
-  border-bottom: none;
-}
-
-.table-detail td:last-child {
-  color: #0f172a;
-  font-weight: 500;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #1e293b;
-}
-
-.table-detail td:first-child {
-  font-weight: 600;
-  color: #475569;
-  width: 45%;
-}
-
-/*responsive*/
 @media (max-width: 768px) {
   .card-header {
     flex-direction: column;

@@ -20,8 +20,11 @@
 
         <main class="main-content">
             <div class="page-title">
-                <h1>Dashboard Admin</h1>
-                <p>Selamat datang di halaman admin layanan akademik FST.</p>
+                <h1>Dasbor Admin</h1>
+                <?php
+                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+                ?>
+                <p>Hallo <?= $namaLengkap ?>! Selamat datang kembali di Dasbor Administrator.</p>
             </div>
 
             <div class="card-grid">

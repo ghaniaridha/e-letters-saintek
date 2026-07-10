@@ -174,7 +174,7 @@ if (!$surat) {
                 </div>
 
                 <div class="form-actions">
-                    <a href="mhs_daftar_surat_akademik.php" class="btn-back-form" onclick="confirmBatalAjukanSurat(event, 'mhs_daftar_surat_akademik.php')">
+                    <a href="mhs_daftar_surat_akademik.php" class="btn-back-form" onclick="confirmBatalAjukanSurat(event, this.href)">
                         Kembali
                     </a>
 

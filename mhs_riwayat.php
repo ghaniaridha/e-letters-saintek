@@ -24,7 +24,8 @@ $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit  = 3;
 $offset = ($page - 1) * $limit;
 
-$whereClause = "WHERE sp.id_mhs = '$id_mhs'";
+$whereClause = "WHERE sp.id_mhs = '$id_mhs' AND (sp.status_akhir = 'Selesai' OR sp.status_akhir LIKE '%Ditolak%')";
+
 if ($search != '') {
     $whereClause .= " AND (js.nama_surat LIKE '%$search%' OR sp.status_akhir LIKE '%$search%' OR sp.tanggal_pengajuan LIKE '%$search%')";
 }
@@ -35,6 +36,7 @@ $count_query = mysqli_query($koneksi, "
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis 
     $whereClause
 ");
+
 $count_row = mysqli_fetch_assoc($count_query);
 $total_data = $count_row['total'];
 $total_pages = ceil($total_data / $limit);
@@ -76,7 +78,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 </head>
 
 <body>
-
     <?php if (isset($_SESSION['pesan'])): ?>
         <script>
             Swal.fire({
@@ -131,7 +132,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             <form method="GET" action="" class="search-container">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
                 <input type="text" name="search" id="searchSurat" class="search-input"
-                    placeholder="Cari jenis surat, status, atau tanggal..."
+                    placeholder="Cari..."
                     value="<?= htmlspecialchars($search); ?>">
                 <button type="submit" style="display: none;"></button>
             </form>
@@ -178,7 +179,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                                 <td>
                                     <?php if (!empty($row['dokumen_hash'])) { ?>
-                                        <a href="verifikasi_surat.php?hash=<?= htmlspecialchars($row['dokumen_hash']); ?>"
+                                        <a href="mhs_qr_verif.php?hash=<?= htmlspecialchars($row['dokumen_hash']); ?>"
                                             target="_blank"
                                             class="btn-aksi">
                                             Verifikasi
@@ -196,15 +197,15 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                                         // 1. Kondisi untuk Surat Magang
                                         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                            $linkUnduh = "generate_balasan_magang.php?id=" . $row['id_surat'];
+                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
                                         }
                                         // 2. PERBAIKAN: Kondisi untuk SK Aktif Kuliah Kembali
                                         elseif (strpos($namaSurat, 'aktif') !== false) {
-                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'];
+                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
                                         }
                                         // 3. Kondisi Default untuk Surat Riset / Lainnya
                                         else {
-                                            $linkUnduh = "generate_balasan_fakultas.php?id=" . $row['id_surat'];
+                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
                                         }
                                         ?>
 
@@ -274,10 +275,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             <?php endif; ?>
     </section>
 
-    <footer class="footer-form-minimal">
-        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
-    </footer>
-
     <script>
         //fungsi dropdown menu user
         document.addEventListener('DOMContentLoaded', function() {
@@ -298,7 +295,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             });
         });
     </script>
-
 </body>
 
 </html>

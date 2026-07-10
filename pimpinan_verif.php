@@ -2,6 +2,7 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
     exit;
@@ -16,8 +17,6 @@ $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
-
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
 
 $pimpinan = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT *
@@ -43,6 +42,18 @@ if (strpos($jabatan, 'wadek 1') !== false || strpos($jabatan, 'wakil dekan 1') !
     $status_target = '';
 }
 
+$search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
+$search_sql = "";
+
+if (!empty($search)) {
+    $search_sql = " AND (
+        m.nama_mhs LIKE '%$search%' OR 
+        m.npm LIKE '%$search%' OR 
+        p.nama_prodi LIKE '%$search%' OR 
+        js.nama_surat LIKE '%$search%'
+    )";
+}
+
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.id_surat,
@@ -51,13 +62,14 @@ $query = mysqli_query($koneksi, "
         sp.status_akhir,
         m.nama_mhs,
         m.npm,
-        p.nama_prodi, /* <-- PERBAIKAN 1: Ganti m.prodi menjadi p.nama_prodi */
+        p.nama_prodi, 
         js.nama_surat
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    JOIN prodi p ON m.id_prodi = p.id_prodi /* <-- PERBAIKAN 2: Tambahkan tabel prodi */
-    WHERE sp.status_akhir = '$status_target'
+    JOIN prodi p ON m.id_prodi = p.id_prodi 
+    WHERE sp.status_akhir = '$status_target' 
+    $search_sql 
     ORDER BY sp.tanggal_pengajuan DESC
 ");
 ?>
@@ -74,41 +86,6 @@ $query = mysqli_query($koneksi, "
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-
-    <style>
-        .pimpinan-content {
-            padding: 130px 7% 60px;
-            background: #f3f4f6;
-            min-height: 100vh;
-        }
-
-        .pimpinan-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
-        }
-
-        .pimpinan-header h2 {
-            color: #2c4664;
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-
-        .pimpinan-header p {
-            margin-bottom: 25px;
-            color: #64748b;
-        }
-
-        .badge-warning {
-            background: #fef3c7;
-            color: #92400e;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-    </style>
 </head>
 
 <body>
@@ -141,57 +118,66 @@ $query = mysqli_query($koneksi, "
         </div>
     </nav>
 
-    <section class="pimpinan-content">
-        <div class="pimpinan-header">
+    <section id="daftar-surat" class="daftar-surat">
+        <div class="daftar-surat-header">
             <h2>Disposisi & Verifikasi Permohonan</h2>
         </div>
 
-        <div class="pimpinan-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Tanggal</th>
-                        <th>Mahasiswa</th>
-                        <th>NPM</th>
-                        <th>Prodi</th>
-                        <th>Jenis Surat</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
+        <div class="table-wrapper" id="template-surat">
+            <form method="GET" action="" class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" id="searchSurat" class="search-input"
+                    placeholder="Cari..."
+                    value="<?= htmlspecialchars($search); ?>">
+                <button type="submit"></button>
+            </form>
 
-                <tbody>
-                    <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-                        <?php $no = 1;
-                        while ($row = mysqli_fetch_assoc($query)) { ?>
+            <div class="riwayat-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Tanggal & Waktu</th>
+                            <th>Mahasiswa</th>
+                            <th>NPM</th>
+                            <th>Prodi</th>
+                            <th>Jenis Surat</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <?php if ($query && mysqli_num_rows($query) > 0) { ?>
+                            <?php $no = 1;
+                            while ($row = mysqli_fetch_assoc($query)) { ?>
+                                <tr>
+                                    <td><?= $no++; ?></td>
+                                    <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
+                                    <td><?= htmlspecialchars($row['npm']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
+                                    <td><?= htmlspecialchars($row['nama_surat']); ?></td>
+                                    <td>
+                                        <span class="badge-warning"><?= htmlspecialchars($row['status_akhir']); ?></span>
+                                    </td>
+                                    <td>
+                                        <a href="pimpinan_detail.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
+                                            Detail
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        <?php } else { ?>
                             <tr>
-                                <td><?= $no++; ?></td>
-                                <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
-                                <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                <td><?= htmlspecialchars($row['npm']); ?></td>
-                                <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
-                                <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-                                <td>
-                                    <span class="badge-warning"><?= htmlspecialchars($row['status_akhir']); ?></span>
-                                </td>
-                                <td>
-                                    <a href="pimpinan_detail.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
-                                        Detail
-                                    </a>
+                                <td colspan="8" style="text-align:center;">
+                                    Tidak ada surat yang menunggu verifikasi Anda.
                                 </td>
                             </tr>
                         <?php } ?>
-                    <?php } else { ?>
-                        <tr>
-                            <td colspan="8" style="text-align:center;">
-                                Tidak ada surat yang menunggu verifikasi Anda.
-                            </td>
-                        </tr>
-                    <?php } ?>
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
     </section>
 
     <script>

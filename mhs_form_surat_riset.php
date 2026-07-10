@@ -2,14 +2,23 @@
 session_start();
 include "koneksi.php";
 
+$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
-$id_mhs = $_SESSION['id_mhs'];
-$id_jenis = $_GET['id_jenis'] ?? 1;
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
 
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$id_jenis = $_GET['id_jenis'] ?? 1;
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE id_jenis = '$id_jenis'
@@ -74,17 +83,6 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -99,14 +97,13 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
     </nav>
 
     <div class="generate-wrapper">
-
         <div class="page-header">
             <h1><?= htmlspecialchars($surat['nama_surat']); ?></h1>
             <p>Silakan lengkapi data berikut untuk membuat surat izin riset.</p>
         </div>
 
         <div class="generate-card">
-            <form action="generate_surat_riset.php" method="POST" enctype="multipart/form-data">
+            <form action="generate_surat_riset_mhs.php" method="POST" enctype="multipart/form-data" onsubmit="confirmAjukanSurat(event)">
                 <input type="hidden" name="id_jenis" value="<?= htmlspecialchars($id_jenis); ?>">
 
                 <div class="form-group">
@@ -188,13 +185,13 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                     <?php } ?>
                 </div>
 
-                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb;">
+                <hr class="hr-separator">
 
                 <h3 class="section-title">Dokumen Pendukung</h3>
 
                 <div class="form-group">
                     <label>Proposal Penelitian</label>
-                    <input type="file" name="proposal_penelitian" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <input type="file" name="proposal_penelitian" accept=".pdf" required>
                 </div>
 
                 <div class="form-group">
@@ -220,6 +217,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
     </footer>
 
     <script>
+        //fungsi dropdown user navbar
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
@@ -238,12 +236,13 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
             });
         });
 
+        //fungsi konfirmasi button kembali
         function confirmBatalAjukanSurat(event, url) {
             event.preventDefault();
 
             Swal.fire({
                 title: 'Batalkan pengisian formulir?',
-                text: "Perubahan yang Anda lakukan tidak akan tersimpan.",
+                text: "Perubahan yang dilakukan tidak akan tersimpan.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -258,6 +257,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
             });
         }
 
+        //fungsi konfirmasi button ajukan surat
         function confirmAjukanSurat(event) {
             event.preventDefault();
 
@@ -265,7 +265,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
 
             Swal.fire({
                 title: 'Konfirmasi Pengajuan Surat',
-                text: "Pastikan semua data dan dokumen pendukung yang Anda unggah sudah benar. Data yang telah dikirim tidak dapat diubah kembali.",
+                text: "Pastikan data sudah benar. Data tidak dapat diubah setelah dikirim.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#1e3a8a',

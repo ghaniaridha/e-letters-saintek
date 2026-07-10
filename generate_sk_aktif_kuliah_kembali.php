@@ -2,16 +2,13 @@
 session_start();
 include "koneksi.php";
 
-
+$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
     exit;
 }
 
-$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_POST['id_jenis'];
-
-// Menangkap input form dengan Null Coalescing Operator ??
 $semester         = (int)($_POST['semester'] ?? 0);
 $lama_cuti        = mysqli_real_escape_string($koneksi, $_POST['lama_cuti'] ?? '');
 $ta_mulai_cuti    = mysqli_real_escape_string($koneksi, $_POST['tahun_akademik_ganjil_cuti'] ?? '');
@@ -19,15 +16,11 @@ $ta_selesai_cuti  = mysqli_real_escape_string($koneksi, $_POST['tahun_akademik_g
 $tahun_akademik   = mysqli_real_escape_string($koneksi, $_POST['tahun_akademik'] ?? '');
 $id_pa            = (int)($_POST['id_pa'] ?? 0);
 
-// VALIDASI PENTING: Cegah error Foreign Key jika PA belum diatur
 if ($id_pa <= 0) {
     echo "<script>alert('Gagal: Data Pembimbing Akademik tidak ditemukan. Pastikan PA sudah diatur.'); history.back();</script>";
     exit;
 }
 
-/* =======================================================================
-   TAHAP 1: PROSES UPLOAD FILE (Surat Keterangan Cuti)
-   ======================================================================= */
 $folder_upload = "uploads/dokumen_hss/";
 
 if (!is_dir($folder_upload)) {
@@ -63,12 +56,10 @@ function uploadFile($field, $folder_upload)
     return $nama_baru;
 }
 
-// Eksekusi fungsi upload menggunakan key 'cuti' sesuai atribut name="..." pada HTML Anda
 $file_cuti = uploadFile('sk_cuti', $folder_upload);
 
 $tanggal = date('Y-m-d H:i:s');
 
-// 2. Insert ke tabel Master (surat_pengajuan)
 $query_utama = "INSERT INTO surat_pengajuan (id_mhs, id_jenis, nomor_surat, tanggal_pengajuan, status_akhir, status_pimpinan) 
                 VALUES ('$id_mhs', '$id_jenis', '', '$tanggal', 'Menunggu Pembimbing Akademik', 'Menunggu')";
 

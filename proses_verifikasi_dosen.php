@@ -2,16 +2,15 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'];
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'];
 $id_surat = $_POST['id_surat'];
 $aksi = $_POST['aksi'];
 
-// PERBAIKAN: Gunakan JOIN jamak agar bisa membaca data Surat Riset DAN SK Aktif Kuliah
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT 
         sp.*, 
@@ -30,15 +29,16 @@ if (!$data) {
 
 $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
 
-// --- LOGIKA SETUJUI ---
+// Logika setuju
 if ($aksi == 'setujui') {
-
-    // 1. Logika untuk Dospem 2 (Verifikator Pertama Surat Riset)
+    // Logika untuk Dospem 2 (Verifikator Pertama Surat Riset)
     if (isset($data['id_pb2']) && $data['id_pb2'] == $id_dosen && $data['status_pb2'] == 'Menunggu') {
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Dospem 1' WHERE id_surat = '$id_surat'");
         mysqli_query($koneksi, "UPDATE detail_surat_riset SET status_pb2 = 'Disetujui', ttd_pb2 = '$hash_ttd' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan disetujui. Surat diteruskan ke Dospem 1.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil disetujui. Surat diteruskan ke Dospem 1.';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 
@@ -47,31 +47,34 @@ if ($aksi == 'setujui') {
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Admin' WHERE id_surat = '$id_surat'");
         mysqli_query($koneksi, "UPDATE detail_surat_riset SET status_pb1 = 'Disetujui', ttd_pb1 = '$hash_ttd' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan disetujui. Surat diteruskan ke Admin.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil disetujui. Surat diteruskan ke Admin.';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 
-    // PERBAIKAN: 3. Logika untuk Pembimbing Akademik (SK Aktif Kuliah Kembali)
+    // 3. Logika untuk Pembimbing Akademik (SK Aktif Kuliah Kembali)
     if (isset($data['id_pa']) && $data['id_pa'] == $id_dosen && $data['status_pa'] == 'Menunggu') {
-        // Update status master menjadi Menunggu Admin agar sinkron dengan timeline pelacakan
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Admin' WHERE id_surat = '$id_surat'");
-        // Update status detail PA dan simpan tanda tangan digital (hash)
         mysqli_query($koneksi, "UPDATE detail_aktif_kuliah SET status_pa = 'Disetujui', ttd_pa = '$hash_ttd' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan SK Aktif Kuliah disetujui. Surat diteruskan ke Admin.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil disetujui. Surat diteruskan ke Admin.';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 }
 
-// --- LOGIKA TOLAK ---
+// Logika tolak
 if ($aksi == 'tolak') {
-
     // 1. Logika Tolak oleh Dospem 2
     if (isset($data['id_pb2']) && $data['id_pb2'] == $id_dosen && $data['status_pb2'] == 'Menunggu') {
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Ditolak Dospem 2' WHERE id_surat = '$id_surat'");
         mysqli_query($koneksi, "UPDATE detail_surat_riset SET status_pb2 = 'Ditolak' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan ditolak oleh Pembimbing 2.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil ditolak';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 
@@ -80,19 +83,26 @@ if ($aksi == 'tolak') {
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Ditolak Dospem 1' WHERE id_surat = '$id_surat'");
         mysqli_query($koneksi, "UPDATE detail_surat_riset SET status_pb1 = 'Ditolak' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan ditolak oleh Pembimbing 1.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil ditolak';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 
-    // PERBAIKAN: 3. Logika Tolak oleh Pembimbing Akademik (SK Aktif Kuliah Kembali)
+    // 3. Logika Tolak oleh Pembimbing Akademik (SK Aktif Kuliah Kembali)
     if (isset($data['id_pa']) && $data['id_pa'] == $id_dosen && $data['status_pa'] == 'Menunggu') {
         mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Ditolak Pembimbing Akademik' WHERE id_surat = '$id_surat'");
         mysqli_query($koneksi, "UPDATE detail_aktif_kuliah SET status_pa = 'Ditolak' WHERE id_surat = '$id_surat'");
 
-        echo "<script>alert('Permohonan SK Aktif Kuliah ditolak oleh Pembimbing Akademik.'); window.location='dosen_permohonan.php';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil ditolak';
+        header("Location: dosen_riwayat.php");
         exit;
     }
 }
 
 // Jika gagal melewati semua pengecekan
-echo "<script>alert('Aksi tidak valid atau Anda tidak berhak memverifikasi surat ini.'); window.location='dosen_permohonan.php';</script>";
+$_SESSION['status'] = 'error';
+$_SESSION['pesan']  = 'Aksi tidak valid atau Anda tidak berhak memverifikasi surat ini.';
+header("Location: dosen_permohonan.php");
+exit;

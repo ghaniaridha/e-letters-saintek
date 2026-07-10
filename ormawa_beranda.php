@@ -14,6 +14,8 @@ include "koneksi.php";
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -158,29 +160,35 @@ include "koneksi.php";
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
-                    <span>Jl. Letkol H. Endro Suratmin, Sukarame, Bandar Lampung.</span>
+                    <span>Jl. Endro Suratmin No.38, Sukarame, Kec. Sukarame, Kota Bandar Lampung, Lampung 35131</span>
                 </div>
             </div>
 
-            <div class="footer-col links-col">
-                <h4>Tautan Cepat</h4>
-                <ul>
-                    <li><a href="#home">Beranda</a></li>
-                    <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#status-info">Lacak Surat</a></li>
-                    <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
-                </ul>
+            <div class="footer-col map-col">
+                <h4>Lokasi Kami</h4>
+                <div class="map-wrapper">
+                    <iframe
+                        src="https://maps.google.com/maps?q=Gedung%20Fakultas%20Sains%20dan%20Teknologi%20Tower%201%20UIN%20Raden%20Intan%20Lampung&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
             </div>
 
             <div class="footer-col contact-col">
-                <h4>Pusat Bantuan</h4>
+                <h4>INFORMASI & KONTAK</h4>
                 <div class="contact-item">
-                    <i class="fa-solid fa-envelope"></i>
-                    <span>akademik.fst@radenintan.ac.id</span>
+                    <i class="fa-brands fa-instagram"></i>
+                    <a href="https://www.instagram.com/saintek.radenintan" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan</span>
+                    </a>
                 </div>
                 <div class="contact-item">
-                    <i class="fa-solid fa-phone"></i>
-                    <span>(0721) 1234567</span>
+                    <i class="fa-solid fa-globe"></i>
+                    <a href="https://saintek.radenintan.ac.id" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan.ac.id</span>
+                    </a>
                 </div>
                 <div class="contact-item">
                     <i class="fa-solid fa-clock"></i>
@@ -194,7 +202,6 @@ include "koneksi.php";
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const userBtn = document.getElementById('user-btn');

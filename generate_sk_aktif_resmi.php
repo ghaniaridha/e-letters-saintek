@@ -9,7 +9,6 @@ if (!isset($_SESSION['role'])) {
 
 $id_surat = $_GET['id'] ?? '';
 
-// 1. Ambil data surat beserta detail aktif kuliah
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT 
         sp.*,
@@ -35,12 +34,10 @@ if (!$data) {
     exit;
 }
 
-// 2. Logika Penomoran Surat (Jika belum ada)
+// Logika Penomoran Surat 
 if (empty($data['nomor_surat'])) {
     $tahun = date('Y');
 
-    // Kueri ini sekarang menghitung TOTAL surat yang sudah selesai secara global, 
-    // tanpa mempedulikan jenis suratnya.
     $cekNomor = mysqli_fetch_assoc(mysqli_query($koneksi, "
         SELECT COUNT(*) AS total
         FROM surat_pengajuan
@@ -48,10 +45,9 @@ if (empty($data['nomor_surat'])) {
         AND YEAR(tanggal_pengajuan) = '$tahun'
     "));
 
-    // Tambahkan 1 karena kita sedang membuat nomor untuk surat baru
     $nomorUrut = str_pad($cekNomor['total'] + 1, 3, '0', STR_PAD_LEFT);
 
-    // Sesuaikan format nomor surat Anda
+    // Format Surat
     $nomorSurat = "B-" . $nomorUrut . "/Un.16/DST/PP.009/" . $tahun;
 
     mysqli_query($koneksi, "
@@ -64,10 +60,9 @@ if (empty($data['nomor_surat'])) {
 }
 
 if (isset($_POST['kirim_balasan'])) {
-    // 1. Tentukan nama file final (gunakan ID surat agar unik)
+    // Nama File
     $nama_file = "surat_resmi_sk_aktif_" . $id_surat . "_" . time() . ".pdf";
 
-    // 2. Pastikan file_surat_final diperbarui
     $update_query = mysqli_query($koneksi, "
         UPDATE surat_pengajuan
         SET 
@@ -100,6 +95,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
     <title>SK Resmi Aktif Kuliah Kembali</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: "Times New Roman", serif;
@@ -149,6 +146,23 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
+
     <div class="surat">
         <div class="kop">
             <table style="width:100%">

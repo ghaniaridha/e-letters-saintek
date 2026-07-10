@@ -14,18 +14,18 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         sp.*,
         m.nama_mhs,
         m.npm,
-        p.nama_prodi,              /* Mengambil nama prodi dari tabel prodi */
+        p.nama_prodi,              
         js.nama_surat,
-        dsm.semester,              /* Mengambil data spesifik dari detail magang */
+        dsm.semester,              
         dsm.lokasi_magang,
         dsm.tanggal_mulai_magang,
         dsm.tanggal_selesai_magang,
         dsm.surat_ditujukan
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
-    JOIN prodi p ON m.id_prodi = p.id_prodi /* JOIN ke tabel prodi */
+    JOIN prodi p ON m.id_prodi = p.id_prodi 
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat /* JOIN ke detail magang */
+    LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat 
     WHERE sp.id_surat = '$id_surat'
 "));
 
@@ -35,7 +35,7 @@ if (!$data) {
 }
 
 if (isset($_POST['kirim_balasan'])) {
-    $nama_file = "surat_balasan_magang_" . $id_surat . "_" . time() . ".html";
+    $nama_file = "surat_resmi_izin_magang_" . $id_surat . "_" . time() . ".pdf";
 
     mysqli_query($koneksi, "
         UPDATE surat_pengajuan
@@ -47,10 +47,9 @@ if (isset($_POST['kirim_balasan'])) {
         WHERE id_surat = '$id_surat'
     ");
 
-    echo "<script>
-        alert('Surat balasan berhasil disetujui dan dikirim ke mahasiswa.');
-        window.location='pimpinan_verif.php';
-    </script>";
+    $_SESSION['status'] = 'success';
+    $_SESSION['pesan']  = 'Surat balasan berhasil dibuat dan dikirim ke mahasiswa.';
+    header("Location: pimpinan_riwayatphp");
     exit;
 }
 
@@ -102,6 +101,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
     <title>Surat Balasan Magang</title>
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             background: #f3f4f6;
@@ -212,9 +213,24 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
 
     <div class="surat">
-
         <div class="kop">
             <table style="width:100%; border:none;">
                 <tr>

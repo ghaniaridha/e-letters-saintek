@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'];
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'];
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
 $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
@@ -18,9 +18,6 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
-// PERBAIKAN: Menambahkan LEFT JOIN ke detail_surat_riset (dsr) 
-// dan mengganti kolom pencarian ke id_pb1 / id_pb2
-// PERBAIKAN: Menambahkan LEFT JOIN jamak dan kondisi untuk Pembimbing Akademik
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.*,
@@ -32,14 +29,14 @@ $query = mysqli_query($koneksi, "
         dsr.id_pb2,
         dsr.status_pb1,
         dsr.status_pb2,
-        dak.id_pa,          -- TAMBAHAN: Tarik ID Pembimbing Akademik
-        dak.status_pa       -- TAMBAHAN: Tarik Status verifikasi PA
+        dak.id_pa,          
+        dak.status_pa       
     FROM surat_pengajuan sp
     JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     JOIN prodi p ON m.id_prodi = p.id_prodi
     LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
-    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat -- TAMBAHAN: Join tabel aktif kuliah
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat 
     WHERE
     (
         -- Skenario A: Dosen adalah PB2 dan sudah tidak 'Menunggu'
@@ -73,9 +70,28 @@ $query = mysqli_query($koneksi, "
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="dosen-page">
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
+
     <nav class="navbar">
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
@@ -135,15 +151,14 @@ $query = mysqli_query($koneksi, "
                         while ($row = mysqli_fetch_assoc($query)) { ?>
 
                             <?php
-                            // PERBAIKAN: Penentuan "Status Anda" yang lebih dinamis dan aman
                             if (isset($row['id_pb1']) && $row['id_pb1'] == $id_dosen) {
                                 $statusAnda = $row['status_pb1'];
                             } elseif (isset($row['id_pb2']) && $row['id_pb2'] == $id_dosen) {
                                 $statusAnda = $row['status_pb2'];
                             } elseif (isset($row['id_pa']) && $row['id_pa'] == $id_dosen) {
-                                $statusAnda = $row['status_pa']; // Tangkap status milik Pembimbing Akademik
+                                $statusAnda = $row['status_pa'];
                             } else {
-                                $statusAnda = '-'; // Default jika tidak ada yang cocok
+                                $statusAnda = '-';
                             }
                             ?>
                             <tr>
@@ -155,9 +170,7 @@ $query = mysqli_query($koneksi, "
                                 <td><?= htmlspecialchars($statusAnda); ?></td>
                                 <td><?= htmlspecialchars($row['status_akhir']); ?></td>
                                 <td>
-                                    <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
-                                        Detail
-                                    </a>
+                                    <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>&asal=riwayat" class="btn btn-detail">Detail</a>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -173,7 +186,6 @@ $query = mysqli_query($koneksi, "
             </table>
         </div>
     </section>
-
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -192,7 +204,6 @@ $query = mysqli_query($koneksi, "
             });
         });
     </script>
-
 </body>
 
 </html>

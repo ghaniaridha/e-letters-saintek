@@ -144,9 +144,7 @@ $query = mysqli_query($koneksi, "
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                 <td><?= htmlspecialchars($row['status_akhir']); ?></td>
                                 <td>
-                                    <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
-                                        Detail
-                                    </a>
+                                    <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>&asal=riwayat" class="btn btn-detail">Detail</a>
                                 </td>
                             </tr>
                         <?php } ?>

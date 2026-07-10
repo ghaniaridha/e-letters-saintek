@@ -2,12 +2,21 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
+$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
+$idLogin = $_SESSION['nama'] ?? '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
 
 $qMenunggu = mysqli_query($koneksi, "
     SELECT COUNT(*) AS total
@@ -44,16 +53,6 @@ $qDitolak = mysqli_query($koneksi, "
 $menunggu = mysqli_fetch_assoc($qMenunggu)['total'] ?? 0;
 $disetujui = mysqli_fetch_assoc($qDisetujui)['total'] ?? 0;
 $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
-
-$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
-$idLogin = $_SESSION['nama'] ?? '';
-$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
-
-$inisial = '';
-$namaParts = explode(' ', $namaLengkap);
-if (!empty($namaParts)) {
-    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-}
 ?>
 
 <!DOCTYPE html>
@@ -67,6 +66,8 @@ if (!empty($namaParts)) {
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -191,29 +192,35 @@ if (!empty($namaParts)) {
                     <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                     <div class="contact-item">
                         <i class="fa-solid fa-location-dot"></i>
-                        <span>Jl. Letkol H. Endro Suratmin, Sukarame, Bandar Lampung.</span>
+                        <span>Jl. Endro Suratmin No.38, Sukarame, Kec. Sukarame, Kota Bandar Lampung, Lampung 35131</span>
                     </div>
                 </div>
 
-                <div class="footer-col links-col">
-                    <h4>Tautan Cepat</h4>
-                    <ul>
-                        <li><a href="#home">Beranda</a></li>
-                        <li><a href="#services">Layanan Akademik</a></li>
-                        <li><a href="#status-info">Lacak Surat</a></li>
-                        <li><a href="mhs_riwayat.php">Riwayat Permohonan</a></li>
-                    </ul>
+                <div class="footer-col map-col">
+                    <h4>Lokasi Kami</h4>
+                    <div class="map-wrapper">
+                        <iframe
+                            src="https://maps.google.com/maps?q=Gedung%20Fakultas%20Sains%20dan%20Teknologi%20Tower%201%20UIN%20Raden%20Intan%20Lampung&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
                 </div>
 
                 <div class="footer-col contact-col">
-                    <h4>Pusat Bantuan</h4>
+                    <h4>INFORMASI & KONTAK</h4>
                     <div class="contact-item">
-                        <i class="fa-solid fa-envelope"></i>
-                        <span>akademik.fst@radenintan.ac.id</span>
+                        <i class="fa-brands fa-instagram"></i>
+                        <a href="https://www.instagram.com/saintek.radenintan" target="_blank" class="footer-clickable-link">
+                            <span>saintek.radenintan</span>
+                        </a>
                     </div>
                     <div class="contact-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span>(0721) 1234567</span>
+                        <i class="fa-solid fa-globe"></i>
+                        <a href="https://saintek.radenintan.ac.id" target="_blank" class="footer-clickable-link">
+                            <span>saintek.radenintan.ac.id</span>
+                        </a>
                     </div>
                     <div class="contact-item">
                         <i class="fa-solid fa-clock"></i>
@@ -226,8 +233,6 @@ if (!empty($namaParts)) {
                 <p>&copy; 2026 Fakultas Sains dan Teknologi UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
             </div>
         </footer>
-
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {

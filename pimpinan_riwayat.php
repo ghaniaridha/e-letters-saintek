@@ -2,31 +2,11 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
     exit;
 }
-
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
-
-$query_riwayat = mysqli_query($koneksi, "
-    SELECT
-        sp.*,
-        m.nama_mhs,
-        m.npm,
-        p.nama_prodi, /* Mengambil nama prodi dari tabel prodi */
-        js.nama_surat
-    FROM surat_pengajuan sp
-    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
-    JOIN prodi p ON m.id_prodi = p.id_prodi /* JOIN ke tabel prodi */
-    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    WHERE
-        -- Filter berdasarkan status pimpinan atau kondisi TTD
-        (sp.ttd_pimpinan IS NOT NULL AND sp.ttd_pimpinan != '')
-        OR sp.status_pimpinan = 'Disetujui'
-        OR sp.status_akhir LIKE '%Ditolak Pimpinan%'
-    ORDER BY sp.tanggal_pengajuan DESC
-");
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'pimpinan';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -37,6 +17,39 @@ $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
+
+$search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
+$search_sql = "";
+
+if (!empty($search)) {
+    $search_sql = " AND (
+        m.nama_mhs LIKE '%$search%' OR 
+        m.npm LIKE '%$search%' OR 
+        p.nama_prodi LIKE '%$search%' OR 
+        js.nama_surat LIKE '%$search%' OR
+        sp.status_akhir LIKE '%$search%'
+    )";
+}
+
+$query_riwayat = mysqli_query($koneksi, "
+    SELECT
+        sp.*,
+        m.nama_mhs,
+        m.npm,
+        p.nama_prodi,
+        js.nama_surat
+    FROM surat_pengajuan sp
+    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    JOIN prodi p ON m.id_prodi = p.id_prodi
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    WHERE (
+        (sp.ttd_pimpinan IS NOT NULL AND sp.ttd_pimpinan != '')
+        OR sp.status_pimpinan = 'Disetujui'
+        OR sp.status_akhir LIKE '%Ditolak Pimpinan%'
+    )
+    $search_sql
+    ORDER BY sp.tanggal_pengajuan DESC
+");
 ?>
 
 <!DOCTYPE html>
@@ -48,61 +61,8 @@ if (!empty($namaParts)) {
     <title>Riwayat Disposisi & Verifikasi</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-
-    <style>
-        .riwayat-wrapper {
-            padding: 120px 7% 60px;
-            background: #f3f4f6;
-            min-height: 100vh;
-        }
-
-        .riwayat-title {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .riwayat-title h2 {
-            color: #1e3a8a;
-            font-size: 2rem;
-        }
-
-        .riwayat-card {
-            background: #fff;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
-            overflow-x: auto;
-        }
-
-        .riwayat-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1000px;
-        }
-
-        .riwayat-table th {
-            background: #f3f4f6;
-            padding: 12px;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .riwayat-table td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }
-
-        .badge-riwayat {
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-    </style>
 </head>
 
 <body>
@@ -135,19 +95,25 @@ if (!empty($namaParts)) {
         </div>
     </nav>
 
-    <section class="riwayat-wrapper">
-        <div class="riwayat-title">
+    <section id="daftar-surat" class="daftar-surat">
+        <div class="daftar-surat-header">
             <h2>Riwayat Disposisi & Verifikasi</h2>
         </div>
 
-        <div class="riwayat-card">
-            <h3 style="margin-bottom:20px;">Daftar Surat yang Telah Diverifikasi</h3>
+        <div class="table-wrapper" id="template-surat">
+            <form method="GET" action="" class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" id="searchSurat" class="search-input"
+                    placeholder="Cari..."
+                    value="<?= htmlspecialchars($search); ?>">
+                <button type="submit" style="display: none;"></button>
+            </form>
 
             <table class="riwayat-table">
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Tanggal Pengajuan</th>
+                        <th>Tanggal & Waktu</th>
                         <th>Mahasiswa</th>
                         <th>NPM</th>
                         <th>Prodi</th>
@@ -162,7 +128,7 @@ if (!empty($namaParts)) {
                         <?php $no = 1;
                         while ($row = mysqli_fetch_assoc($query_riwayat)) { ?>
                             <?php
-                            $warna = '#10b981';
+                            $warna = '#276F27';
 
                             if (strpos($row['status_akhir'], 'Ditolak') !== false) {
                                 $warna = '#ef4444';
@@ -194,19 +160,35 @@ if (!empty($namaParts)) {
                                     </span>
                                 </td>
                                 <td>
-                                    <?php if (!empty($row['file_surat_final'])) { ?>
-                                        <a href="<?= $linkFile; ?>" target="_blank" class="btn btn-detail">
-                                            Lihat Surat
+                                    <?php
+                                    $isDisetujui = ($row['status_pimpinan'] == 'Disetujui' || $row['status_akhir'] == 'Selesai');
+
+                                    if ($isDisetujui):
+                                        $namaSurat = strtolower($row['nama_surat']);
+
+                                        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                        } elseif (strpos($namaSurat, 'aktif') !== false) {
+                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                        } else {
+                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                        }
+                                    ?>
+                                        <a href="<?= $linkUnduh; ?>" target="_blank" class="btn btn-detail">
+                                            <i class="fa-solid fa-eye"></i> Lihat Surat
                                         </a>
-                                    <?php } else { ?>
-                                        <span style="color:#94a3b8;">Belum tersedia</span>
-                                    <?php } ?>
+
+                                    <?php else: ?>
+                                        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
+                                            Belum disetujui
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php } ?>
                     <?php } else { ?>
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:20px;">
+                            <td colspan=" 8" style="text-align:center; padding:20px;">
                                 Belum ada riwayat disposisi/verifikasi.
                             </td>
                         </tr>

@@ -2,6 +2,7 @@
 session_start();
 include "koneksi.php";
 
+$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['nama']) || $_SESSION['role'] !== 'mahasiswa') {
     header("Location: index.php");
     exit;

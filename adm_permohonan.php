@@ -2,13 +2,16 @@
 session_start();
 include "koneksi.php";
 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
+
 $prodi           = $_GET['prodi'] ?? '';
 $id_jenis_filter = $_GET['id_jenis'] ?? '';
 $detail_id       = $_GET['detail'] ?? '';
 
-/* =======================================================================
-   1. PROSES ADMIN (LANJUTKAN / TOLAK)
-   ======================================================================= */
+/*Proses Lanjutkan/Tolak Permohonan*/
 if (isset($_POST['aksi_admin'])) {
     $id_surat = (int) $_POST['id_surat'];
     $aksi     = $_POST['aksi_admin'];
@@ -24,13 +27,13 @@ if (isset($_POST['aksi_admin'])) {
         if ($aksi == 'lanjut') {
             $namaSurat = strtolower($dataSurat['nama_surat']);
 
-            // Menentukan arah surat selanjutnya berdasarkan jenisnya
+            //Arah Surat Berdasarkan Jenis 
             if (strpos($namaSurat, 'riset') !== false || strpos($namaSurat, 'aktif') !== false) {
                 $statusBaru = 'Menunggu Wadek 1';
             } elseif (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                 $statusBaru = 'Menunggu Dekan';
             } else {
-                $statusBaru = 'Menunggu Dekan'; // Default jika tidak masuk kategori
+                $statusBaru = 'Menunggu Dekan'; //Default
             }
 
             mysqli_query($koneksi, "
@@ -39,7 +42,9 @@ if (isset($_POST['aksi_admin'])) {
                 WHERE id_surat = '$id_surat'
             ");
 
-            echo "<script>alert('Surat berhasil diteruskan ke $statusBaru'); window.location='adm_permohonan.php';</script>";
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Surat berhasil diteruskan ke $statusBaru';
+            header("Location: adm_riwayat_review.php");
             exit;
         }
 
@@ -50,34 +55,29 @@ if (isset($_POST['aksi_admin'])) {
                 WHERE id_surat = '$id_surat'
             ");
 
-            echo "<script>alert('Surat berhasil ditolak'); window.location='adm_permohonan.php';</script>";
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Surat berhasil ditolak';
+            header("Location: adm_riwayat_review.php");
             exit;
         }
     }
 }
 
-/* =======================================================================
-   2. PROSES HAPUS DATA
-   ======================================================================= */
+/*Proses Hapus Data*/
 if (isset($_GET['hapus'])) {
     $id = (int) $_GET['hapus'];
 
-    // Catatan: Jika database Anda menggunakan relasi tanpa ON DELETE CASCADE, 
-    // Anda mungkin perlu menghapus data di tabel detail dan lampiran terlebih dahulu.
     mysqli_query($koneksi, "DELETE FROM surat_pengajuan WHERE id_surat = $id");
 
     echo "<script>alert('Permohonan berhasil dihapus'); window.location='adm_permohonan.php';</script>";
     exit;
 }
 
-/* =======================================================================
-   3. FILTER PENCARIAN DATA
-   ======================================================================= */
+/*Filter Pencarian Data*/
 $where = "WHERE sp.status_akhir = 'Menunggu Admin'";
 
 if ($prodi != "") {
     $prodiAman = mysqli_real_escape_string($koneksi, $prodi);
-    // PERBAIKAN: Menggunakan m.id_prodi (Asumsi form select option valuenya adalah ID Prodi)
     $where .= " AND m.id_prodi = '$prodiAman'";
 }
 
@@ -89,9 +89,7 @@ if ($id_jenis_filter != "") {
 // Data untuk dropdown filter
 $jenisSurat = mysqli_query($koneksi, "SELECT * FROM jenis_surat ORDER BY nama_surat ASC");
 
-/* =======================================================================
-   4. QUERY DATA TABEL UTAMA
-   ======================================================================= */
+/*Query Utama*/
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.id_surat,
@@ -110,16 +108,13 @@ $query = mysqli_query($koneksi, "
     ORDER BY sp.tanggal_pengajuan DESC
 ");
 
-/* =======================================================================
-   5. QUERY DETAIL REVIEW (Jika tombol review diklik)
-   ======================================================================= */
+/*Query Detail Review*/
 $detail = null;
 $lampiran = [];
 
 if ($detail_id != "") {
     $detail_id = (int) $detail_id;
 
-    // Menarik semua data yang dibutuhkan, dari Riset, Magang, maupun Aktif Kuliah
     $query_detail = mysqli_query($koneksi, "
         SELECT 
             sp.*, 
@@ -158,7 +153,6 @@ if ($detail_id != "") {
 
     $detail = mysqli_fetch_assoc($query_detail);
 
-    // Mengambil data lampiran dari tabel lampiran_pengajuan
     if ($detail) {
         $q_lampiran = mysqli_query($koneksi, "
             SELECT ms.nama_syarat, lp.file_upload 
@@ -243,11 +237,8 @@ if ($detail_id != "") {
 </head>
 
 <body>
-
     <div class="admin-wrapper">
-
         <?php include "adm_sidebar.php"; ?>
-
         <main class="main-content">
 
             <div class="page-title">

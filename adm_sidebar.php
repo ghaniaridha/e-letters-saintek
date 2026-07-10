@@ -1,15 +1,14 @@
 <div class="sidebar">
     <div class="sidebar-logo">
-        <h2>ADMIN SIPATU<br>FST UIN RIL</h2>
-        <p>Sistem Informasi Pengajuan Surat Terpadu</p>
+        <img src="images/logo2.png" alt="Logo SIPATU FST UIN RIL" class="logo-img">
     </div>
 
     <a href="adm_dashboard.php">
-        <i class="fa-solid fa-house"></i> Dashboard
+        <i class="fa-solid fa-house"></i> Dasbor
     </a>
 
     <a href="adm_template_surat.php">
-        <i class="fa-solid fa-file-word"></i> Template Surat
+        <i class="fa-solid fa-file-word"></i> Templat Surat
     </a>
 
     <a href="adm_permohonan.php">
@@ -31,7 +30,7 @@
 
     <a href="adm_riwayat_review.php">
         <i class="fa-solid fa-clock-rotate-left"></i>
-        Riwayat Review
+        Riwayat Kelola Surat
     </a>
 
     <a href="adm_laporan_surat.php">

@@ -48,10 +48,25 @@ $query = mysqli_query($koneksi, "
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
 
     <div class="adm-wrapper">
         <?php include "adm_sidebar.php"; ?>
-
         <main class="main-content">
             <div class="page-title">
                 <h1>Riwayat Review Admin</h1>
@@ -134,7 +149,6 @@ $query = mysqli_query($koneksi, "
             </div>
         </main>
     </div>
-
 </body>
 
 </html>

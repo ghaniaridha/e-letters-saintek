@@ -2,15 +2,23 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'];
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'];
-$id_surat = $_GET['id'];
+$namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
+$idLogin = $_SESSION['nama'] ?? '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
 
-// PERBAIKAN 1: Tambahkan LEFT JOIN ke tabel detail_surat_riset
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$id_surat = $_GET['id'];
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT
         sp.*,
@@ -22,8 +30,8 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         -- Detail Surat Riset
         dsr.judul_skripsi,
         dsr.lokasi_penelitian,
-        dsr.id_pb1,         /* <-- PERBAIKAN: Tambahkan ini */
-        dsr.id_pb2,         /* <-- PERBAIKAN: Tambahkan ini */
+        dsr.id_pb1,         
+        dsr.id_pb2,         
         dsr.status_pb1,
         dsr.status_pb2,
         
@@ -33,7 +41,7 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         dsm.tanggal_selesai_magang,
         
         -- Detail SK Aktif Kuliah Kembali
-        dak.id_pa,          /* <-- PERBAIKAN: Tambahkan ini agar validasi PA juga bisa jalan */
+        dak.id_pa,          
         dak.lama_cuti,
         dak.ta_mulai_cuti,
         dak.ta_selesai_cuti,
@@ -58,7 +66,7 @@ if (!$data) {
     exit;
 }
 
-$boleh_verifikasi = false; // Inisialisasi default
+$boleh_verifikasi = false;
 
 // Skenario A: Jika Dosen ini adalah Pembimbing 2 Riset
 if (isset($data['id_pb2']) && $data['id_pb2'] == $id_dosen && $data['status_pb2'] == 'Menunggu') {
@@ -70,7 +78,7 @@ if (isset($data['id_pb1']) && $data['id_pb1'] == $id_dosen && isset($data['statu
     $boleh_verifikasi = true;
 }
 
-// PERBAIKAN: Skenario C: Jika Dosen ini adalah Pembimbing Akademik (SK Aktif Kuliah)
+// Skenario C: Jika Dosen ini adalah Pembimbing Akademik (SK Aktif Kuliah)
 if (isset($data['id_pa']) && $data['id_pa'] == $id_dosen && $data['status_pa'] == 'Menunggu') {
     $boleh_verifikasi = true;
 }
@@ -94,9 +102,9 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
         $file_lampiran['khs'] = $row_lamp['file_upload'];
     } elseif (strpos($nama_syarat, 'ukt') !== false) {
         $file_lampiran['ukt'] = $row_lamp['file_upload'];
-    } elseif (strpos($nama_syarat, 'ktm') !== false) {    // Tambahan untuk Surat Magang
+    } elseif (strpos($nama_syarat, 'ktm') !== false) {
         $file_lampiran['ktm'] = $row_lamp['file_upload'];
-    } elseif (strpos($nama_syarat, 'cuti') !== false) {   // Tambahan untuk SK Aktif Kuliah
+    } elseif (strpos($nama_syarat, 'cuti') !== false) {
         $file_lampiran['sk_cuti'] = $row_lamp['file_upload'];
     }
 }
@@ -112,241 +120,241 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="dosen-page">
+<body>
+    <nav class="navbar">
+        <a href="#" class="navbar-logo">
+            <img src="images/LOGO2.png" alt="navbar-logo">
+        </a>
 
-    <div class="admin-wrapper">
-        <main class="main-content">
+        <div class="navbar-nav">
+            <a href="dosen_beranda.php">Beranda</a>
+            <a href="dosen_permohonan.php">Verifikasi Permohonan</a>
+            <a href="dosen_beranda.php#riwayat">Informasi</a>
+            <a href="dosen_riwayat.php">Riwayat Verifikasi</a>
+        </div>
 
-            <div class="page-title">
-                <h1>Detail Permohonan Surat</h1>
-                <p>Periksa data permohonan sebelum melakukan verifikasi.</p>
-            </div>
+        <div class="navbar-extra">
+            <div class="user-menu-container">
+                <button id="user-btn" class="user-btn">
+                    <span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span>
+                </button>
 
-            <div class="table-card">
-
-                <h3>Data Permohonan</h3>
-                <br>
-
-                <table>
-                    <tr>
-                        <th>Jenis Surat</th>
-                        <td><?= htmlspecialchars($data['nama_surat']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Nama Mahasiswa</th>
-                        <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>NPM</th>
-                        <td><?= htmlspecialchars($data['npm']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Program Studi</th>
-                        <td><?= htmlspecialchars($data['nama_prodi']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Semester</th>
-                        <td><?= htmlspecialchars($data['semester'] ?? '-'); ?></td>
-                    </tr>
-
-                    <?php
-                    $namaSurat = strtolower($data['nama_surat']);
-
-                    if (strpos($namaSurat, 'riset') !== false) {
-                        // Kategori Surat Riset
-                    ?>
-                        <tr>
-                            <th>Judul Skripsi</th>
-                            <td><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Lokasi Penelitian</th>
-                            <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Surat Ditujukan Kepada</th>
-                            <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
-                        </tr>
-
-                    <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                        // Kategori Surat Magang
-                    ?>
-                        <tr>
-                            <th>Lokasi Magang</th>
-                            <td><?= htmlspecialchars($data['lokasi_magang'] ?? '-'); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Tanggal Pelaksanaan</th>
-                            <td>
-                                <?= htmlspecialchars($data['tanggal_mulai_magang'] ?? '-'); ?>
-                                s/d
-                                <?= htmlspecialchars($data['tanggal_selesai_magang'] ?? '-'); ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Surat Ditujukan Kepada</th>
-                            <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
-                        </tr>
-
-                    <?php } else if (strpos($namaSurat, 'aktif') !== false) {
-                        // Kategori SK Aktif Kuliah Kembali
-                    ?>
-                        <tr>
-                            <th>Lama Cuti</th>
-                            <td><?= htmlspecialchars($data['lama_cuti'] ?? '-'); ?> Semester</td>
-                        </tr>
-                        <tr>
-                            <th>Periode Masa Cuti</th>
-                            <td>
-                                Gasal: <?= htmlspecialchars($data['ta_mulai_cuti'] ?? '-'); ?> <br>
-                                Genap: <?= htmlspecialchars($data['ta_selesai_cuti'] ?? '-'); ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Tahun Akademik Aktif</th>
-                            <td><?= htmlspecialchars($data['tahun_akademik'] ?? '-'); ?></td>
-                        </tr>
-                    <?php } ?>
-
-                    <tr>
-                        <th>Status Saat Ini</th>
-                        <td><?= htmlspecialchars($data['status_akhir']); ?></td>
-                    </tr>
-                </table>
-
-                <br><br>
-
-                <h3>Dokumen Surat</h3>
-
-                <div style="
-    background:#f8fafc;
-    border:1px solid #e5e7eb;
-    border-radius:12px;
-    padding:20px;
-    margin-top:15px;
-    margin-bottom:20px;
-">
-                    <p>Klik tombol di bawah untuk melihat preview surat dan dokumen pendukung mahasiswa.</p>
-                    <br>
-
-                    <?php
-                    // LOGIKA PENENTUAN HALAMAN PREVIEW BERDASARKAN JENIS SURAT
-                    $filePreview = "preview_surat.php?id=" . $data['id_surat']; // Default untuk riset
-
-                    if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                        $filePreview = "preview_magang.php?id=" . $data['id_surat'];
-                    } else if (strpos($namaSurat, 'aktif') !== false) {
-                        $filePreview = "mhs_preview_sk_aktif.php?id=" . $data['id_surat'];
-                    }
-                    ?>
-
-                    <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
-                        Preview Surat
-                    </a>
-
-                    <?php
-                    /* ==========================================
-       TAMPILAN DOKUMEN KHUSUS SURAT RISET
-       ========================================== */
-                    if (strpos($namaSurat, 'riset') !== false) {
-                    ?>
-                        <?php if (!empty($file_lampiran['proposal'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['proposal']); ?>')">Proposal</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">Proposal Belum Ada</span>
-                        <?php } ?>
-
-                        <?php if (!empty($file_lampiran['khs'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')">KHS</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">KHS Belum Ada</span>
-                        <?php } ?>
-
-                        <?php if (!empty($file_lampiran['ukt'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')">Bukti UKT</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">Bukti UKT Belum Ada</span>
-                        <?php } ?>
-
-                    <?php
-                        /* ==========================================
-       TAMPILAN DOKUMEN KHUSUS SURAT MAGANG
-       ========================================== */
-                    } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                    ?>
-                        <?php if (!empty($file_lampiran['ktm'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ktm']); ?>')">KTM</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">KTM Belum Ada</span>
-                        <?php } ?>
-
-                        <?php if (!empty($file_lampiran['ukt'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')">Bukti UKT</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">Bukti UKT Belum Ada</span>
-                        <?php } ?>
-
-                        <?php if (!empty($file_lampiran['khs'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')">KHS</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">KHS Belum Ada</span>
-                        <?php } ?>
-
-                    <?php
-                        /* ==========================================
-       TAMPILAN DOKUMEN KHUSUS SK AKTIF KULIAH
-       ========================================== */
-                    } else if (strpos($namaSurat, 'aktif') !== false) {
-                    ?>
-                        <?php if (!empty($file_lampiran['sk_cuti'])) { ?>
-                            <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['sk_cuti']); ?>')">SK Cuti</a>
-                        <?php } else { ?>
-                            <span class="btn btn-delete">SK Cuti Belum Ada</span>
-                        <?php } ?>
-
-                    <?php } ?>
-
+                <div id="user-dropdown" class="dropdown-menu">
+                    <div class="user-info">
+                        <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
+                        <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
+                    </div>
                 </div>
-                <?php if ($boleh_verifikasi) { ?>
-                    <form action="proses_verifikasi_dosen.php" method="POST">
-                        <input type="hidden" name="id_surat" value="<?= $data['id_surat']; ?>">
-
-                        <button type="submit" name="aksi" value="setujui" class="btn btn-edit">
-                            Setujui
-                        </button>
-
-                        <button type="submit" name="aksi" value="tolak" class="btn btn-delete"
-                            onclick="return confirm('Yakin ingin menolak permohonan ini?')">
-                            Tolak
-                        </button>
-
-                        <a href="dosen_permohonan.php" class="btn btn-detail">
-                            Kembali
-                        </a>
-                    </form>
-                <?php } else { ?>
-                    <a href="dosen_permohonan.php" class="btn btn-detail">
-                        Kembali
-                    </a>
-                <?php } ?>
-
             </div>
+        </div>
+    </nav>
 
-        </main>
+    <div class="table-card">
+        <h3 class="section-title-verif">Detail Permohonan Surat Mahasiswa</h3>
+        <table class="table-detail">
+            <tr>
+                <th>Jenis Surat</th>
+                <td><?= htmlspecialchars($data['nama_surat']); ?></td>
+            </tr>
+            <tr>
+                <th>Nama Mahasiswa</th>
+                <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
+            </tr>
+            <tr>
+                <th>NPM</th>
+                <td><?= htmlspecialchars($data['npm']); ?></td>
+            </tr>
+            <tr>
+                <th>Program Studi</th>
+                <td><?= htmlspecialchars($data['nama_prodi']); ?></td>
+            </tr>
+            <tr>
+                <th>Semester</th>
+                <td><?= htmlspecialchars($data['semester'] ?? '-'); ?></td>
+            </tr>
+
+            <?php
+            $namaSurat = strtolower($data['nama_surat']);
+
+            if (strpos($namaSurat, 'riset') !== false) {
+                // Kategori Surat Riset
+            ?>
+                <tr>
+                    <th>Judul Skripsi</th>
+                    <td><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <th>Lokasi Penelitian</th>
+                    <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <th>Surat Ditujukan Kepada</th>
+                    <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
+                </tr>
+
+            <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                // Kategori Surat Magang
+            ?>
+                <tr>
+                    <th>Lokasi Magang</th>
+                    <td><?= htmlspecialchars($data['lokasi_magang'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <th>Tanggal Pelaksanaan</th>
+                    <td>
+                        <?= htmlspecialchars($data['tanggal_mulai_magang'] ?? '-'); ?>
+                        s/d
+                        <?= htmlspecialchars($data['tanggal_selesai_magang'] ?? '-'); ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Surat Ditujukan Kepada</th>
+                    <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
+                </tr>
+
+            <?php } else if (strpos($namaSurat, 'aktif') !== false) {
+                // Kategori SK Aktif Kuliah Kembali
+            ?>
+                <tr>
+                    <th>Lama Cuti</th>
+                    <td><?= htmlspecialchars($data['lama_cuti'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <th>Periode Masa Cuti</th>
+                    <td>
+                        Gasal: <?= htmlspecialchars($data['ta_mulai_cuti'] ?? '-'); ?> <br>
+                        Genap: <?= htmlspecialchars($data['ta_selesai_cuti'] ?? '-'); ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Tahun Akademik Aktif</th>
+                    <td><?= htmlspecialchars($data['tahun_akademik'] ?? '-'); ?></td>
+                </tr>
+            <?php } ?>
+
+            <tr>
+                <th>Status Saat Ini</th>
+                <td class="status-text-amber"><?= htmlspecialchars($data['status_akhir']); ?></td>
+            </tr>
+        </table>
+
+        <h3 class="section-title mt-4">Dokumen Pendukung</h3>
+
+        <div class="document-box">
+            <p><i class="fa-solid fa-file-circle-check" style="margin-right: 8px;"></i> Klik tombol di bawah untuk memeriksa lampiran mahasiswa sebelum melakukan verifikasi.</p>
+
+            <div class="document-buttons">
+                <?php
+                $filePreview = "preview_surat_riset_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+
+                if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                    $filePreview = "preview_surat_magang_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+                } else if (strpos($namaSurat, 'aktif') !== false) {
+                    $filePreview = "preview_sk_aktif_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+                }
+                ?>
+
+                <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
+                    <i class="fa-regular fa-eye"></i> Surat Permohonan
+                </a>
+
+                <?php
+                //surat riset
+                if (strpos($namaSurat, 'riset') !== false) {
+                ?>
+                    <?php if (!empty($file_lampiran['proposal'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['proposal']); ?>')"><i class="fa-solid fa-paperclip"></i>Proposal Penelitian</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">Proposal Penelitian Belum Ada</span>
+                    <?php } ?>
+
+                    <?php if (!empty($file_lampiran['khs'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')"><i class="fa-solid fa-paperclip"></i>KHS</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">KHS Belum Ada</span>
+                    <?php } ?>
+
+                    <?php if (!empty($file_lampiran['ukt'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')"><i class="fa-solid fa-paperclip"></i>Bukti Pembayaran UKT</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
+                    <?php } ?>
+
+                <?php
+                    //surat magang
+                } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                ?>
+                    <?php if (!empty($file_lampiran['ktm'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ktm']); ?>')"><i class="fa-solid fa-paperclip"></i>KTM</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">KTM Belum Ada</span>
+                    <?php } ?>
+
+                    <?php if (!empty($file_lampiran['ukt'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')"><i class="fa-solid fa-paperclip"></i>Bukti Pembayaran UKT</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
+                    <?php } ?>
+
+                    <?php if (!empty($file_lampiran['khs'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')"><i class="fa-solid fa-paperclip"></i>KHS</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">KHS Belum Ada</span>
+                    <?php } ?>
+
+                <?php
+                    //sk aktif kuliah
+                } else if (strpos($namaSurat, 'aktif') !== false) {
+                ?>
+                    <?php if (!empty($file_lampiran['sk_cuti'])) { ?>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['sk_cuti']); ?>')"><i class="fa-solid fa-paperclip"></i> SK Cuti</a>
+                    <?php } else { ?>
+                        <span class="btn-disabled">SK Cuti Belum Ada</span>
+                    <?php } ?>
+                <?php } ?>
+            </div>
+        </div>
+
+        <div class="action-panel">
+            <?php
+            $asal = $_GET['asal'] ?? 'permohonan';
+
+            if ($asal == 'riwayat') {
+                $link_kembali = 'dosen_riwayat.php';
+            } else {
+                $link_kembali = 'dosen_permohonan.php';
+            }
+            ?>
+
+            <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Kembali
+            </a>
+
+            <?php if ($boleh_verifikasi) { ?>
+                <form action="proses_verifikasi_dosen.php" method="POST" id="formVerifikasi">
+                    <input type="hidden" name="id_surat" value="<?= $data['id_surat']; ?>">
+
+                    <input type="hidden" name="aksi" id="aksiInput" value="">
+                    <button type="button" class="btn-styled btn-reject" onclick="konfirmasiAksi('tolak', 'Yakin ingin menolak permohonan ini?', 'error')">
+                        <i class="fa-solid fa-xmark"></i> Tolak
+                    </button>
+
+                    <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
+                        <i class="fa-solid fa-check"></i> Setujui
+                    </button>
+                </form>
+            <?php } ?>
+        </div>
     </div>
 
     <div id="modalPreview" class="modal-preview">
         <div class="modal-content-preview">
             <span class="close-preview" onclick="tutupPreview()">&times;</span>
-
-            <iframe
-                id="previewFrame"
-                width="100%"
-                height="600px"
-                style="border:none;">
-            </iframe>
+            <iframe id="previewFrame" width="100%" height="620px" style="border:none;"></iframe>
         </div>
     </div>
 
@@ -367,8 +375,25 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                 tutupPreview();
             }
         }
-    </script>
 
+        function konfirmasiAksi(aksi, pesan, icon) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: pesan,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: (aksi === 'setujui') ? '#10b981' : '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('aksiInput').value = aksi;
+                    document.getElementById('formVerifikasi').submit();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

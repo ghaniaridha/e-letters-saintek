@@ -2,6 +2,7 @@
 session_start();
 include "koneksi.php";
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
     exit;
@@ -18,7 +19,6 @@ if (!empty($namaParts)) {
 }
 
 $id_surat = $_GET['id'] ?? '';
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
 
 $query_detail = mysqli_query($koneksi, "
     SELECT 
@@ -68,7 +68,7 @@ if (!$data) {
 
 $namaSurat = strtolower($data['nama_surat']);
 
-// Penentuan Rute Preview Surat Secara Dinamis
+// Rute Surat Permohonan Mahasiswa
 if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
     $filePreview = "preview_magang.php?id=" . $data['id_surat'];
 } else if (strpos($namaSurat, 'aktif') !== false) {
@@ -77,59 +77,69 @@ if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== fals
     $filePreview = "preview_surat.php?id=" . $data['id_surat'];
 }
 
+// Aksi Setuju/Tolak Permoonan
 if (isset($_POST['aksi'])) {
     $aksi = $_POST['aksi'];
     $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
 
-    // Gunakan trim untuk menghindari bug spasi kosong pada database
     $status_skrg = trim($data['status_akhir']);
 
-    if ($aksi == 'setujui') {
+    // Aksi Setuju
+    // Kondisi Menunggu Wadek 1
+    if ($status_skrg == 'Menunggu Wadek 1') {
+        if (strpos($namaSurat, 'aktif') !== false) {
+            // SK Aktif Kuliah -> Selesai
+            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
 
-        // --- KONDISI: MENUNGGU WADEK 1 ---
-        if ($status_skrg == 'Menunggu Wadek 1') {
-            if (strpos($namaSurat, 'aktif') !== false) {
-                // SK Aktif Kuliah -> Selesai
-                mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-                echo "<script>alert('SK Aktif Kuliah disetujui.'); window.location='generate_sk_aktif_resmi.php?id=$id_surat';</script>";
-            } else {
-                // Surat Lain -> Surat Balasan
-                mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-                echo "<script>alert('Surat disetujui. Silakan buat surat balasan fakultas.'); window.location='generate_balasan_fakultas.php?id=$id_surat';</script>";
-            }
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
+            header("Location: generate_sk_aktif_resmi.php?id=$id_surat");
             exit;
-        }
+        } else {
+            // Surat Lain -> Surat Balasan
+            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
 
-        // --- KONDISI: MENUNGGU DEKAN ---
-        elseif ($status_skrg == 'Menunggu Dekan') {
-            if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-                echo "<script>alert('Surat disetujui. Silakan buat surat balasan.'); window.location='generate_balasan_magang.php?id=$id_surat';</script>";
-            } else {
-                mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-                echo "<script>alert('Surat berhasil disetujui.'); window.location='pimpinan_verif.php';</script>";
-            }
-            exit;
-        }
-
-        // --- KONDISI: MENUNGGU WADEK 2 ATAU KASUBAG ---
-        elseif ($status_skrg == 'Menunggu Wadek 2' || $status_skrg == 'Menunggu Kasubag') {
-            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Dekan', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-            echo "<script>alert('Surat berhasil disetujui dan diteruskan ke Dekan.'); window.location='pimpinan_verif.php';</script>";
-            exit;
-        }
-
-        // Jika status tidak terdeteksi
-        else {
-            echo "<script>alert('Status surat tidak valid (saat ini: $status_skrg).'); window.location='pimpinan_verif.php';</script>";
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
+            header("Location: generate_surat_riset_resmi.php?id=$id_surat");
             exit;
         }
     }
 
-    // --- AKSI TOLAK (Diletakkan SEJAJAR dengan setujui) ---
-    elseif ($aksi == 'tolak') {
-        mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Ditolak Pimpinan' WHERE id_surat = '$id_surat'");
-        echo "<script>alert('Surat berhasil ditolak.'); window.location='pimpinan_verif.php';</script>";
+    // Kondisi Menunggu Dekan
+    elseif ($status_skrg == 'Menunggu Dekan') {
+        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
+            header("Location: generate_surat_magang_resmi.php?id=$id_surat");
+            exit;
+        } else {
+            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
+            header("Location: pimpinan_riwayat.php");
+            exit;
+        }
+    }
+
+    // Kondisi Menunggu Wadek 2 atau Kasubbag TU
+    elseif ($status_skrg == 'Menunggu Wadek 2' || $status_skrg == 'Menunggu Kasubag') {
+        mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Dekan', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Surat berhasil disetujui dan diteruskan ke Dekan.';
+        header("Location: pimpinan_riwayat.php");
+        exit;
+    }
+
+    // Jika status tidak terdeteksi
+    else {
+        $_SESSION['status'] = 'error';
+        $_SESSION['pesan']  = "Status surat tidak valid (saat ini: $status_skrg).";
+        header("Location: pimpinan_verif.php");
         exit;
     }
 }
@@ -140,65 +150,17 @@ if (isset($_POST['aksi'])) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Detail Verifikasi Pimpinan</title>
+    <title>Detail Permohonan</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
-    <style>
-        .pimpinan-content {
-            padding: 130px 7% 60px;
-            background: #f3f4f6;
-            min-height: 100vh;
-        }
-
-        .pimpinan-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 5px 18px rgba(0, 0, 0, .08);
-        }
-
-        .action-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .modal-preview {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .65);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content-preview {
-            width: 88%;
-            max-width: 1050px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 14px;
-            position: relative;
-        }
-
-        .close-preview {
-            position: absolute;
-            right: 18px;
-            top: 8px;
-            font-size: 30px;
-            cursor: pointer;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
-
     <nav class="navbar">
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
@@ -227,119 +189,123 @@ if (isset($_POST['aksi'])) {
         </div>
     </nav>
 
-    <section class="pimpinan-content">
-        <div class="pimpinan-card">
-            <h2>Detail Permohonan Surat</h2>
-            <br>
+    <div class="table-card">
+        <h3 class="section-title-verif">Detail Permohonan Surat Mahasiswa</h3>
+        <table class="table-detail">
+            <tr>
+                <th>NPM</th>
+                <td><?= htmlspecialchars($data['npm']); ?></td>
+            </tr>
+            <tr>
+                <th>Nama Mahasiswa</th>
+                <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
+            </tr>
+            <tr>
+                <th>Program Studi</th>
+                <td><?= htmlspecialchars($data['nama_prodi']); ?></td>
+            </tr>
+            <tr>
+                <th>Jenis Surat</th>
+                <td><?= htmlspecialchars($data['nama_surat']); ?></td>
+            </tr>
+            <tr>
+                <th>Semester</th>
+                <td><?= htmlspecialchars($data['semester'] ?? '-'); ?></td>
+            </tr>
 
-            <table>
+            <?php
+            $namaSurat = strtolower($data['nama_surat']);
+            if (strpos($namaSurat, 'riset') !== false) {
+            ?>
                 <tr>
-                    <th>NPM</th>
-                    <td><?= htmlspecialchars($data['npm']); ?></td>
+                    <th>Judul Skripsi</th>
+                    <td><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Nama Mahasiswa</th>
-                    <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
+                    <th>Lokasi Penelitian</th>
+                    <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Program Studi</th>
-                    <td><?= htmlspecialchars($data['nama_prodi']); ?></td>
+                    <th>Ditujukan Kepada</th>
+                    <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
+                </tr>
+
+            <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) { ?>
+                <tr>
+                    <th>Lokasi Magang</th>
+                    <td><?= htmlspecialchars($data['lokasi_magang'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Jenis Surat</th>
-                    <td><?= htmlspecialchars($data['nama_surat']); ?></td>
+                    <th>Tanggal Magang</th>
+                    <td>
+                        <?= htmlspecialchars($data['tanggal_mulai_magang'] ?? '-'); ?>
+                        s/d
+                        <?= htmlspecialchars($data['tanggal_selesai_magang'] ?? '-'); ?>
+                    </td>
                 </tr>
                 <tr>
-                    <th>Semester</th>
-                    <td><?= htmlspecialchars($data['semester'] ?? '-'); ?></td>
+                    <th>Ditujukan Kepada</th>
+                    <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
                 </tr>
 
-                <?php
-                $namaSurat = strtolower($data['nama_surat']);
-
-                if (strpos($namaSurat, 'riset') !== false) {
-                ?>
-                    <tr>
-                        <th>Judul Skripsi</th>
-                        <td><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Lokasi Penelitian</th>
-                        <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Ditujukan Kepada</th>
-                        <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
-                    </tr>
-
-                <?php } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) { ?>
-
-                    <tr>
-                        <th>Lokasi Magang</th>
-                        <td><?= htmlspecialchars($data['lokasi_magang'] ?? '-'); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Tanggal Magang</th>
-                        <td>
-                            <?= htmlspecialchars($data['tanggal_mulai_magang'] ?? '-'); ?>
-                            s/d
-                            <?= htmlspecialchars($data['tanggal_selesai_magang'] ?? '-'); ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Ditujukan Kepada</th>
-                        <td><?= htmlspecialchars($data['surat_ditujukan'] ?? '-'); ?></td>
-                    </tr>
-
-                <?php } else if (strpos($namaSurat, 'aktif') !== false) { ?>
-
-                    <tr>
-                        <th>Lama Cuti</th>
-                        <td><?= htmlspecialchars($data['lama_cuti'] ?? '-'); ?> Semester</td>
-                    </tr>
-                    <tr>
-                        <th>Periode Masa Cuti</th>
-                        <td>
-                            Gasal: <?= htmlspecialchars($data['ta_mulai_cuti'] ?? '-'); ?> <br>
-                            Genap: <?= htmlspecialchars($data['ta_selesai_cuti'] ?? '-'); ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Tahun Akademik Aktif</th>
-                        <td><?= htmlspecialchars($data['tahun_akademik'] ?? '-'); ?></td>
-                    </tr>
-
-                <?php } ?>
-
+            <?php } else if (strpos($namaSurat, 'aktif') !== false) { ?>
                 <tr>
-                    <th>Status Saat Ini</th>
-                    <td><?= htmlspecialchars($data['status_akhir']); ?></td>
+                    <th>Lama Cuti</th>
+                    <td><?= htmlspecialchars($data['lama_cuti'] ?? '-'); ?> Semester</td>
                 </tr>
-            </table>
+                <tr>
+                    <th>Periode Masa Cuti</th>
+                    <td>
+                        Gasal: <?= htmlspecialchars($data['ta_mulai_cuti'] ?? '-'); ?> <br>
+                        Genap: <?= htmlspecialchars($data['ta_selesai_cuti'] ?? '-'); ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Tahun Akademik Aktif</th>
+                    <td><?= htmlspecialchars($data['tahun_akademik'] ?? '-'); ?></td>
+                </tr>
+            <?php } ?>
+            <tr>
+                <th>Status Saat Ini</th>
+                <td class="status-text-amber"><?= htmlspecialchars($data['status_akhir']); ?></td>
+            </tr>
+        </table>
+
+        <h3 class="section-title mt-4">Dokumen Pendukung</h3>
+
+        <div class="document-buttons">
+            <?php
+            $filePreview = "preview_surat_riset_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+
+            if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                $filePreview = "preview_surat_magang_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+            } else if (strpos($namaSurat, 'aktif') !== false) {
+                $filePreview = "preview_sk_aktif_mhs.php?id=" . $data['id_surat'] . "&mode=view";
+            }
+            ?>
+
+            <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
+                <i class="fa-regular fa-eye"></i> Surat Permohonan
+            </a>
         </div>
 
-        <div class="action-row">
-            <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
-                Preview Surat
-            </a>
-
-            <form method="POST" style="display:inline;">
-                <button type="submit" name="aksi" value="setujui" class="btn btn-edit">
-                    Setujui
-                </button>
-
-                <button type="submit" name="aksi" value="tolak" class="btn btn-delete"
-                    onclick="return confirm('Yakin ingin menolak surat ini?')">
-                    Tolak
-                </button>
-            </form>
-
-            <a href="pimpinan_verif.php" class="btn btn-detail">
+        <div class="action-panel">
+            <a href="pimpinan_verif.php" class="btn-styled btn-back">
                 Kembali
             </a>
+            <form method="POST" style="display:inline;">
+                <button type="submit" name="aksi" value="tolak" class="btn-styled btn-reject"
+                    onclick="konfirmasiAksi('tolak', 'Yakin ingin menolak permohonan ini?', 'error')">
+                    Tolak
+                </button>
+
+                <button type="submit" name="aksi" value="setujui" class="btn-styled btn-approve"
+                    onclick="konfirmasiAksi('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
+                    Setujui
+                </button>
+            </form>
         </div>
-        </div>
-    </section>
+    </div>
 
     <div id="modalPreview" class="modal-preview">
         <div class="modal-content-preview">
@@ -358,8 +324,25 @@ if (isset($_POST['aksi'])) {
             document.getElementById('modalPreview').style.display = 'none';
             document.getElementById('previewFrame').src = '';
         }
-    </script>
 
+        function konfirmasiAksi(aksi, pesan, icon) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: pesan,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: (aksi === 'setujui') ? '#10b981' : '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('aksiInput').value = aksi;
+                    document.getElementById('formVerifikasi').submit();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

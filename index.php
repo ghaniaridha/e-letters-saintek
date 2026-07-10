@@ -6,6 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $login_id = $_POST['login_id'];
     $password = $_POST['password'];
 
+    // 1. Pengecekan Admin
     $queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
     $resultAdmin = mysqli_query($koneksi, $queryAdmin);
     $dataAdmin = mysqli_fetch_assoc($resultAdmin);
@@ -19,6 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // 2. Pengecekan Dosen / Pimpinan
     $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";
     $resultDosen = mysqli_query($koneksi, $queryDosen);
     $dataDosen = mysqli_fetch_assoc($resultDosen);
@@ -29,6 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['nama'] = $dataDosen['nip'];
         $_SESSION['nip'] = $dataDosen['nip'];
         $_SESSION['jabatan'] = $dataDosen['jabatan'];
+
         if (strtolower($dataDosen['role_akses']) == 'pimpinan') {
             $_SESSION['role'] = 'pimpinan';
             header("Location: pimpinan_beranda.php");
@@ -39,12 +42,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // 3. Pengecekan Mahasiswa
     $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
     $resultMhs = mysqli_query($koneksi, $queryMhs);
     $dataMhs = mysqli_fetch_assoc($resultMhs);
 
     if ($dataMhs && password_verify($password, $dataMhs['password'])) {
-
         if ($dataMhs['status'] == 1) {
             $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
             $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
@@ -63,12 +66,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             header("Location: index.php");
             exit;
         }
-    } else {
-        $_SESSION['error'] = "NPM atau kata sandi tidak sesuai.";
-        header("Location: index.php");
-        exit;
     }
 
+    // 4. Pengecekan Ormawa
     $queryOrmawa = "SELECT * FROM ormawa WHERE username='$login_id'";
     $resultOrmawa = mysqli_query($koneksi, $queryOrmawa);
     $dataOrmawa = mysqli_fetch_assoc($resultOrmawa);
@@ -85,6 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // 5. Fallback Default (Jika semua tidak cocok)
     $_SESSION['error'] = "Gagal masuk! Identitas pengguna atau kata sandi tidak sesuai.";
     header("Location: index.php");
     exit;
