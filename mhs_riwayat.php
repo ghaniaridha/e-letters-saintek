@@ -232,9 +232,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                                 </td>
 
                                 <td>
-                                    <a href="detail_pengajuan.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">
-                                        Detail
-                                    </a>
+                                    <button onclick="bukaModal(<?= $row['id_surat']; ?>)">Detail</button>
                                 </td>
                             </tr>
                         <?php } ?>
@@ -274,6 +272,35 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                 </div>
             <?php endif; ?>
     </section>
+
+
+    <!-- Struktur Modal -->
+<div id="modalDetail" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; width:500px; border-radius:8px; position:relative;">
+        <span onclick="tutupModal()" style="position:absolute; right:15px; top:10px; cursor:pointer; font-size:20px;">&times;</span>
+        <h3>Detail Pengajuan</h3>
+        <div id="kontenDetail">
+            <!-- Data akan muncul di sini via JavaScript -->
+            Memuat data...
+        </div>
+    </div>
+</div>
+
+<script>
+function bukaModal(id) {
+    document.getElementById('modalDetail').style.display = 'flex';
+    // Mengambil data menggunakan fetch
+    fetch('get_detail_surat.php?id=' + id)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('kontenDetail').innerHTML = data;
+        });
+}
+
+function tutupModal() {
+    document.getElementById('modalDetail').style.display = 'none';
+}
+</script>
 
     <script>
         //fungsi dropdown menu user

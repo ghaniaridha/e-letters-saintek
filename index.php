@@ -7,18 +7,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
 
     // 1. Pengecekan Admin
-    $queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
-    $resultAdmin = mysqli_query($koneksi, $queryAdmin);
-    $dataAdmin = mysqli_fetch_assoc($resultAdmin);
+$queryAdmin = "SELECT * FROM admin WHERE npa='$login_id'";
+$resultAdmin = mysqli_query($koneksi, $queryAdmin);
+$dataAdmin = mysqli_fetch_assoc($resultAdmin);
 
-    if ($dataAdmin && password_verify($password, $dataAdmin['password'])) {
-        $_SESSION['id_admin'] = $dataAdmin['id_admin'];
-        $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
-        $_SESSION['nama'] = $dataAdmin['npa'];
-        $_SESSION['role'] = 'admin';
-        header("Location:adm_dashboard.php");
-        exit;
+if ($dataAdmin && password_verify($password, $dataAdmin['password'])) {
+    $_SESSION['id_admin'] = $dataAdmin['id_admin'];
+    $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
+    $_SESSION['nama'] = $dataAdmin['npa'];
+    $_SESSION['role'] = 'admin';
+    
+    // TENTUKAN ADMIN 1 ATAU 2 BERDASARKAN NPA
+    // GANTI 'NPA_ADMIN_1' DENGAN NPA ASLI ADMIN 1 ANDA
+    if ($dataAdmin['npa'] == 'ADM001') {
+    $_SESSION['role_admin'] = 'admin1';
+    } elseif ($dataAdmin['npa'] == 'ADM002') {
+    $_SESSION['role_admin'] = 'admin2';
     }
+    
+    header("Location:adm_dashboard.php");
+    exit;
+}
 
     // 2. Pengecekan Dosen / Pimpinan
     $queryDosen = "SELECT * FROM dosen WHERE nip='$login_id'";

@@ -642,29 +642,32 @@ table tbody td {
   opacity: 1 !important;
 }
 
-.dropdown-menu {
-  display: none;
-  list-style: none;
-  padding-left: 20px;
-  background: rgba(0, 0, 0, 0.05);
+.sidebar-dropdown-menu{
+    display: none;
+    list-style: none;
+    padding-left: 45px;
+    margin-top: 10px;
 }
 
-.dropdown-menu li a {
-  display: block;
-  padding: 10px;
-  text-decoration: none;
-  color: #fff;
-  font-size: 14px;
+.sidebar-dropdown-menu.show{
+    display: block;
 }
 
-.dropdown-menu li a:hover {
-  color: #0d6efd;
+.sidebar-dropdown-menu li{
+    margin: 8px 0;
 }
 
-.dropdown-arrow {
-  float: right;
-  font-size: 12px;
-  transition: transform 0.3s;
+.sidebar-dropdown-menu li a{
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 15px;
+    opacity: .85;
+    transition: .3s;
+}
+
+.sidebar-dropdown-menu li a:hover{
+    opacity: 1;
+    padding-left: 5px;
 }
 
 .show {
@@ -1581,3 +1584,38 @@ table tbody td {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 /*halaman bertable section - end*/
+
+
+
+
+
+/*button lihat surat di riwayat adm
+
+
+/* Modal Preview */
+#modalPreview {
+    display: none; 
+    position: fixed; 
+    z-index: 9999; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content-frame {
+    background: #fff;
+    width: 85%;
+    height: 85%;
+    border-radius: 10px;
+    position: relative;
+    padding: 20px;
+}
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 30px;
+    cursor: pointer;
+    color: #333;
+}
