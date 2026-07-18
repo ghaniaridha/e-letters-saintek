@@ -58,7 +58,7 @@ if (mysqli_query($koneksi, $query_utama)) {
         // Tampilkan pesan sukses dan arahkan ke halaman preview magang
         echo "<script>
             alert('Surat magang berhasil dibuat dan dikirim ke admin.');
-            window.location='preview_magang.php?id=$id_surat';
+            window.location='preview_surat_magang_mhs.php?id=$id_surat';
         </script>";
         exit;
     } else {

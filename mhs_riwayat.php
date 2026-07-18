@@ -21,7 +21,7 @@ if (!empty($namaParts)) {
 // Query search dan pagination
 $search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
 $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit  = 3;
+$limit  = 5;
 $offset = ($page - 1) * $limit;
 
 $whereClause = "WHERE sp.id_mhs = '$id_mhs' AND (sp.status_akhir = 'Selesai' OR sp.status_akhir LIKE '%Ditolak%')";
@@ -274,6 +274,10 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                 </div>
             <?php endif; ?>
     </section>
+
+    <footer class="footer-form-minimal">
+        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
+    </footer>
 
     <script>
         //fungsi dropdown menu user

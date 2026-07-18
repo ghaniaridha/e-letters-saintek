@@ -26,7 +26,7 @@ SELECT
     sp.status_akhir,
     COALESCE(dsr.status_pb1, 'N/A') AS status_pb1,
     COALESCE(dsr.status_pb2, 'N/A') AS status_pb2,
-    COALESCE(dak.status_pa, 'N/A') AS status_pa, /* Tambahan untuk status PA */
+    COALESCE(dak.status_pa, 'N/A') AS status_pa, 
     sp.status_pimpinan,
     sp.file_surat_final,
     sp.dokumen_hash,
@@ -34,7 +34,7 @@ SELECT
 FROM surat_pengajuan sp
 JOIN jenis_surat js ON js.id_jenis = sp.id_jenis
 LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
-LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat /* Tambahan JOIN untuk surat aktif */
+LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat 
 WHERE sp.id_mhs = '$id_mhs'
 AND sp.status_akhir <> 'Selesai'
 AND sp.status_akhir NOT LIKE 'Ditolak%'
@@ -383,6 +383,10 @@ function getPosisiDariStatus($statusAkhir, $namaSurat)
 
         <?php endif; ?>
     </section>
+
+    <footer class="footer-form-minimal">
+        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
+    </footer>
 
     <script>
         /*fungsi dropdown user*/
