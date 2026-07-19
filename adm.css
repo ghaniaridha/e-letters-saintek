@@ -642,29 +642,32 @@ table tbody td {
   opacity: 1 !important;
 }
 
-.dropdown-menu {
+.sidebar-dropdown-menu {
   display: none;
   list-style: none;
-  padding-left: 20px;
-  background: rgba(0, 0, 0, 0.05);
+  padding-left: 45px;
+  margin-top: 10px;
 }
 
-.dropdown-menu li a {
+.sidebar-dropdown-menu.show {
   display: block;
-  padding: 10px;
+}
+
+.sidebar-dropdown-menu li {
+  margin: 8px 0;
+}
+
+.sidebar-dropdown-menu li a {
+  color: #ffffff;
   text-decoration: none;
-  color: #fff;
-  font-size: 14px;
+  font-size: 15px;
+  opacity: 0.85;
+  transition: 0.3s;
 }
 
-.dropdown-menu li a:hover {
-  color: #0d6efd;
-}
-
-.dropdown-arrow {
-  float: right;
-  font-size: 12px;
-  transition: transform 0.3s;
+.sidebar-dropdown-menu li a:hover {
+  opacity: 1;
+  padding-left: 5px;
 }
 
 .show {
@@ -835,6 +838,19 @@ table tbody td {
   box-sizing: border-box;
   margin-left: 260px;
   width: calc(100% - 260px);
+}
+
+.sec-footer-form-minimal {
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+  background-color: #0f2038;
+}
+
+.sec-footer-form-minimal p {
+  color: #ffffff;
+  font-size: 14px;
+  margin-top: auto;
 }
 /*section footer - end*/
 
@@ -1581,3 +1597,36 @@ table tbody td {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 /*halaman bertable section - end*/
+
+/*button lihat surat di riwayat adm
+
+
+/* Modal Preview */
+#modalPreview {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+.modal-content-frame {
+  background: #fff;
+  width: 85%;
+  height: 85%;
+  border-radius: 10px;
+  position: relative;
+  padding: 20px;
+}
+.close-btn {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+  color: #333;
+}

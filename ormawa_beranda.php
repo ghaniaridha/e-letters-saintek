@@ -1,10 +1,38 @@
 <?php
 session_start();
 include "koneksi.php";
+
+// 1. PROTEKSI HALAMAN: Pastikan pengguna login sebagai Ormawa
+if (!isset($_SESSION['id_ormawa'])) {
+    echo "<script>
+            alert('Silakan login terlebih dahulu');
+            window.location='index.php';
+          </script>";
+    exit;
+}
+
+$id_ormawa = $_SESSION['id_ormawa'];
+
+// 2. QUERY HITUNG STATUS SURAT SECARA REAL-TIME (KHUSUS ORMAWA INI)
+// Menunggu
+$q_menunggu = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir LIKE 'Menunggu%'");
+$c_menunggu = mysqli_fetch_assoc($q_menunggu)['total'];
+
+// Disetujui (Disetujui Pembina atau Kasubbag tapi belum berstatus Selesai)
+$q_disetujui = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir LIKE 'Disetujui%'");
+$c_disetujui = mysqli_fetch_assoc($q_disetujui)['total'];
+
+// Ditolak
+$q_ditolak = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir LIKE 'Ditolak%'");
+$c_ditolak = mysqli_fetch_assoc($q_ditolak)['total'];
+
+// Selesai
+$q_selesai = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir = 'Selesai'");
+$c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
@@ -27,8 +55,10 @@ include "koneksi.php";
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
             <a href="#services">Layanan</a>
-            <a href="#riwayat">Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat Permohonan</a>
+            <a href="#status-info">Informasi</a>
+            <!-- UBAH: Arahkan ke file lacak/riwayat ormawa yang valid -->
+            <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
+            <a href="ormawa_lacak.php">lacak surat</a>
         </div>
 
         <div class="navbar-extra">
@@ -49,8 +79,8 @@ include "koneksi.php";
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
                     <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
+                        <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
+                        <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
                     </div>
                     <div class="divider"></div>
                     <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
@@ -64,10 +94,7 @@ include "koneksi.php";
 
     <section class="hero" id="home">
         <main class="content">
-            <?php
-            $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-            ?>
-            <h2>Halo, <?= $namaLengkap ?></h2>
+            <h2>Halo, <?= htmlspecialchars($namaLengkap) ?></h2>
             <h1>Selamat datang di layanan Persuratan FST UIN RIL</h1>
         </main>
     </section>
@@ -107,23 +134,24 @@ include "koneksi.php";
 
         <div class="dashboard-container">
             <div class="status-grid">
+                <!-- UBAH: Menggunakan Variabel Dinamis Hasil COUNT Database -->
                 <div class="status-box">
-                    <span class="status-count" style="color: #f59e0b;">3</span>
+                    <span class="status-count" style="color: #f59e0b;"><?= $c_menunggu; ?></span>
                     <h4>Menunggu</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #10b981;">1</span>
+                    <span class="status-count" style="color: #10b981;"><?= $c_disetujui; ?></span>
                     <h4>Disetujui</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #ef4444;">0</span>
+                    <span class="status-count" style="color: #ef4444;"><?= $c_ditolak; ?></span>
                     <h4>Ditolak</h4>
                 </div>
 
                 <div class="status-box">
-                    </i> <span class="status-count" style="color: #3b82f6;">5</span>
+                    <span class="status-count" style="color: #3b82f6;"><?= $c_selesai; ?></span>
                     <h4>Selesai</h4>
                 </div>
             </div>
@@ -134,7 +162,8 @@ include "koneksi.php";
                 </div>
                 <h3>Riwayat Pengajuan</h3>
                 <p>Lihat detail riwayat seluruh surat yang pernah Anda ajukan sebelumnya.</p>
-                <a href="mhs_riwayat.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
+                <!-- DIUBAH: Mengarah ke file internal lacak/riwayat milik Ormawa -->
+                <a href="ormawa_lacak.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
 
             <div class="action-box">
@@ -143,7 +172,7 @@ include "koneksi.php";
                 </div>
                 <h3>Lacak Surat</h3>
                 <p>Pantau posisi terkini dan proses disposisi surat Anda secara real-time.</p>
-                <a href="mhs_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="ormawa_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
     </section>

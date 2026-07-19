@@ -19,14 +19,14 @@ include "koneksi.php";
 <body>
     <nav class="navbar">
         <a href="#" class="navbar-logo">
-            <img src="images/AKADEMIK FST2.png" alt="navbar-logo">
+            <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
-            <a href="mhs_dashboard.php">Beranda</a>
-            <a href="mhs_dashboard.php#services">Layanan</a>
-            <a href="mhs_dashboard.php#riwayat">Informasi</a>
-            <a href="mhs_riwayat.php">Riwayat Permohonan</a>
+            <a href="ormawa_beranda.php">Beranda</a>
+            <a href="ormawa_beranda.php#services">Layanan</a>
+            <a href="ormawa_beranda.php#status-info">Informasi</a>
+            <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
         </div>
 
         <div class="navbar-extra">
@@ -108,13 +108,13 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="form_peminjaman_gedung.php?id_jenis=1">
+            <a class="layanan-card" href="ormawa_form_peminjaman_ruangan.php?id_jenis=1">
                 <div class="layanan-content">
                     <h3>Peminjaman<br>Gedung</h3>
                 </div>
             </a>
 
-            <a class="layanan-card" href="form_pengajuan .php">
+            <a class="layanan-card" href="ormawa_form_pengajuan_dana.php">
                 <div class="layanan-content">
                     <h3>Pengajuan<br>Dana</h3>
                 </div>

@@ -79,10 +79,42 @@ if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== fals
 
 // Aksi Setuju/Tolak Permoonan
 if (isset($_POST['aksi'])) {
+
     $aksi = $_POST['aksi'];
+    $catatan = mysqli_real_escape_string($koneksi, $_POST['catatan'] ?? '');
+
+    $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
+    $status_skrg = trim($data['status_akhir']);
+
+   if ($aksi == 'tolak') {
+
+    $sql = "
+        UPDATE surat_pengajuan
+        SET
+            status_akhir='Ditolak Pimpinan',
+            status_pimpinan='Ditolak',
+            catatan='$catatan'
+        WHERE id_surat='$id_surat'
+    ";
+
+    mysqli_query($koneksi, $sql);
+
+    $_SESSION['status'] = 'success';
+    $_SESSION['pesan'] = 'Permohonan berhasil ditolak';
+
+    header("Location: pimpinan_riwayat.php");
+    exit;
+}
+
+
+    // ==========================
+    // BARU PROSES SETUJU
+    // ==========================
     $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
 
     $status_skrg = trim($data['status_akhir']);
+
+  
 
     // Aksi Setuju
     // Kondisi Menunggu Wadek 1
@@ -293,14 +325,18 @@ if (isset($_POST['aksi'])) {
             <a href="pimpinan_verif.php" class="btn-styled btn-back">
                 Kembali
             </a>
-            <form method="POST" style="display:inline;">
-                <button type="submit" name="aksi" value="tolak" class="btn-styled btn-reject"
-                    onclick="konfirmasiAksi('tolak', 'Yakin ingin menolak permohonan ini?', 'error')">
+            <form method="POST" id="formPimpinan" style="display:inline;">
+                <!-- Input hidden untuk menangkap aksi -->
+                <input type="hidden" name="aksi" id="aksiInput" value="">
+                <input type="hidden" name="catatan" id="catatanInput" value="">
+
+                <button type="button" class="btn-styled btn-reject" 
+                        onclick="konfirmasiTolakPimpinan()">
                     Tolak
                 </button>
 
-                <button type="submit" name="aksi" value="setujui" class="btn-styled btn-approve"
-                    onclick="konfirmasiAksi('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
+                <button type="button" class="btn-styled btn-approve" 
+                        onclick="konfirmasiAksiPimpinan('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
                     Setujui
                 </button>
             </form>
@@ -343,6 +379,43 @@ if (isset($_POST['aksi'])) {
             });
         }
     </script>
+
+
+<script>
+function konfirmasiTolakPimpinan() {
+    Swal.fire({
+        title: 'Alasan Penolakan',
+        input: 'textarea',
+        inputPlaceholder: 'Masukkan alasan penolakan...',
+        showCancelButton: true,
+        confirmButtonText: 'Kirim',
+        inputValidator: (value) => {
+            if (!value) return 'Anda harus mengisi alasan penolakan!';
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('catatanInput').value = result.value;
+            document.getElementById('aksiInput').value = 'tolak';
+            document.getElementById('formPimpinan').submit();
+        }
+    });
+}
+
+function konfirmasiAksiPimpinan(aksi, pesan, icon) {
+    Swal.fire({
+        title: 'Konfirmasi',
+        text: pesan,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Lanjutkan!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('aksiInput').value = aksi;
+            document.getElementById('formPimpinan').submit();
+        }
+    });
+}
+</script>
 </body>
 
 </html>

@@ -18,29 +18,28 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
-// PERBAIKAN QUERY
+// PERBAIKAN QUERY: MENDUKUNG VERIFIKASI MAHASISWA & ORMAWA
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.*,
         m.nama_mhs,
         m.npm,
+        o.nama_ormawa,      -- Tambahan: Ambil nama ormawa jika ada
         p.nama_prodi,
         js.nama_surat,
         dsr.id_pb1,
         dsr.id_pb2,
         dsr.status_pb1,
         dsr.status_pb2,
-        dak.id_pa,          -- Ambil data ID PA
-        dak.status_pa       -- Ambil data status PA
+        dak.id_pa,          
+        dak.status_pa       
     FROM surat_pengajuan sp
-    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    -- DIUBAH MENJADI LEFT JOIN agar surat Ormawa (yang id_mhs nya NULL) tetap lolos tampil
+    LEFT JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    LEFT JOIN ormawa o ON sp.id_ormawa = o.id_ormawa -- Tambahan JOIN ke tabel ormawa
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    JOIN prodi p ON m.id_prodi = p.id_prodi
-    
-    -- JOIN ke tabel detail riset
+    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
     LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
-    
-    -- PERBAIKAN 1: Tambahkan JOIN ke tabel detail aktif kuliah
     LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
     
     WHERE
@@ -58,9 +57,16 @@ $query = mysqli_query($koneksi, "
     )
     OR
     (
-        -- PERBAIKAN 2: SKENARIO C: Dosen ini adalah Pembimbing Akademik (Aktif Kuliah)
+        -- SKENARIO C: Dosen ini adalah Pembimbing Akademik (Aktif Kuliah)
         dak.id_pa = '$id_dosen'
         AND dak.status_pa = 'Menunggu'
+    )
+    OR
+    (
+        -- BARU!! SKENARIO D: Dosen ini adalah Pembina Ormawa (Peminjaman Ruangan, dll)
+        sp.id_pembina = '$id_dosen'
+        AND sp.posisi_sekarang = 'Pembina'
+        AND sp.urutan_sekarang = '3'
     )
     ORDER BY sp.tanggal_pengajuan DESC
 ");
@@ -139,8 +145,9 @@ $query = mysqli_query($koneksi, "
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
-                                <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                <td><?= htmlspecialchars($row['npm']); ?></td>
+                                <!-- Jika nama_mhs kosong, tampilkan nama_ormawa sebagai pengirim -->
+                                <td><?= !empty($row['nama_mhs']) ? htmlspecialchars($row['nama_mhs']) : '<b>(ORMAWA)</b> ' . htmlspecialchars($row['nama_ormawa']); ?></td>
+                                <td><?= !empty($row['npm']) ? htmlspecialchars($row['npm']) : '-'; ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                 <td><?= htmlspecialchars($row['status_akhir']); ?></td>
                                 <td>

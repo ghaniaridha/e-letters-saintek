@@ -18,11 +18,13 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
+// PERBAIKAN QUERY RIWAYAT VERIFIKASI (MENDUKUNG MAHASISWA & ORMAWA)
 $query = mysqli_query($koneksi, "
     SELECT 
         sp.*,
         m.nama_mhs,
         m.npm,
+        o.nama_ormawa,      -- Tambahan: Ambil nama ormawa
         p.nama_prodi,
         js.nama_surat,
         dsr.id_pb1,
@@ -32,9 +34,11 @@ $query = mysqli_query($koneksi, "
         dak.id_pa,          
         dak.status_pa       
     FROM surat_pengajuan sp
-    JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    -- DIUBAH MENJADI LEFT JOIN agar data surat Ormawa tidak terbuang/hilang
+    LEFT JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
+    LEFT JOIN ormawa o ON sp.id_ormawa = o.id_ormawa 
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    JOIN prodi p ON m.id_prodi = p.id_prodi
+    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
     LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
     LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat 
     WHERE
@@ -51,9 +55,15 @@ $query = mysqli_query($koneksi, "
     )
     OR
     (
-        -- Skenario C: Dosen adalah Pembimbing Akademik dan sudah tidak 'Menunggu'
+        -- Skenario C: Dosen adalah Pembimbing Academic dan sudah tidak 'Menunggu'
         dak.id_pa = '$id_dosen'
         AND dak.status_pa != 'Menunggu'
+    )
+    OR
+    (
+        -- BARU!! Skenario D: Dosen adalah Pembina Ormawa dan posisi surat sudah bergeser (Sudah diverifikasi)
+        sp.id_pembina = '$id_dosen'
+        AND sp.posisi_sekarang != 'Pembina'
     )
     ORDER BY sp.tanggal_pengajuan DESC
 ");
@@ -137,7 +147,7 @@ $query = mysqli_query($koneksi, "
                     <tr>
                         <th>No</th>
                         <th>Tanggal Pengajuan</th>
-                        <th>Mahasiswa</th>
+                        <th>Pengirim (Mhs/Ormawa)</th>
                         <th>NPM</th>
                         <th>Jenis Surat</th>
                         <th>Status Anda</th>
@@ -151,12 +161,16 @@ $query = mysqli_query($koneksi, "
                         while ($row = mysqli_fetch_assoc($query)) { ?>
 
                             <?php
+                            // Penentuan Status Verifikasi Sisi Dosen secara dinamis
                             if (isset($row['id_pb1']) && $row['id_pb1'] == $id_dosen) {
                                 $statusAnda = $row['status_pb1'];
                             } elseif (isset($row['id_pb2']) && $row['id_pb2'] == $id_dosen) {
                                 $statusAnda = $row['status_pb2'];
                             } elseif (isset($row['id_pa']) && $row['id_pa'] == $id_dosen) {
                                 $statusAnda = $row['status_pa'];
+                            } elseif (isset($row['id_pembina']) && $row['id_pembina'] == $id_dosen) {
+                                // Mengambil potongan kata dari status akhir (misal: Disetujui/Ditolak)
+                                $statusAnda = (strpos($row['status_akhir'], 'Ditolak') !== false) ? 'Ditolak' : 'Disetujui';
                             } else {
                                 $statusAnda = '-';
                             }
@@ -164,8 +178,9 @@ $query = mysqli_query($koneksi, "
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
-                                <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
-                                <td><?= htmlspecialchars($row['npm']); ?></td>
+                                <!-- Mengubah penampilan Kolom Pengirim jika data adalah Ormawa -->
+                                <td><?= !empty($row['nama_mhs']) ? htmlspecialchars($row['nama_mhs']) : '<b>(ORMAWA)</b> ' . htmlspecialchars($row['nama_ormawa']); ?></td>
+                                <td><?= !empty($row['npm']) ? htmlspecialchars($row['npm']) : '-'; ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                 <td><?= htmlspecialchars($statusAnda); ?></td>
                                 <td><?= htmlspecialchars($row['status_akhir']); ?></td>

@@ -1207,7 +1207,7 @@ body.swal2-shown {
 
 /*form pengajuan surat - start*/
 .generate-wrapper {
-  padding-top: 130px;
+  padding-top: 120px;
   padding-bottom: 50px;
   max-width: 1200px;
   margin: 0 auto;
@@ -2102,3 +2102,7 @@ body.swal2-shown {
   cursor: not-allowed;
 }
 /*pagination section - end*/
+
+
+
+

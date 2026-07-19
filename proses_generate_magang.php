@@ -27,9 +27,25 @@ $dokumen_hash      = hash('sha256', $id_mhs . $id_jenis . time());
    ======================================================================= */
 $query_utama = "
     INSERT INTO surat_pengajuan 
-    (id_mhs, id_jenis, tanggal_pengajuan, status_akhir, status_pimpinan, dokumen_hash)
+    (
+        id_mhs,
+        id_jenis,
+        tanggal_pengajuan,
+        status_akhir,
+        status_pimpinan,
+        tujuan_admin,
+        dokumen_hash
+    )
     VALUES 
-    ('$id_mhs', '$id_jenis', '$tanggal_pengajuan', 'Menunggu Admin', 'Menunggu', '$dokumen_hash')
+    (
+        '$id_mhs',
+        '$id_jenis',
+        '$tanggal_pengajuan',
+        'Menunggu Admin',
+        'Menunggu',
+        'admin2',
+        '$dokumen_hash'
+    )
 ";
 
 if (mysqli_query($koneksi, $query_utama)) {

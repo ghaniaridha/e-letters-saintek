@@ -156,7 +156,7 @@ function getIcon($step)
         case "pembimbing akademik":
             return "fa-user-check";
 
-        case "admin":
+        case "admin":                                                                         
             return "fa-desktop";
 
         case "dekan":

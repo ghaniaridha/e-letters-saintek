@@ -16,6 +16,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['nama_lengkap'] = $dataAdmin['nama_admin'];
         $_SESSION['nama'] = $dataAdmin['npa'];
         $_SESSION['role'] = 'admin';
+
+        // TENTUKAN ADMIN 1 ATAU 2 BERDASARKAN NPA
+        // GANTI 'NPA_ADMIN_1' DENGAN NPA ASLI ADMIN 1 ANDA
+        if ($dataAdmin['npa'] == 'ADM001') {
+            $_SESSION['role_admin'] = 'admin1';
+        } elseif ($dataAdmin['npa'] == 'ADM002') {
+            $_SESSION['role_admin'] = 'admin2';
+        }
+
         header("Location:adm_dashboard.php");
         exit;
     }
@@ -43,22 +52,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // 3. Pengecekan Mahasiswa
-    $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
+    // 1. Ubah Query menggunakan JOIN agar mendapat nama_prodi sekaligus
+    $queryMhs = "
+        SELECT m.*, p.nama_prodi 
+        FROM mahasiswa m 
+        LEFT JOIN prodi p ON m.id_prodi = p.id_prodi 
+        WHERE m.npm='$login_id'
+    ";
     $resultMhs = mysqli_query($koneksi, $queryMhs);
     $dataMhs = mysqli_fetch_assoc($resultMhs);
 
     if ($dataMhs && password_verify($password, $dataMhs['password'])) {
         if ($dataMhs['status'] == 1) {
+            // 2. Set Session
             $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
             $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
-            $_SESSION['nama'] = $dataMhs['npm'];
+
+            // Hapus salah satu $_SESSION['nama'] jika isinya sama-sama NPM agar memori lebih efisien
             $_SESSION['npm'] = $dataMhs['npm'];
-            $_SESSION['prodi'] = $dataMhs['prodi'];
-            $_SESSION['id_pa'] = $dataMhs['id_pa'];
-            $_SESSION['id_pb1'] = $dataMhs['id_pb1'];
-            $_SESSION['id_pb2'] = $dataMhs['id_pb2'];
-            $_SESSION['semester'] = $dataMhs['semester'];
+
+            // Simpan id_prodi dan sekalian nama_prodi-nya
+            $_SESSION['id_prodi'] = $dataMhs['id_prodi'];
+            $_SESSION['nama_prodi'] = $dataMhs['nama_prodi'];
+
+            // Gunakan operator ?? (Null Coalescing) untuk mencegah error jika data dosen kosong
+            $_SESSION['id_pa'] = $dataMhs['id_pa'] ?? null;
+            $_SESSION['id_pb1'] = $dataMhs['id_pb1'] ?? null;
+            $_SESSION['id_pb2'] = $dataMhs['id_pb2'] ?? null;
+
+            // PERBAIKAN: Baris semester dihapus karena tabel tidak memiliki kolom semester
+            // $_SESSION['semester'] = $dataMhs['semester']; 
+
             $_SESSION['role'] = 'mahasiswa';
+
+            // 3. Redirect
             header("Location: mhs_beranda.php");
             exit;
         } else {

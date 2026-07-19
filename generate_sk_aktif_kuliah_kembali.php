@@ -101,7 +101,7 @@ if (mysqli_query($koneksi, $query_utama)) {
             mysqli_query($koneksi, $query_lampiran);
         }
 
-        echo "<script>alert('Surat Aktif Kuliah Kembali berhasil diajukan.'); window.location='mhs_preview_sk_aktif.php?id=$id_surat';</script>";
+        echo "<script>alert('Surat Aktif Kuliah Kembali berhasil diajukan.'); window.location='preview_sk_aktif_mhs.php?id=$id_surat';</script>";
         exit;
     } else {
         // Rollback data master pengajuan jika penyimpanan tabel detail mengalami kegagalan
