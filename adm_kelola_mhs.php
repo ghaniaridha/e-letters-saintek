@@ -40,7 +40,7 @@ if (count($where) > 0) {
 $sql .= " ORDER BY mahasiswa.status ASC, prodi.nama_prodi ASC, mahasiswa.nama_mhs ASC";
 
 // logika pagination
-$batas = 5;
+$batas = 10;
 $halaman = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $halaman_awal = ($halaman > 1) ? ($halaman * $batas) - $batas : 0;
 
@@ -66,14 +66,13 @@ $query_string = $query_string ? '&' . $query_string : '';
     <title>Kelola Mahasiswa</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="adm.css">
+    <link rel="stylesheet" href="adm.css?v=1.3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
-
     <?php if (isset($_SESSION['pesan'])): ?>
         <script>
             Swal.fire({
@@ -100,7 +99,7 @@ $query_string = $query_string ? '&' . $query_string : '';
                 <p>Kelola data dan lakukan verifikasi pendaftaran akun baru mahasiswa.</p>
             </div>
 
-            <div class="table-card">
+            <div class="table-card-table">
                 <form method="GET" action="" class="filter-section">
                     <input type="text" name="keyword" placeholder="Cari NPM atau Nama..." value="<?= $_GET['keyword'] ?? '' ?>">
 
@@ -125,7 +124,9 @@ $query_string = $query_string ? '&' . $query_string : '';
                     <button type="submit" class="btn-filter">
                         <i class="fa-solid fa-search"></i> Cari
                     </button>
-
+                    <a href="adm_kelola_mhs.php" class="btn-reset-filter">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </a>
                 </form>
                 <table>
                     <thead>
@@ -136,7 +137,7 @@ $query_string = $query_string ? '&' . $query_string : '';
                             <th>Program Studi</th>
                             <th>Email</th>
                             <th>Status</th>
-                            <th width="150">Aksi</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
 
@@ -214,9 +215,7 @@ $query_string = $query_string ? '&' . $query_string : '';
                         <?php endif; ?>
                     </ul>
                 </div>
-
             </div>
-
         </main>
     </div>
 

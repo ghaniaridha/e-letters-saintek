@@ -72,15 +72,28 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
-            <a href="dosen_permohonan.php">Verifikasi Permohonan</a>
-            <a href="#riwayat">Informasi</a>
-            <a href="dosen_riwayat.php">Riwayat Verifikasi</a>
+            <div class="nav-dropdown">
+                <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                <div class="dropdown-content">
+                    <a href="dosen_permohonan_akademik.php">Akademik</a>
+                    <a href="dosen_permohonan_ormawa.php">Ormawa</a>
+                </div>
+            </div>
+            <a href="#riwayat">Informasi Persuratan</a>
+            <div class="nav-dropdown">
+                <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                <div class="dropdown-content">
+                    <a href="dosen_riwayat_akademik.php">Akademik</a>
+                    <a href="dosen_riwayat_ormawa.php">Ormawa</a>
+                </div>
+            </div>
         </div>
 
         <div class="navbar-extra">
@@ -272,6 +285,16 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
                     }
                 });
             }
+        </script>
+        <script>
+            document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.navbar-nav')?.classList.toggle('active');
+            });
+            document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+            });
         </script>
 </body>
 

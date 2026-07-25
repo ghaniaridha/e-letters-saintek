@@ -29,16 +29,35 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
     LEFT JOIN dosen d2 ON dsr.id_pb2 = d2.id_dosen
     WHERE sp.id_surat = '$id'
 "));
-
 if (!$data) {
     echo "Data surat tidak ditemukan.";
     exit;
 }
 
+$array_bulan = [
+    1 => 'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+];
+$tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y');
+
 $semester = $data['semester'] ?? '-';
 
 $host = $_SERVER['HTTP_HOST'];
-$base_url = "http://" . $host . "/e letters saintek";
+if (strpos($host, '.') !== false && strpos($host, 'localhost') === false && !filter_var($host, FILTER_VALIDATE_IP)) {
+    $base_url = "https://" . $host;
+} else {
+    $base_url = "http://" . $host . "/e-letters-saintek";
+}
 
 $qr_mhs = "";
 if (!empty($data['dokumen_hash'])) {
@@ -79,7 +98,7 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surat Permohonan Riset</title>
+    <title>Preview Surat</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="preview.css?v=<?= time(); ?>">
@@ -108,14 +127,16 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
     <div class="surat-wrapper">
         <div class="surat-document">
             <p>Perihal : Permohonan Surat Rekomendasi Riset</p>
-            <br>
-            <p>Kepada Yth,</p>
-            <p><b>Dekan Fakultas Sains dan Teknologi</b></p>
-            <p><b>UIN Raden Intan Lampung</b></p>
-            <p>di-</p>
-            <p class="indent">Bandar Lampung</p>
 
             <br>
+
+            <p>Kepada Yth,</p>
+            <p><strong>Dekan Fakultas Sains dan Teknologi<br>UIN Raden Intan Lampung</strong></p>
+            <p>di-</p>
+            <p class="indent">Tempat</p>
+
+            <br>
+
             <p>Assalamu’alaikum wr. wb.</p>
             <p>Saya yang bertanda tangan dibawah ini :</p>
 
@@ -151,9 +172,10 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
             </table>
 
             <br>
+
             <p>
                 Bermaksud memohon surat Rekomendasi Riset dari pihak Fakultas,
-                sebagai bahan pertimbangan Bapak, saya lampirkan:
+                sebagai bahan pertimbangan Bapak/Ibu, saya lampirkan:
             </p>
 
             <ol class="surat-list">
@@ -162,15 +184,15 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
                 <li>KHS Semester terakhir</li>
             </ol>
 
-            <p>Atas perhatian Bapak, saya ucapkan terima kasih</p>
+            <p>Atas perhatian Bapak/Ibu, saya ucapkan terima kasih</p>
             <p>Wassalamu’alaikum Wr. Wb.</p>
 
             <div class="surat-date">
-                Bandar Lampung, <?= date('d-m-Y'); ?>
+                Bandar Lampung, <?= $tanggal_surat; ?>
             </div>
 
-            <div class="surat-signatures">
-                <div class="signature-block">
+            <div class="surat-signatures-3">
+                <div class="signature-block-3">
                     <p>Mengetahui,</p>
                     <p>Pembimbing I</p>
                     <?php if (!empty($qr_dospem1)) { ?>
@@ -182,7 +204,7 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
                     <p>NIP. <?= htmlspecialchars($data['nip_dospem1']); ?></p>
                 </div>
 
-                <div class="signature-block">
+                <div class="signature-block-3">
                     <p>&nbsp;</p>
                     <p>Pembimbing II</p>
                     <?php if (!empty($qr_dospem2)) { ?>
@@ -194,7 +216,7 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
                     <p>NIP. <?= htmlspecialchars($data['nip_dospem2']); ?></p>
                 </div>
 
-                <div class="signature-block">
+                <div class="signature-block-3">
                     <p>&nbsp;</p>
                     <p>Pemohon</p>
                     <?php if (!empty($qr_mhs)) { ?>
@@ -203,9 +225,10 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
                         <div class="qr-placeholder"></div>
                     <?php } ?>
                     <p><b><?= htmlspecialchars($data['nama_mhs']); ?></b></p>
-                    <p><?= htmlspecialchars($data['npm']); ?></p>
+                    <p>NPM. <?= htmlspecialchars($data['npm']); ?></p>
                 </div>
             </div>
+            <div class="clearfix"></div>
         </div>
     </div>
 
@@ -220,10 +243,10 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
 
             <div class="action-buttons">
                 <a href="mhs_daftar_surat_akademik.php" class="btn-action btn-outline">
-                    <i class="fa-solid fa-arrow-left"></i> Kembali
+                    Kembali
                 </a>
                 <a href="mhs_lacak.php?id=<?= $id ?>" class="btn-action btn-fill">
-                    <i class="fa-solid fa-route"></i> Lacak Surat
+                    Lacak Surat
                 </a>
             </div>
         </div>

@@ -2,11 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_dosen = $_SESSION['id_dosen'];
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
-    echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
+    echo "<script>alert('Silakan login sebagai dosen'); window.location='index.php';</script>";
     exit;
 }
+
+$id_dosen = $_SESSION['id_dosen'];
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -24,7 +25,7 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         sp.*,
         m.nama_mhs,
         m.npm,
-        o.nama_ormawa,      -- Tambahan: Ambil nama ormawa
+        o.nama_ormawa,      
         p.nama_prodi,
         js.nama_surat,
         
@@ -54,15 +55,12 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         dpr.ruangan_yang_diajukan,
         dpr.tanggal_mulai,
         dpr.proposal,              
-        dpr.surat_permohonan,
 
         -- Detail Pengajuan Dana
         dpd.nama_kegiatan AS nama_kegiatan_dana,
         dpd.tema_kegiatan,
         dpd.tempat_kegiatan,
         dpd.tanggal_kegiatan,
-        dpd.nominal_pengajuan,
-        dpd.deskripsi_kegiatan,
         dpd.proposal AS proposal_dana,
         
         COALESCE(dsr.semester, dsm.semester, dak.semester) AS semester,
@@ -131,6 +129,22 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
         $file_lampiran['sk_cuti'] = $row_lamp['file_upload'];
     }
 }
+
+$array_bulan = [
+    1 => 'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+];
+$tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y');
 ?>
 
 <!DOCTYPE html>
@@ -140,27 +154,46 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Permohonan</title>
+
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
+
         <div class="navbar-nav">
             <a href="dosen_beranda.php">Beranda</a>
-            <a href="dosen_permohonan.php">Verifikasi Permohonan</a>
-            <a href="dosen_beranda.php#riwayat">Informasi</a>
-            <a href="dosen_riwayat.php">Riwayat Verifikasi</a>
+            <div class="nav-dropdown">
+                <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                <div class="dropdown-content">
+                    <a href="dosen_permohonan_akademik.php">Akademik</a>
+                    <a href="dosen_permohonan_ormawa.php">Ormawa</a>
+                </div>
+            </div>
+            <a href="dosen_beranda.php#riwayat">Informasi Persuratan</a>
+            <div class="nav-dropdown">
+                <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                <div class="dropdown-content">
+                    <a href="dosen_riwayat_akademik.php">Akademik</a>
+                    <a href="dosen_riwayat_ormawa.php">Ormawa</a>
+                </div>
+            </div>
         </div>
+
         <div class="navbar-extra">
             <div class="user-menu-container">
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span>
                 </button>
+
                 <div id="user-dropdown" class="dropdown-menu">
                     <div class="user-info">
                         <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
@@ -208,12 +241,15 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
 
                     <tr>
                         <th>Tanggal Kegiatan</th>
-                        <td><?= !empty($data['tanggal_kegiatan']) ? date('d-m-Y', strtotime($data['tanggal_kegiatan'])) : '-'; ?></td>
-                    </tr>
-
-                    <tr>
-                        <th>Nominal Pengajuan</th>
-                        <td>Rp <?= number_format($data['nominal_pengajuan'] ?? 0, 0, ',', '.'); ?></td>
+                        <td><?php
+                            if (!empty($data['tanggal_kegiatan'])) {
+                                $timestamp = strtotime($data['tanggal_kegiatan']);
+                                echo date('d', $timestamp) . ' ' . $array_bulan[(int)date('m', $timestamp)] . ' ' . date('Y', $timestamp);
+                            } else {
+                                echo '-';
+                            }
+                            ?>
+                        </td>
                     </tr>
 
                 <?php } else { ?>
@@ -321,7 +357,7 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
 
             <div class="document-buttons">
                 <?php
-                // 1. Penentuan Jalur Surat Hasil Generate Sistem / Preview Utama Mahasiswa
+                // Penentuan Jalur Surat Hasil Generate Sistem 
                 if (!empty($data['id_ormawa'])) {
 
                     if (strpos(strtolower($data['nama_surat']), 'dana') !== false) {
@@ -330,7 +366,6 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                         $fileSystemPreview = "preview_peminjaman_ruangan.php?id=" . $data['id_surat'] . "&mode=view";
                     }
                 } else {
-                    // Jika Mahasiswa
                     $fileSystemPreview = "preview_surat_riset_mhs.php?id=" . $data['id_surat'] . "&mode=view";
                     if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                         $fileSystemPreview = "preview_surat_magang_mhs.php?id=" . $data['id_surat'] . "&mode=view";
@@ -340,32 +375,22 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                 }
                 ?>
 
-                <!-- Tombol Utama: Surat Hasil Sistem / Preview -->
+                <!-- Surat Hasil Sistem / Preview -->
                 <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $fileSystemPreview; ?>')">
-                    <i class="fa-regular fa-eye"></i> <?= !empty($data['id_ormawa']) ? 'Surat Hasil Sistem (QR Code)' : 'Surat Permohonan'; ?>
+                    <?= !empty($data['id_ormawa']) ? 'Surat Permohonan' : 'Surat Permohonan'; ?>
                 </a>
 
                 <?php
-                // --- KONDISI 1: TAMPILAN JIKA INI SURAT DARI ORMAWA ---
+                // TAMPILAN SURAT DARI ORMAWA
                 if (!empty($data['id_ormawa'])) {
                 ?>
-                    <!-- Tombol untuk melihat File Surat Permohonan yang Di-upload Manual -->
-                    <?php if (!empty($data['surat_permohonan'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/surat_permohonan/<?= htmlspecialchars($data['surat_permohonan']); ?>')">
-                            <i class="fa-solid fa-paperclip"></i> Dokumen Pengajuan (Upload)
-                        </a>
-                    <?php } else { ?>
-                        <span class="btn-disabled">Dokumen Pengajuan Belum Ada</span>
-                    <?php } ?>
-
-                    <!-- Tombol untuk melihat File Proposal yang Di-upload Manual -->
+                    <!-- File Proposal  -->
                     <?php if (strpos(strtolower($data['nama_surat']), 'dana') !== false) { ?>
 
                         <?php if (!empty($data['proposal_dana'])) { ?>
                             <a href="#"
                                 class="btn btn-edit"
                                 onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($data['proposal_dana']); ?>')">
-                                <i class="fa-solid fa-paperclip"></i>
                                 Proposal Kegiatan
                             </a>
                         <?php } else { ?>
@@ -378,7 +403,6 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                             <a href="#"
                                 class="btn btn-edit"
                                 onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($data['proposal']); ?>')">
-                                <i class="fa-solid fa-paperclip"></i>
                                 Proposal Kegiatan
                             </a>
                         <?php } else { ?>
@@ -388,55 +412,55 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                     <?php } ?>
 
                 <?php
-                    // --- KONDISI 2: TAMPILAN BERKAS SURAT RISET MAHASISWA ---
+                    // TAMPILAN BERKAS SURAT RISET  
                 } else if (strpos($namaSurat, 'riset') !== false) {
                 ?>
                     <?php if (!empty($file_lampiran['proposal'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['proposal']); ?>')"><i class="fa-solid fa-paperclip"></i>Proposal Penelitian</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['proposal']); ?>')">Proposal Penelitian</a>
                     <?php } else { ?>
                         <span class="btn-disabled">Proposal Penelitian Belum Ada</span>
                     <?php } ?>
 
                     <?php if (!empty($file_lampiran['khs'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')"><i class="fa-solid fa-paperclip"></i>KHS</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')">KHS</a>
                     <?php } else { ?>
                         <span class="btn-disabled">KHS Belum Ada</span>
                     <?php } ?>
 
                     <?php if (!empty($file_lampiran['ukt'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')"><i class="fa-solid fa-paperclip"></i>Bukti Pembayaran UKT</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')">Bukti Pembayaran UKT</a>
                     <?php } else { ?>
                         <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
                     <?php } ?>
 
                 <?php
-                    // --- KONDISI 3: TAMPILAN BERKAS SURAT MAGANG MAHASISWA ---
+                    // TAMPILAN BERKAS SURAT MAGANG MAHASISWA 
                 } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                 ?>
                     <?php if (!empty($file_lampiran['ktm'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ktm']); ?>')"><i class="fa-solid fa-paperclip"></i>KTM</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ktm']); ?>')">KTM</a>
                     <?php } else { ?>
                         <span class="btn-disabled">KTM Belum Ada</span>
                     <?php } ?>
 
                     <?php if (!empty($file_lampiran['ukt'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')"><i class="fa-solid fa-paperclip"></i>Bukti Pembayaran UKT</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['ukt']); ?>')">Bukti Pembayaran UKT</a>
                     <?php } else { ?>
                         <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
                     <?php } ?>
 
                     <?php if (!empty($file_lampiran['khs'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')"><i class="fa-solid fa-paperclip"></i>KHS</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['khs']); ?>')">KHS</a>
                     <?php } else { ?>
                         <span class="btn-disabled">KHS Belum Ada</span>
                     <?php } ?>
 
                 <?php
-                    // --- KONDISI 4: TAMPILAN BERKAS AKTIF KULIAH MAHASISWA ---
+                    // --- TAMPILAN BERKAS AKTIF KULIAH 
                 } else if (strpos($namaSurat, 'aktif') !== false) {
                 ?>
                     <?php if (!empty($file_lampiran['sk_cuti'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['sk_cuti']); ?>')"><i class="fa-solid fa-paperclip"></i> SK Cuti</a>
+                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($file_lampiran['sk_cuti']); ?>')">SK Cuti</a>
                     <?php } else { ?>
                         <span class="btn-disabled">SK Cuti Belum Ada</span>
                     <?php } ?>
@@ -446,41 +470,39 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
 
         <div class="action-panel">
             <?php
-            $asal = $_GET['asal'] ?? 'permohonan';
-            if ($asal == 'riwayat') {
-                $link_kembali = 'dosen_riwayat.php';
+            $asal = $_GET['asal'] ?? 'akademik';
+
+            if ($asal == 'riwayat_akademik') {
+                $link_kembali = 'dosen_riwayat_akademik.php';
+            } elseif ($asal == 'riwayat_ormawa') {
+                $link_kembali = 'dosen_riwayat_ormawa.php';
+            } elseif ($asal == 'ormawa' || !empty($data['id_ormawa'])) {
+                $link_kembali = 'dosen_permohonan_ormawa.php';
             } else {
-                $link_kembali = 'dosen_permohonan.php';
+                $link_kembali = 'dosen_permohonan_akademik.php';
             }
             ?>
 
             <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
+                Kembali
             </a>
 
             <?php if ($boleh_verifikasi) { ?>
                 <form action="proses_verifikasi_dosen.php" method="POST" id="formVerifikasi">
                     <input type="hidden" name="id_surat" value="<?= $data['id_surat']; ?>">
                     <input type="hidden" name="aksi" id="aksiInput" value="">
-                    <!-- Input catatan tersembunyi untuk dikirim ke PHP -->
                     <input type="hidden" name="catatan" id="catatanInput" value="">
 
                     <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                        <i class="fa-solid fa-xmark"></i> Tolak
+                        Tolak
                     </button>
                     <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
-                        <i class="fa-solid fa-check"></i> Setujui
+                        Setujui
                     </button>
                 </form>
             <?php } ?>
-
-
         </div>
     </div>
-
-    <footer class="sec-footer-form-minimal">
-        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
-    </footer>
 
     <div id="modalPreview" class="modal-preview">
         <div class="modal-content-preview">
@@ -510,7 +532,6 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
 
         function tampilkanCatatan() {
             const div = document.getElementById('divCatatan');
-            // Jika belum tampil, tampilkan. Jika sudah tampil, jalankan konfirmasi tolak.
             if (div.style.display === "none") {
                 div.style.display = "block";
             } else {
@@ -518,7 +539,7 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
             }
         }
 
-        // Fungsi khusus untuk Tolak (menampilkan pop-up input)
+        // Fungsi khusus untuk Tolak
         function konfirmasiTolak() {
             Swal.fire({
                 title: 'Alasan Penolakan',
@@ -533,7 +554,6 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Masukkan alasan ke input hidden
                     document.getElementById('catatanInput').value = result.value;
                     document.getElementById('aksiInput').value = 'tolak';
                     document.getElementById('formVerifikasi').submit();
@@ -541,7 +561,7 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
             });
         }
 
-        // Fungsi untuk Setujui (tetap seperti sebelumnya)
+        // Fungsi untuk Setujui
         function konfirmasiAksi(aksi, pesan, icon) {
             Swal.fire({
                 title: 'Konfirmasi',
@@ -549,7 +569,8 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                 icon: icon,
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
-                confirmButtonText: 'Ya, Lanjutkan!'
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('aksiInput').value = aksi;
@@ -557,6 +578,15 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
                 }
             });
         }
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
     </script>
 </body>
 

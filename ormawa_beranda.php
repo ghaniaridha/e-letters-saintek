@@ -2,23 +2,29 @@
 session_start();
 include "koneksi.php";
 
-// 1. PROTEKSI HALAMAN: Pastikan pengguna login sebagai Ormawa
 if (!isset($_SESSION['id_ormawa'])) {
-    echo "<script>
-            alert('Silakan login terlebih dahulu');
-            window.location='index.php';
-          </script>";
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
 $id_ormawa = $_SESSION['id_ormawa'];
 
-// 2. QUERY HITUNG STATUS SURAT SECARA REAL-TIME (KHUSUS ORMAWA INI)
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+// QUERY HITUNG STATUS SURAT SECARA REAL-TIME
 // Menunggu
 $q_menunggu = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir LIKE 'Menunggu%'");
 $c_menunggu = mysqli_fetch_assoc($q_menunggu)['total'];
 
-// Disetujui (Disetujui Pembina atau Kasubbag tapi belum berstatus Selesai)
+// Disetujui (Disetujui Pembina tapi belum berstatus Selesai)
 $q_disetujui = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan WHERE id_ormawa = '$id_ormawa' AND status_akhir LIKE 'Disetujui%'");
 $c_disetujui = mysqli_fetch_assoc($q_disetujui)['total'];
 
@@ -37,7 +43,7 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Ormawa</title>
+    <title>Dashboard</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css" media="screen" title="no title">
@@ -48,32 +54,21 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
-            <a href="#services">Layanan</a>
-            <a href="#status-info">Informasi</a>
-            <!-- UBAH: Arahkan ke file lacak/riwayat ormawa yang valid -->
-            <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
+            <a href="#services">Pengajuan Surat</a>
+            <a href="#status-info">Status & Informasi</a>
             <a href="ormawa_lacak.php">lacak surat</a>
+            <a href="ormawa_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -84,7 +79,7 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                     </div>
                     <div class="divider"></div>
                     <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
-                        <span>Logout</span>
+                        <span>Keluar</span>
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </a>
                 </div>
@@ -95,7 +90,7 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
     <section class="hero" id="home">
         <main class="content">
             <h2>Halo, <?= htmlspecialchars($namaLengkap) ?></h2>
-            <h1>Selamat datang di layanan Persuratan FST UIN RIL</h1>
+            <h1>Selamat Datang di Sistem Informasi Persuratan Terpadu FST UIN RIL</h1>
         </main>
     </section>
 
@@ -111,8 +106,8 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                     <i class="fa-solid fa-paper-plane"></i>
                 </div>
                 <div class="text-middle">
-                    <h3>Pengajuan Surat Online</h3>
-                    <p>Ajukan kebutuhan surat Anda secara daring, mudah, dan dapat dilacak</p>
+                    <h3>Pengajuan Surat Daring</h3>
+                    <p>Ajukan permohonan surat administrasi Anda secara daring, mudah, dan dapat dilacak.</p>
                 </div>
                 <div class="btn-right">
                     <a href="ormawa_daftar_surat.php"><i class="fa-solid fa-arrow-right"></i></a>
@@ -134,24 +129,23 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
 
         <div class="dashboard-container">
             <div class="status-grid">
-                <!-- UBAH: Menggunakan Variabel Dinamis Hasil COUNT Database -->
                 <div class="status-box">
-                    <span class="status-count" style="color: #f59e0b;"><?= $c_menunggu; ?></span>
+                    <span class="status-count count-menunggu"><?= $c_menunggu; ?></span>
                     <h4>Menunggu</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #10b981;"><?= $c_disetujui; ?></span>
+                    <span class="status-count count-disetujui"><?= $c_disetujui; ?></span>
                     <h4>Disetujui</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #ef4444;"><?= $c_ditolak; ?></span>
+                    <span class="status-count count-ditolak"><?= $c_ditolak; ?></span>
                     <h4>Ditolak</h4>
                 </div>
 
                 <div class="status-box">
-                    <span class="status-count" style="color: #3b82f6;"><?= $c_selesai; ?></span>
+                    <span class="status-count count-selesai"><?= $c_selesai; ?></span>
                     <h4>Selesai</h4>
                 </div>
             </div>
@@ -162,7 +156,6 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                 </div>
                 <h3>Riwayat Pengajuan</h3>
                 <p>Lihat detail riwayat seluruh surat yang pernah Anda ajukan sebelumnya.</p>
-                <!-- DIUBAH: Mengarah ke file internal lacak/riwayat milik Ormawa -->
                 <a href="ormawa_lacak.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
 
@@ -268,6 +261,15 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                 }
             });
         }
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
     </script>
 </body>
 

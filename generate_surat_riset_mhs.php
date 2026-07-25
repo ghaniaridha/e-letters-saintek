@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
     exit;
 }
 
+$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_POST['id_jenis'];
 $semester = mysqli_real_escape_string($koneksi, $_POST['semester']);
 $judul_skripsi = mysqli_real_escape_string($koneksi, $_POST['judul_skripsi']);
@@ -16,13 +16,14 @@ $surat_ditujukan = mysqli_real_escape_string($koneksi, $_POST['surat_ditujukan']
 $pembimbing_1 = $_POST['pembimbing_1'];
 $pembimbing_2 = !empty($_POST['pembimbing_2']) ? $_POST['pembimbing_2'] : 'NULL';
 
-$folder_upload = "uploads/dokumen_hss/";
+$folder_upload = __DIR__ . "/uploads/dokumen_hss/";
 
 if (!is_dir($folder_upload)) {
     mkdir($folder_upload, 0777, true);
+    chmod($folder_upload, 0777);
 }
 
-function uploadFile($field, $folder_upload)
+function uploadFile($field, $folder_upload, $allowed_ext, $allowed_mime)
 {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] != 0) {
         echo "<script>alert('File " . $field . " wajib diupload'); history.back();</script>";
@@ -33,10 +34,12 @@ function uploadFile($field, $folder_upload)
     $tmp_file = $_FILES[$field]['tmp_name'];
     $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
 
-    $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_asli = finfo_file($finfo, $tmp_file);
+    finfo_close($finfo);
 
-    if (!in_array($ext, $allowed)) {
-        echo "<script>alert('Format file harus PDF, JPG, JPEG, atau PNG'); history.back();</script>";
+    if (!in_array($ext, $allowed_ext) || !in_array($mime_asli, $allowed_mime)) {
+        echo "<script>alert('Format file " . $field . " tidak valid atau file telah dimanipulasi!'); history.back();</script>";
         exit;
     }
 
@@ -50,17 +53,23 @@ function uploadFile($field, $folder_upload)
     return $nama_baru;
 }
 
-$proposal_penelitian = uploadFile('proposal_penelitian', $folder_upload);
-$khs = uploadFile('khs', $folder_upload);
-$bukti_ukt = uploadFile('bukti_ukt', $folder_upload);
+$ext_proposal = ['pdf'];
+$mime_proposal = ['application/pdf'];
+$proposal_penelitian = uploadFile('proposal_penelitian', $folder_upload, $ext_proposal, $mime_proposal);
+
+$ext_umum = ['pdf', 'jpg', 'jpeg', 'png'];
+$mime_umum = ['application/pdf', 'image/jpeg', 'image/png'];
+
+$khs = uploadFile('khs', $folder_upload, $ext_umum, $mime_umum);
+$bukti_ukt = uploadFile('bukti_ukt', $folder_upload, $ext_umum, $mime_umum);
 
 $tanggal = date('Y-m-d H:i:s');
 
 $query_utama = "
     INSERT INTO surat_pengajuan 
-    (id_mhs, id_jenis, nomor_surat, tanggal_pengajuan, status_akhir, status_pimpinan)
+    (id_mhs, id_jenis, nomor_surat, file_surat_final, dokumen_hash, tanggal_pengajuan, status_akhir, status_pimpinan)
     VALUES 
-    ('$id_mhs', '$id_jenis', '', '$tanggal', 'Menunggu Dospem 2', 'Menunggu')
+    ('$id_mhs', '$id_jenis', '', '', '', '$tanggal', 'Menunggu Dospem 2', 'Menunggu')
 ";
 
 if (mysqli_query($koneksi, $query_utama)) {
@@ -108,7 +117,7 @@ if (mysqli_query($koneksi, $query_utama)) {
     }
 
     $_SESSION['status'] = 'success';
-    $_SESSION['pesan']  = 'Surat permohonan izin riset berhasil diajukan.';
+    $_SESSION['pesan']  = 'Surat permohonan izin riset berhasil dibuat dan diajukan.';
     header("Location: preview_surat_riset_mhs.php?id=$id_surat");
     exit;
 } else {
@@ -126,7 +135,7 @@ if (mysqli_query($koneksi, $query_utama)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview Surat</title>
+    <title>Generate Surat</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">

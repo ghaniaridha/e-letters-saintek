@@ -1,39 +1,39 @@
 <?php
-// Pastikan variabel username admin sudah terbaca dari session login (contoh: adm001)
 $username_admin = $_SESSION['nama'] ?? '';
 ?>
 
-<div class="sidebar">
+<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fa-solid fa-bars"></i>
+</button>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
         <img src="images/logo2.png" alt="Logo SIPATU FST UIN RIL" class="logo-img">
     </div>
 
-    <!-- Menu Dasbor & Templat Surat tetap bisa diakses kedua admin -->
     <a href="adm_dashboard.php">
         <i class="fa-solid fa-house"></i> Dasbor
     </a>
 
-    <!-- MENU INI HANYA MUNCUL UNTUK ADMIN AKADEMIK (ADMIN 2) -->
     <?php if ($username_admin !== 'ADM001') : ?>
         <a href="adm_template_surat.php">
             <i class="fa-solid fa-file-word"></i> Templat Surat
         </a>
     <?php endif; ?>
 
-    <!-- PERBEDAAN FITUR PERMOHONAN SURAT -->
     <?php if ($username_admin === 'ADM001') : ?>
-        <a href="adm_permohonan.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Ormawa
+        <a href="adm_permohonan_ormawa.php">
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
         </a>
     <?php else : ?>
-        <a href="adm_permohonan.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Mhs
+        <a href="adm_permohonan_akademik.php">
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
         </a>
     <?php endif; ?>
 
-    <!-- PERBEDAAN FITUR KELOLA PENGGUNA -->
     <?php if ($username_admin === 'ADM001') : ?>
-        <!-- Admin 1: Hanya bisa mengelola data Ormawa & Dosen (Pembina) -->
         <div class="dropdown-container">
             <a href="javascript:void(0)" class="dropdown-btn">
                 <i class="fa-solid fa-users"></i> Kelola Pengguna
@@ -44,7 +44,6 @@ $username_admin = $_SESSION['nama'] ?? '';
             </ul>
         </div>
     <?php else : ?>
-        <!-- Admin 2: Hanya bisa mengelola data Mahasiswa & Dosen (PA/Dospem) -->
         <div class="dropdown-container">
             <a href="javascript:void(0)" class="dropdown-btn">
                 <i class="fa-solid fa-users"></i> Kelola Pengguna
@@ -57,7 +56,6 @@ $username_admin = $_SESSION['nama'] ?? '';
         </div>
     <?php endif; ?>
 
-    <!-- PERBEDAAN FITUR RIWAYAT & LAPORAN -->
     <?php if ($username_admin === 'ADM001') : ?>
         <a href="adm_riwayat_review.php">
             <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Surat Ormawa
@@ -80,9 +78,25 @@ $username_admin = $_SESSION['nama'] ?? '';
 </div>
 
 <script>
-    // fungsi dropdown menu sidebar bawaan kode lama Anda
     document.querySelector('.dropdown-btn').addEventListener('click', function() {
         this.nextElementSibling.classList.toggle('show');
         this.querySelector('.dropdown-arrow').classList.toggle('rotate-arrow');
     });
+
+    // Mobile sidebar toggle
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (sidebarToggle && sidebar && sidebarOverlay) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
 </script>

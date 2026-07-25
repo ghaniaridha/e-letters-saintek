@@ -52,40 +52,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // 3. Pengecekan Mahasiswa
-    // 1. Ubah Query menggunakan JOIN agar mendapat nama_prodi sekaligus
-    $queryMhs = "
-        SELECT m.*, p.nama_prodi 
-        FROM mahasiswa m 
-        LEFT JOIN prodi p ON m.id_prodi = p.id_prodi 
-        WHERE m.npm='$login_id'
-    ";
+    $queryMhs = "SELECT * FROM mahasiswa WHERE npm='$login_id'";
     $resultMhs = mysqli_query($koneksi, $queryMhs);
     $dataMhs = mysqli_fetch_assoc($resultMhs);
 
     if ($dataMhs && password_verify($password, $dataMhs['password'])) {
         if ($dataMhs['status'] == 1) {
-            // 2. Set Session
             $_SESSION['id_mhs'] = $dataMhs['id_mhs'];
             $_SESSION['nama_lengkap'] = $dataMhs['nama_mhs'];
-
-            // Hapus salah satu $_SESSION['nama'] jika isinya sama-sama NPM agar memori lebih efisien
+            $_SESSION['nama'] = $dataMhs['npm'];
             $_SESSION['npm'] = $dataMhs['npm'];
-
-            // Simpan id_prodi dan sekalian nama_prodi-nya
             $_SESSION['id_prodi'] = $dataMhs['id_prodi'];
-            $_SESSION['nama_prodi'] = $dataMhs['nama_prodi'];
-
-            // Gunakan operator ?? (Null Coalescing) untuk mencegah error jika data dosen kosong
-            $_SESSION['id_pa'] = $dataMhs['id_pa'] ?? null;
-            $_SESSION['id_pb1'] = $dataMhs['id_pb1'] ?? null;
-            $_SESSION['id_pb2'] = $dataMhs['id_pb2'] ?? null;
-
-            // PERBAIKAN: Baris semester dihapus karena tabel tidak memiliki kolom semester
-            // $_SESSION['semester'] = $dataMhs['semester']; 
-
+            $_SESSION['id_pa'] = $dataMhs['id_pa'];
+            $_SESSION['id_pb1'] = $dataMhs['id_pb1'];
+            $_SESSION['id_pb2'] = $dataMhs['id_pb2'];
             $_SESSION['role'] = 'mahasiswa';
-
-            // 3. Redirect
             header("Location: mhs_beranda.php");
             exit;
         } else {
@@ -125,10 +106,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="6Nm9ln2Cc_GuiZlsPDBFvU39M2CAL-zL7uoMOBmRtYs" />
     <title>Login</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="index.css" media="screen" title="no title">
+    <link rel="stylesheet" href="index.css?v=1.2" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -157,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </a>
             </div>
             <div class="form-content">
-                <img src="images/logo1.png" alt="image" />
+                <img src="images/logo1.png" alt="Logo" class="logo-login" />
 
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="error-message">

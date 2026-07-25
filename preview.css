@@ -67,31 +67,84 @@ body {
   margin-bottom: 20px;
 }
 
-.surat-signatures {
+.surat-signatures-3 {
   display: flex;
   justify-content: space-between;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.signature-block-3 {
+  width: 30%;
   text-align: center;
-  margin-top: 20px;
+}
+
+.signature-block-3 p {
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.surat-signatures {
+  width: 100%;
+  margin-top: 25px;
+  text-align: justify;
 }
 
 .signature-block {
-  width: 30%;
+  width: 45%;
+  display: inline-block;
+  vertical-align: top;
+  text-align: center;
+}
+
+.signature-block:nth-child(2) {
+  float: right;
+}
+
+.signature-block:nth-child(1) {
+  float: left;
 }
 
 .signature-block p {
-  margin: 0;
+  margin: 3px 0;
+  line-height: 1.4;
 }
 
 .qr-img {
-  width: 90px;
-  height: 90px;
-  margin: 15px auto;
+  width: 85px;
+  height: 85px;
+  margin: 10px auto;
   display: block;
 }
 
 .qr-placeholder {
   height: 90px;
   margin: 15px auto;
+}
+
+.ttd {
+  width: 260px;
+  float: right;
+  text-align: left;
+  margin-top: 40px;
+}
+
+.ttd p {
+  margin: 3px 0;
+  line-height: 1.5;
+}
+
+.ttd .qr-img {
+  width: 80px;
+  height: 80px;
+  margin: 15px 0;
+  display: block;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
 }
 
 .preview-actions {
@@ -171,6 +224,18 @@ body {
 }
 
 @media print {
+  .no-print,
+  .btn,
+  .action-panel,
+  .document-buttons,
+  nav,
+  .navbar,
+  footer,
+  .btn-group,
+  .preview-actions {
+    display: none !important;
+  }
+
   .preview-actions,
   nav,
   .navbar,
@@ -181,14 +246,14 @@ body {
 
   @page {
     size: A4 portrait;
-    margin: 1.5cm 2cm;
+    margin: 1cm 1.5cm;
   }
 
   body,
   html {
     background-color: white !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 10mm !important;
   }
 
   .surat-wrapper {
@@ -203,19 +268,47 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
-    font-size: 11.5pt !important;
-    line-height: 1.3 !important;
+    font-size: 11pt !important;
+    line-height: 1.25 !important;
     color: black !important;
   }
 
   .surat-document p {
-    margin: 0 0 3px 0 !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  .surat-signatures-3 {
+    display: flex !important;
+    justify-content: space-between !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 15px !important;
+  }
+
+  .signature-block-3 {
+    width: 30% !important;
+    display: inline-block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .surat-signatures {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 15px !important;
+  }
+
+  .signature-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 45% !important;
+    display: inline-block !important;
   }
 
   .qr-img {
     width: 70px !important;
     height: 70px !important;
-    margin: 5px auto !important;
+    margin: 8px auto !important;
   }
 
   .qr-placeholder {
@@ -228,9 +321,16 @@ body {
     margin-bottom: 10px !important;
   }
 
-  .surat-signatures {
-    margin-top: 10px !important;
-    page-break-inside: avoid !important;
+  .ttd {
+    float: right !important;
+    text-align: left !important;
+    width: 260px !important;
+    page-break-inside: avoid;
+  }
+
+  .ttd .qr-img {
+    margin: 15px 0 !important;
+    display: block !important;
   }
 }
 /*surat mahasiswa section - end */
@@ -240,6 +340,30 @@ body {
   max-width: 850px;
   margin: 40px auto;
   font-family: sans-serif;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .preview-container {
+    margin: 10px auto;
+    padding: 0 10px;
+  }
+  .surat-wrapper-resmi {
+    padding: 30px 20px !important;
+    font-size: 13px !important;
+  }
+  .kop-logo img {
+    width: 60px !important;
+  }
+  .kop-teks h3 {
+    font-size: 10pt !important;
+  }
+  .kop-teks h2 {
+    font-size: 12pt !important;
+  }
+  .kop-teks small {
+    font-size: 8pt !important;
+  }
 }
 
 .surat-wrapper-resmi {
@@ -253,6 +377,9 @@ body {
   line-height: 1.5;
   color: #000000;
   margin-bottom: 30px;
+  width: 100%;
+  max-width: 850px;
+  box-sizing: border-box;
 }
 
 .kop-surat {
@@ -470,3 +597,329 @@ body {
   }
 }
 /*surat resmi fakultas section - end */
+
+/*surat ormawa section - start */
+.ormawa-surat-wrapper {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 30px auto;
+  background: white;
+  padding: 20mm;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  font-family: "Times New Roman", Times, serif;
+  color: #000;
+  font-size: 12pt;
+  line-height: 1.5;
+}
+
+.ormawa-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.ormawa-logo-kiri img,
+.ormawa-logo-kanan img {
+  width: 90px;
+  height: auto;
+}
+
+.ormawa-judul-kop {
+  flex: 1;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.ormawa-judul-kop h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.ormawa-judul-kop p {
+  margin: 5px 0 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.ormawa-garis-kop {
+  border: none;
+  border-top: 3px solid #000;
+  border-bottom: 1px solid #000;
+  height: 3px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.ormawa-detail-surat {
+  width: 100%;
+  margin-bottom: 15px;
+  border-collapse: collapse;
+}
+
+.ormawa-detail-surat td {
+  vertical-align: top;
+  padding: 2px 0;
+}
+
+.ormawa-tujuan-surat {
+  margin-bottom: 15px;
+}
+
+.ormawa-tempat {
+  padding-left: 20px;
+}
+
+.ormawa-salutation {
+  margin-bottom: 10px;
+  margin-top: 15px;
+}
+
+.ormawa-paragraf {
+  text-align: justify;
+  text-indent: 40px;
+  margin-bottom: 10px;
+}
+
+.ormawa-table-info {
+  width: 90%;
+  margin: 10px auto;
+  border-collapse: collapse;
+}
+
+.ormawa-table-info td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.ormawa-ttd-section {
+  width: 440px;
+  margin: 15px auto 0 auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.ormawa-tanggal-surat {
+  text-align: right;
+  margin-bottom: 10px;
+  font-size: 11pt;
+}
+
+.ormawa-ttd-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  gap: 20px;
+}
+
+.ormawa-ttd-box {
+  width: 50%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11pt;
+}
+
+.ormawa-ttd-box img,
+.ormawa-ttd-pembina img {
+  width: 70px;
+  height: 70px;
+  margin: 3px 0;
+}
+
+.ormawa-ttd-pembina {
+  width: 100%;
+  margin-top: 15px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11pt;
+}
+
+.ormawa-jabatan-pembina {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.ormawa-qr-placeholder {
+  width: 70px;
+  height: 70px;
+  border: 1px dashed #aaa;
+  margin: 3px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #777;
+  font-style: italic;
+  background: #fafafa;
+}
+
+.ormawa-nama-ttd {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1cm 1.5cm;
+  }
+
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .ormawa-surat-wrapper {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    font-size: 10.5pt !important;
+    line-height: 1.3 !important;
+  }
+
+  .ormawa-paragraf {
+    margin-bottom: 5px !important;
+    text-indent: 30px !important;
+  }
+
+  .ormawa-table-info {
+    margin: 4px auto !important;
+  }
+
+  .ormawa-table-info td,
+  .ormawa-detail-surat td {
+    padding: 1px 0 !important;
+  }
+
+  .ormawa-ttd-section {
+    margin-top: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .preview-actions,
+  .action {
+    display: none !important;
+  }
+}
+/*surat ormawa section - end */
+
+/* ── Responsive: preview document & surat ── */
+@media (max-width: 768px) {
+  .preview-container {
+    padding: 0 10px;
+    margin: 10px auto;
+  }
+
+  .surat-wrapper {
+    margin: 20px auto;
+  }
+
+  .surat-document {
+    padding: 30px 20px;
+    font-size: 14px;
+  }
+
+  .surat-wrapper-resmi {
+    padding: 25px 15px !important;
+    font-size: 12px !important;
+  }
+
+  .kop-logo {
+    width: 70px;
+  }
+
+  .kop-logo img {
+    width: 60px !important;
+  }
+
+  .kop-teks h3 {
+    font-size: 9pt !important;
+  }
+
+  .kop-teks h2 {
+    font-size: 11pt !important;
+  }
+
+  .kop-teks small {
+    font-size: 7pt !important;
+  }
+
+  .surat-signatures {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .signature-block {
+    width: 80%;
+  }
+
+  .ttd-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+  }
+
+  .btn-action {
+    width: 100%;
+    text-align: center;
+  }
+
+  .preview-actions {
+    padding: 15px 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .surat-document {
+    padding: 20px 12px;
+    font-size: 13px;
+  }
+
+  .surat-wrapper-resmi {
+    padding: 18px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .col-label {
+    width: 130px;
+  }
+
+  .kop-logo img {
+    width: 50px !important;
+  }
+
+  .kop-teks h3 {
+    font-size: 8pt !important;
+  }
+
+  .kop-teks h2 {
+    font-size: 10pt !important;
+  }
+
+  .signature-block {
+    width: 100%;
+  }
+
+  .qr-img {
+    width: 70px;
+    height: 70px;
+  }
+}

@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
+$id_mhs = $_SESSION['id_mhs'];
 $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
 $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
 $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
@@ -30,16 +30,16 @@ if (!$surat) {
 }
 
 $mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM mahasiswa
-    WHERE id_mhs = '$id_mhs'
+    SELECT m.*, p.nama_prodi 
+    FROM mahasiswa m
+    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
+    WHERE m.id_mhs = '$id_mhs'
 "));
 
 if (!$mhs || empty($mhs['id_prodi'])) {
     echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='mhs_daftar_surat_akademik.php';</script>";
     exit;
 }
-
-$id_prodi = $mhs['id_prodi'];
 
 $id_pb1 = $mhs['id_pb1'];
 $id_pb2 = $mhs['id_pb2'];
@@ -69,6 +69,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -119,20 +120,23 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                     <label>Semester / Program Studi</label>
 
                     <div class="input-group-flex">
-                        <input type="number"
-                            name="semester"
-                            placeholder="Contoh: 6"
-                            class="form-control flex-1"
-                            min="3"
-                            max="14"
-                            required>
+                        <select name="semester" class="form-control flex-1" required>
+                            <option value="" disabled selected>Pilih Semester</option>
+                            <?php
+                            for ($i = 5; $i <= 10; $i++) {
+                                echo "<option value=\"$i\">$i</option>";
+                            }
+                            ?>
+                        </select>
 
                         <input type="text"
                             class="form-control input-readonly flex-2"
-                            value="<?= htmlspecialchars($mhs['nama_prodi'] ?? 'Sistem Informasi'); ?>"
+                            value="<?= htmlspecialchars($mhs['nama_prodi'] ?? 'Prodi Belum Diatur'); ?>"
                             readonly>
 
-                        <input type="hidden" name="id_prodi" value="<?= $data_mhs['id_prodi'] ?? ''; ?>">
+                        <input type="hidden"
+                            name="id_prodi"
+                            value="<?= htmlspecialchars($mhs['id_prodi'] ?? ''); ?>">
                     </div>
                 </div>
 
@@ -217,8 +221,8 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
     </footer>
 
     <script>
-        //fungsi dropdown user navbar
         document.addEventListener('DOMContentLoaded', function() {
+            //fungsi dropdown user navbar
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
 
@@ -234,12 +238,37 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                     }
                 }
             });
+
+            //fungsi validasi input file (keamanan)
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    if (this.hasAttribute('accept')) {
+                        const acceptedTypes = this.getAttribute('accept').split(',');
+                        const fileName = this.value.toLowerCase();
+
+                        const isValid = acceptedTypes.some(ext => fileName.endsWith(ext.trim()));
+
+                        if (!isValid && fileName !== "") {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Format Tidak Valid!',
+                                text: 'Silakan masukkan format: ' + acceptedTypes.join(", "),
+                                showConfirmButton: true,
+                                confirmButtonText: 'Mengerti',
+                                confirmButtonColor: '#1e3a8a'
+                            });
+
+                            this.value = '';
+                        }
+                    }
+                });
+            });
         });
 
         //fungsi konfirmasi button kembali
         function confirmBatalAjukanSurat(event, url) {
             event.preventDefault();
-
             Swal.fire({
                 title: 'Batalkan pengisian formulir?',
                 text: "Perubahan yang dilakukan tidak akan tersimpan.",
@@ -260,9 +289,7 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
         //fungsi konfirmasi button ajukan surat
         function confirmAjukanSurat(event) {
             event.preventDefault();
-
             const form = event.target;
-
             Swal.fire({
                 title: 'Konfirmasi Pengajuan Surat',
                 text: "Pastikan data sudah benar. Data tidak dapat diubah setelah dikirim.",
@@ -278,7 +305,17 @@ $pb2 = mysqli_fetch_assoc($q_pb2);
                     form.submit();
                 }
             });
+
         }
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
     </script>
 </body>
 

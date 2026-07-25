@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='login.php';</script>";
     exit;
 }
 
+$id_mhs = $_SESSION['id_mhs'];
 $id_jenis = $_POST['id_jenis'];
 $semester         = (int)($_POST['semester'] ?? 0);
 $lama_cuti        = mysqli_real_escape_string($koneksi, $_POST['lama_cuti'] ?? '');
@@ -25,9 +25,10 @@ $folder_upload = "uploads/dokumen_hss/";
 
 if (!is_dir($folder_upload)) {
     mkdir($folder_upload, 0777, true);
+    chmod($folder_upload, 0777);
 }
 
-function uploadFile($field, $folder_upload)
+function uploadFile($field, $folder_upload, $allowed_ext, $allowed_mime)
 {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] != 0) {
         echo "<script>alert('File berkas permohonan wajib diupload'); history.back();</script>";
@@ -38,14 +39,15 @@ function uploadFile($field, $folder_upload)
     $tmp_file = $_FILES[$field]['tmp_name'];
     $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
 
-    $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_asli = finfo_file($finfo, $tmp_file);
+    finfo_close($finfo);
 
-    if (!in_array($ext, $allowed)) {
-        echo "<script>alert('Format file lampiran harus PDF, JPG, JPEG, atau PNG'); history.back();</script>";
+    if (!in_array($ext, $allowed_ext) || !in_array($mime_asli, $allowed_mime)) {
+        echo "<script>alert('Format file lampiran tidak valid atau file telah dimanipulasi!'); history.back();</script>";
         exit;
     }
 
-    // Penamaan file dinamis berdasarkan field input form
     $nama_baru = $field . "_" . time() . "_" . rand(1000, 9999) . "." . $ext;
 
     if (!move_uploaded_file($tmp_file, $folder_upload . $nama_baru)) {
@@ -56,23 +58,22 @@ function uploadFile($field, $folder_upload)
     return $nama_baru;
 }
 
-$file_cuti = uploadFile('sk_cuti', $folder_upload);
+$ext_umum = ['pdf', 'jpg', 'jpeg', 'png'];
+$mime_umum = ['application/pdf', 'image/jpeg', 'image/png'];
+
+$file_cuti = uploadFile('sk_cuti', $folder_upload, $ext_umum, $mime_umum);
 
 $tanggal = date('Y-m-d H:i:s');
 
-$query_utama = "INSERT INTO surat_pengajuan (id_mhs, id_jenis, nomor_surat, tanggal_pengajuan, status_akhir, status_pimpinan) 
-                VALUES ('$id_mhs', '$id_jenis', '', '$tanggal', 'Menunggu Pembimbing Akademik', 'Menunggu')";
+$query_utama = "INSERT INTO surat_pengajuan (id_mhs, id_jenis, nomor_surat, file_surat_final, dokumen_hash, tanggal_pengajuan, status_akhir, status_pimpinan) 
+                VALUES ('$id_mhs', '$id_jenis', '', '', '', '$tanggal', 'Menunggu Pembimbing Akademik', 'Menunggu')";
 
 if (mysqli_query($koneksi, $query_utama)) {
     $id_surat = mysqli_insert_id($koneksi);
 
-    // Generate dan Update Dokumen Hash untuk keperluan pelacakan QR Code dan validasi link keamanan
     $dokumen_hash = hash('sha256', $id_surat . $id_mhs . time());
     mysqli_query($koneksi, "UPDATE surat_pengajuan SET dokumen_hash = '$dokumen_hash' WHERE id_surat = '$id_surat'");
 
-    /* =======================================================================
-       TAHAP 2: INSERT DATA KE TABEL DETAIL (detail_aktif_kuliah)
-       ======================================================================= */
     $query_detail = "INSERT INTO detail_aktif_kuliah 
                      (id_surat, semester, lama_cuti, ta_mulai_cuti, ta_selesai_cuti, tahun_akademik, id_pa, status_pa) 
                      VALUES 
@@ -80,9 +81,6 @@ if (mysqli_query($koneksi, $query_utama)) {
 
     if (mysqli_query($koneksi, $query_detail)) {
 
-        /* =======================================================================
-           TAHAP 3: INSERT DATA BERKAS KE TABEL LAMPIRAN (lampiran_pengajuan)
-           ======================================================================= */
         function getIdSyarat($koneksi, $nama_syarat)
         {
             $nama_syarat_clean = mysqli_real_escape_string($koneksi, $nama_syarat);
@@ -91,27 +89,25 @@ if (mysqli_query($koneksi, $query_utama)) {
             return $row['id_syarat'] ?? null;
         }
 
-        // Ambil ID Syarat dinamis berdasarkan nama berkas syarat di master_syarat Anda
         $id_syarat_cuti = getIdSyarat($koneksi, 'SK Cuti');
 
-        // Jika ID syarat ditemukan di master_syarat, jalankan query insert lampiran
         if ($id_syarat_cuti) {
             $query_lampiran = "INSERT INTO lampiran_pengajuan (id_surat, id_syarat, file_upload) 
                                VALUES ('$id_surat', '$id_syarat_cuti', '$file_cuti')";
             mysqli_query($koneksi, $query_lampiran);
         }
 
-        echo "<script>alert('Surat Aktif Kuliah Kembali berhasil diajukan.'); window.location='preview_sk_aktif_mhs.php?id=$id_surat';</script>";
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'SK Aktif Kuliah Kembali berhasil dibuat dan diajukan.';
+        header("Location: preview_sk_aktif_mhs.php?id=$id_surat");
         exit;
     } else {
-        // Rollback data master pengajuan jika penyimpanan tabel detail mengalami kegagalan
-        mysqli_query($koneksi, "DELETE FROM surat_pengajuan WHERE id_surat = '$id_surat'");
-        echo "<script>alert('Gagal menyimpan rincian detail berkas surat aktif.'); history.back();</script>";
+        $_SESSION['status'] = 'error';
+        $_SESSION['pesan']  = 'Sistem gagal memproses pengajuan surat.';
+        $halaman_sebelumnya = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'mhs_beranda.php';
+        header("Location: " . $halaman_sebelumnya);
         exit;
     }
-} else {
-    echo "<script>alert('Sistem gagal memproses pengajuan utama.'); history.back();</script>";
-    exit;
 }
 ?>
 

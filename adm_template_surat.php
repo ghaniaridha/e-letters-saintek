@@ -127,6 +127,22 @@ $query = mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     ORDER BY status DESC, id_jenis DESC
 ");
+
+$limit = 10;
+$halaman = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($halaman - 1) * $limit;
+$query_string = "";
+
+$q_count = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM jenis_surat");
+$d_count = mysqli_fetch_assoc($q_count);
+$total_data = $d_count['total'];
+$total_halaman = ceil($total_data / $limit);
+
+$query = mysqli_query($koneksi, "
+    SELECT * FROM jenis_surat
+    ORDER BY status DESC, id_jenis DESC
+    LIMIT $limit OFFSET $offset
+");
 ?>
 
 <!DOCTYPE html>
@@ -196,7 +212,7 @@ $query = mysqli_query($koneksi, "
                         <tbody>
                             <?php
                             if ($query && mysqli_num_rows($query) > 0) {
-                                $no = 1;
+                                $no = $offset + 1;
                                 while ($row = mysqli_fetch_assoc($query)) { ?>
                                     <tr>
                                         <td><?= $no++; ?></td>
@@ -234,11 +250,37 @@ $query = mysqli_query($koneksi, "
                                 <?php }
                             } else { ?>
                                 <tr>
-                                    <td colspan="5" class="empty-table-row">Belum ada template surat.</td>
+                                    <td colspan="6" class="empty-table-row">Belum ada template surat.</td>
                                 </tr>
                             <?php } ?>
                         </tbody>
                     </table>
+
+                    <?php if (isset($total_halaman) && $total_halaman > 0): ?>
+                        <div class="pagination-container">
+                            <ul class="pagination">
+                                <?php if ($halaman > 1): ?>
+                                    <li><a href="?page=<?= $halaman - 1 ?><?= $query_string ?>">Sebelumnya</a></li>
+                                <?php else: ?>
+                                    <li class="disabled"><span>Sebelumnya</span></li>
+                                <?php endif; ?>
+
+                                <?php for ($i = 1; $i <= $total_halaman; $i++): ?>
+                                    <?php if ($i == $halaman): ?>
+                                        <li class="active"><span><?= $i ?></span></li>
+                                    <?php else: ?>
+                                        <li><a href="?page=<?= $i ?><?= $query_string ?>"><?= $i ?></a></li>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+
+                                <?php if ($halaman < $total_halaman): ?>
+                                    <li><a href="?page=<?= $halaman + 1 ?><?= $query_string ?>">Selanjutnya</a></li>
+                                <?php else: ?>
+                                    <li class="disabled"><span>Selanjutnya</span></li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

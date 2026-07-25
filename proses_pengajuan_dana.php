@@ -30,9 +30,11 @@ $id_pembina = mysqli_real_escape_string(
     $_POST['id_pembina']
 );
 
-/* ==========================
-   DATA PENGAJUAN DANA
-========================== */
+$nomor_surat      = mysqli_real_escape_string(
+    $koneksi,
+    $_POST['nomor_surat']
+        ?? ''
+);
 
 $nama_kegiatan = mysqli_real_escape_string(
     $koneksi,
@@ -44,40 +46,24 @@ $tema_kegiatan = mysqli_real_escape_string(
     $_POST['tema_kegiatan']
 );
 
-$tanggal_kegiatan = mysqli_real_escape_string(
-    $koneksi,
-    $_POST['tanggal_kegiatan']
-);
 
 $tempat_kegiatan = mysqli_real_escape_string(
     $koneksi,
     $_POST['tempat_kegiatan']
 );
 
-$nominal_pengajuan = mysqli_real_escape_string(
+$tanggal_kegiatan = mysqli_real_escape_string(
     $koneksi,
-    $_POST['nominal_pengajuan']
+    $_POST['tanggal_kegiatan']
 );
 
-$deskripsi_kegiatan = mysqli_real_escape_string(
-    $koneksi,
-    $_POST['deskripsi_kegiatan']
-);
-
-/* ==========================
-   FILE PROPOSAL
-========================== */
 
 $proposal = isset($_POST['file_proposal_terupload'])
     ? mysqli_real_escape_string(
         $koneksi,
         $_POST['file_proposal_terupload']
-      )
+    )
     : '';
-
-/* ==========================
-   STATUS AWAL
-========================== */
 
 $status_awal = "Menunggu Persetujuan Pembina";
 $posisi      = "Pembina";
@@ -87,10 +73,6 @@ $tanggal_pengajuan = date(
     "Y-m-d H:i:s"
 );
 
-/* ==========================
-   SIMPAN SURAT PENGAJUAN
-========================== */
-
 $query = mysqli_query(
     $koneksi,
     "
@@ -99,6 +81,9 @@ $query = mysqli_query(
         id_jenis,
         id_ormawa,
         id_pembina,
+        nomor_surat,
+        file_surat_final,
+        dokumen_hash,
         tanggal_pengajuan,
         status_akhir,
         posisi_sekarang,
@@ -109,6 +94,9 @@ $query = mysqli_query(
         '$id_jenis',
         '$id_ormawa',
         '$id_pembina',
+        '$nomor_surat',
+        '',
+        '',
         '$tanggal_pengajuan',
         '$status_awal',
         '$posisi',
@@ -118,17 +106,14 @@ $query = mysqli_query(
 );
 
 if (!$query) {
-    die(
-        "Gagal menyimpan surat pengajuan : "
-        . mysqli_error($koneksi)
-    );
+    die("Gagal menyimpan surat pengajuan : "
+        . mysqli_error($koneksi));
 }
 
 $id_surat = mysqli_insert_id($koneksi);
 
-/* ==========================
-   SIMPAN DETAIL PENGAJUAN DANA
-========================== */
+$dokumen_hash = hash('sha256', $id_surat . $id_ormawa . time());
+mysqli_query($koneksi, "UPDATE surat_pengajuan SET dokumen_hash = '$dokumen_hash' WHERE id_surat = '$id_surat'");
 
 $detail = mysqli_query(
     $koneksi,
@@ -136,38 +121,30 @@ $detail = mysqli_query(
     INSERT INTO detail_pengajuan_dana
     (
         id_surat,
+        nomor_surat,
         nama_kegiatan,
         tema_kegiatan,
         tanggal_kegiatan,
         tempat_kegiatan,
-        nominal_pengajuan,
-        deskripsi_kegiatan,
         proposal
     )
     VALUES
     (
         '$id_surat',
+        '$nomor_surat',
         '$nama_kegiatan',
         '$tema_kegiatan',
         '$tanggal_kegiatan',
         '$tempat_kegiatan',
-        '$nominal_pengajuan',
-        '$deskripsi_kegiatan',
         '$proposal'
     )
 "
 );
 
 if (!$detail) {
-    die(
-        "Gagal menyimpan detail pengajuan dana : "
-        . mysqli_error($koneksi)
-    );
+    die("Gagal menyimpan detail pengajuan dana : "
+        . mysqli_error($koneksi));
 }
-
-/* ==========================
-   RIWAYAT DISPOSISI
-========================== */
 
 mysqli_query(
     $koneksi,
@@ -178,7 +155,8 @@ mysqli_query(
         pengirim,
         penerima,
         waktu_disposisi,
-        intruksi_catatan
+        intruksi_catatan,
+        status_tindakan
     )
     VALUES
     (
@@ -186,19 +164,13 @@ mysqli_query(
         'ORMAWA',
         'PEMBINA',
         NOW(),
-        'Pengajuan dana menunggu persetujuan pembina.'
+        'Pengajuan dana menunggu persetujuan pembina.',
+        'MENUNGGU'
     )
 "
 );
 
-/* ==========================
-   REDIRECT
-========================== */
-
-echo "
-<script>
-alert('Pengajuan dana berhasil dikirim ke Pembina.');
-window.location='ormawa_lacak.php';
-</script>
-";
-?>
+$_SESSION['status'] = 'success';
+$_SESSION['pesan']  = 'Surat permohonan pengajuan dana kegiatan berhasil dikirim.';
+header("Location: ormawa_lacak.php?id=$id_surat");
+exit;

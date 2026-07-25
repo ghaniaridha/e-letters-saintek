@@ -1,6 +1,23 @@
 <?php
 session_start();
 include "koneksi.php";
+
+if (!isset($_SESSION['id_ormawa'])) {
+    echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
+    exit;
+}
+
+$id_ormawa = $_SESSION['id_ormawa'];
+
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
 ?>
 
 <!DOCTYPE html>
@@ -18,30 +35,21 @@ include "koneksi.php";
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
 
         <div class="navbar-nav">
             <a href="ormawa_beranda.php">Beranda</a>
-            <a href="ormawa_beranda.php#services">Layanan</a>
-            <a href="ormawa_beranda.php#status-info">Informasi</a>
+            <a href="ormawa_beranda.php#services">Pengajuan Surat</a>
+            <a href="ormawa_beranda.php#status-info">Status & Informasi</a>
+            <a href="ormawa_lacak.php">lacak surat</a>
             <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -110,17 +118,15 @@ include "koneksi.php";
         <div class="layanan-container">
             <a class="layanan-card" href="ormawa_form_peminjaman_ruangan.php?id_jenis=1">
                 <div class="layanan-content">
-                    <h3>Peminjaman<br>Gedung</h3>
+                    <h3>Peminjaman<br>Ruangan</h3>
                 </div>
             </a>
 
             <a class="layanan-card" href="ormawa_form_pengajuan_dana.php">
                 <div class="layanan-content">
-                    <h3>Pengajuan<br>Dana</h3>
+                    <h3>Pengajuan Dana<br>Kegiatan</h3>
                 </div>
             </a>
-
-
         </div>
     </section>
 
@@ -132,33 +138,39 @@ include "koneksi.php";
         </div>
         <div class="footer-container">
             <div class="footer-col info-col">
-                <h3>Layanan Akademik FST</h3>
+                <h3>SIPATU FST</h3>
                 <p>Sistem Informasi Manajemen Persuratan Fakultas Sains dan Teknologi UIN Raden Intan Lampung.</p>
                 <div class="contact-item">
                     <i class="fa-solid fa-location-dot"></i>
-                    <span>Jl. Letkol H. Endro Suratmin, Sukarame, Bandar Lampung.</span>
+                    <span>Jl. Endro Suratmin No.38, Sukarame, Kec. Sukarame, Kota Bandar Lampung, Lampung 35131</span>
                 </div>
             </div>
 
-            <div class="footer-col links-col">
-                <h4>Tautan Cepat</h4>
-                <ul>
-                    <li><a href="#home">Beranda</a></li>
-                    <li><a href="#services">Layanan Akademik</a></li>
-                    <li><a href="#riwayat">Lacak</a></li>
-                    <li><a href="#kalender">Riwayat Permohonan</a></li>
-                </ul>
+            <div class="footer-col map-col">
+                <h4>Lokasi Kami</h4>
+                <div class="map-wrapper">
+                    <iframe
+                        src="https://maps.google.com/maps?q=Gedung%20Fakultas%20Sains%20dan%20Teknologi%20Tower%201%20UIN%20Raden%20Intan%20Lampung&t=&z=17&ie=UTF8&iwloc=&output=embed"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
             </div>
 
             <div class="footer-col contact-col">
-                <h4>Pusat Bantuan</h4>
+                <h4>INFORMASI & KONTAK</h4>
                 <div class="contact-item">
-                    <i class="fa-solid fa-envelope"></i>
-                    <span>akademik.fst@radenintan.ac.id</span>
+                    <i class="fa-brands fa-instagram"></i>
+                    <a href="https://www.instagram.com/saintek.radenintan" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan</span>
+                    </a>
                 </div>
                 <div class="contact-item">
-                    <i class="fa-solid fa-phone"></i>
-                    <span>(0721) 1234567</span>
+                    <i class="fa-solid fa-globe"></i>
+                    <a href="https://saintek.radenintan.ac.id" target="_blank" class="footer-clickable-link">
+                        <span>saintek.radenintan.ac.id</span>
+                    </a>
                 </div>
                 <div class="contact-item">
                     <i class="fa-solid fa-clock"></i>
@@ -168,7 +180,7 @@ include "koneksi.php";
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 Layanan Akademik FST UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
+            <p>&copy; 2026 Fakultas Sains dan Teknologi UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
         </div>
     </footer>
 
@@ -189,6 +201,15 @@ include "koneksi.php";
                     }
                 }
             });
+        });
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
     </script>
 </body>

@@ -2,14 +2,24 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
-$id_jenis = $_GET['id_jenis'] ?? 3;
+$id_mhs = $_SESSION['id_mhs'];
 
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$id_jenis = $_GET['id_jenis'] ?? 3;
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE id_jenis = '$id_jenis'
@@ -21,16 +31,16 @@ if (!$surat) {
 }
 
 $mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM mahasiswa
-    WHERE id_mhs = '$id_mhs'
+    SELECT m.*, p.nama_prodi 
+    FROM mahasiswa m
+    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
+    WHERE m.id_mhs = '$id_mhs'
 "));
 
 if (!$mhs || empty($mhs['id_prodi'])) {
     echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='mhs_daftar_surat_akademik.php';</script>";
     exit;
 }
-
-$id_prodi = $mhs['id_prodi'];
 
 $id_pa = $mhs['id_pa'];
 $q_pa = mysqli_query($koneksi, "SELECT id_dosen, nama_dosen, nip FROM dosen WHERE id_dosen = '$id_pa'");
@@ -55,6 +65,7 @@ $pa = mysqli_fetch_assoc($q_pa);
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -69,17 +80,6 @@ $pa = mysqli_fetch_assoc($q_pa);
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -124,11 +124,14 @@ $pa = mysqli_fetch_assoc($q_pa);
 
                 <div class="form-group">
                     <label>Semester</label>
-                    <input type="number"
-                        name="semester"
-                        placeholder="Contoh: 6"
-                        min="3"
-                        max="14" required>
+                    <select name="semester" class="form-control flex-1" required>
+                        <option value="" disabled selected>Pilih Semester</option>
+                        <?php
+                        for ($i = 3; $i <= 10; $i++) {
+                            echo "<option value=\"$i\">$i</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -203,6 +206,7 @@ $pa = mysqli_fetch_assoc($q_pa);
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            //fungsi dropdown user navbar
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
 
@@ -218,11 +222,36 @@ $pa = mysqli_fetch_assoc($q_pa);
                     }
                 }
             });
+
+            //fungsi validasi input file (keamanan)
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    if (this.hasAttribute('accept')) {
+                        const acceptedTypes = this.getAttribute('accept').split(',');
+                        const fileName = this.value.toLowerCase();
+
+                        const isValid = acceptedTypes.some(ext => fileName.endsWith(ext.trim()));
+
+                        if (!isValid && fileName !== "") {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Format Tidak Valid!',
+                                text: 'Silakan masukkan format: ' + acceptedTypes.join(", "),
+                                showConfirmButton: true,
+                                confirmButtonText: 'Mengerti',
+                                confirmButtonColor: '#1e3a8a'
+                            });
+
+                            this.value = '';
+                        }
+                    }
+                });
+            });
         });
 
         function confirmBatalAjukanSurat(event, url) {
             event.preventDefault();
-
             Swal.fire({
                 title: 'Batalkan pengisian formulir?',
                 text: "Perubahan yang Anda lakukan tidak akan tersimpan.",
@@ -242,7 +271,6 @@ $pa = mysqli_fetch_assoc($q_pa);
 
         function confirmAjukanSurat(event) {
             event.preventDefault();
-
             const form = event.target;
 
             Swal.fire({
@@ -261,8 +289,16 @@ $pa = mysqli_fetch_assoc($q_pa);
                 }
             });
         }
-    </script>
 
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
+    </script>
 </body>
 
 </html>

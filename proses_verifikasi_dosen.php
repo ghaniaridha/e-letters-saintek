@@ -5,7 +5,7 @@ include "koneksi.php";
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     echo "<script>
             alert('Silakan login sebagai dosen');
-            window.location='login.php';
+            window.location='index.php';
           </script>";
     exit;
 }
@@ -46,7 +46,7 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
 if (!$data) {
     echo "<script>
             alert('Data surat tidak ditemukan');
-            window.location='dosen_permohonan.php';
+            window.location='dosen_permohonan_akademik.php';
           </script>";
     exit;
 }
@@ -58,20 +58,20 @@ $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
 ===================================================== */
 if ($aksi == 'setujui') {
 
-    /* Dospem 2 */
+    /* Dospem 2 (Akademik) */
     if (
         !empty($data['id_pb2']) &&
         $data['id_pb2'] == $id_dosen &&
         $data['status_pb2'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Menunggu Dospem 1'
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb2='Disetujui',
                 ttd_pb2='$hash_ttd'
@@ -81,11 +81,11 @@ if ($aksi == 'setujui') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Surat diteruskan ke Dospem 1';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
-    /* Dospem 1 */
+    /* Dospem 1 (Akademik) */
     if (
         !empty($data['id_pb1']) &&
         $data['id_pb1'] == $id_dosen &&
@@ -93,14 +93,14 @@ if ($aksi == 'setujui') {
         $data['status_pb1'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Menunggu Admin',
                 tujuan_admin='admin2'
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb1='Disetujui',
                 ttd_pb1='$hash_ttd'
@@ -110,25 +110,25 @@ if ($aksi == 'setujui') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Surat diteruskan ke Admin';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
-    /* Pembimbing Akademik */
+    /* Pembimbing Akademik (Akademik) */
     if (
         !empty($data['id_pa']) &&
         $data['id_pa'] == $id_dosen &&
         $data['status_pa'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Menunggu Admin',
                 tujuan_admin='admin2'
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_aktif_kuliah
             SET status_pa='Disetujui',
                 ttd_pa='$hash_ttd'
@@ -138,18 +138,18 @@ if ($aksi == 'setujui') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Surat diteruskan ke Admin';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
-    /* Pembina Ormawa */
+    /* Pembina Ormawa (Ormawa) */
     if (
         !empty($data['id_pembina']) &&
         $data['id_pembina'] == $id_dosen &&
         $data['posisi_sekarang'] == 'Pembina'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Menunggu Admin',
                 posisi_sekarang='Admin',
@@ -158,7 +158,7 @@ if ($aksi == 'setujui') {
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
         INSERT INTO riwayat_disposisi
         (
             id_surat,
@@ -180,7 +180,7 @@ if ($aksi == 'setujui') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Pengajuan Ormawa berhasil disetujui dan diteruskan ke Admin 1';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_ormawa.php");
         exit;
     }
 }
@@ -191,14 +191,14 @@ if ($aksi == 'setujui') {
 ===================================================== */
 if ($aksi == 'tolak') {
 
-    /* Dospem 2 */
+    /* Dospem 2 (Akademik) */
     if (
         !empty($data['id_pb2']) &&
         $data['id_pb2'] == $id_dosen &&
         $data['status_pb2'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
            UPDATE surat_pengajuan
             SET status_akhir='Ditolak Dospem 2',
                 posisi_sekarang='Selesai',
@@ -206,7 +206,7 @@ if ($aksi == 'tolak') {
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb2='Ditolak'
             WHERE id_surat='$id_surat'
@@ -215,11 +215,11 @@ if ($aksi == 'tolak') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
-    /* Dospem 1 */
+    /* Dospem 1 (Akademik) */
     if (
         !empty($data['id_pb1']) &&
         $data['id_pb1'] == $id_dosen &&
@@ -227,7 +227,7 @@ if ($aksi == 'tolak') {
         $data['status_pb1'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Ditolak Dospem 1',
                 posisi_sekarang='Selesai',
@@ -235,7 +235,7 @@ if ($aksi == 'tolak') {
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb1='Ditolak'
             WHERE id_surat='$id_surat'
@@ -244,7 +244,7 @@ if ($aksi == 'tolak') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
@@ -255,7 +255,7 @@ if ($aksi == 'tolak') {
         $data['status_pa'] == 'Menunggu'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE surat_pengajuan
             SET status_akhir='Ditolak Pembimbing Akademik',
                 posisi_sekarang='Selesai',
@@ -263,7 +263,7 @@ if ($aksi == 'tolak') {
             WHERE id_surat='$id_surat'
         ");
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
             UPDATE detail_aktif_kuliah
             SET status_pa='Ditolak'
             WHERE id_surat='$id_surat'
@@ -272,7 +272,7 @@ if ($aksi == 'tolak') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
@@ -283,7 +283,7 @@ if ($aksi == 'tolak') {
         $data['posisi_sekarang'] == 'Pembina'
     ) {
 
-        mysqli_query($koneksi,"
+        mysqli_query($koneksi, "
            UPDATE surat_pengajuan
             SET status_akhir='Ditolak Pembina',
                 posisi_sekarang='Selesai',
@@ -294,13 +294,12 @@ if ($aksi == 'tolak') {
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Pengajuan Ormawa ditolak';
 
-        header("Location:dosen_riwayat.php");
+        header("Location: dosen_riwayat_ormawa.php");
         exit;
     }
 }
 
 $_SESSION['status'] = 'error';
 $_SESSION['pesan']  = 'Aksi tidak valid atau Anda tidak memiliki hak verifikasi.';
-header("Location:dosen_permohonan.php");
+header("Location: dosen_permohonan_akademik.php");
 exit;
-?>

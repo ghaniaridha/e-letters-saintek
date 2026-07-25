@@ -2,7 +2,6 @@
 session_start();
 include "koneksi.php";
 
-// Proteksi halaman: pastikan yang login adalah Ormawa
 if (!isset($_SESSION['id_ormawa'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
@@ -20,7 +19,6 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
-// QUERY UTAMA: Mengambil surat Ormawa yang sedang berjalan (Bukan Selesai / Ditolak)
 $query_lacak = mysqli_query($koneksi, "
     SELECT
         sp.id_surat,
@@ -37,24 +35,38 @@ $query_lacak = mysqli_query($koneksi, "
     ORDER BY sp.tanggal_pengajuan DESC
 ");
 
-// Fungsi format tanggal Indonesia
+// Fungsi tanggal
 function tanggalIndonesia($tanggal)
 {
     $bulan = [
-        1 => "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        1 => "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember"
     ];
+
     $time = strtotime($tanggal);
-    return date("d", $time) . " " . $bulan[(int)date("m", $time)] . " " . date("Y", $time);
+
+    return date("d", $time) . " " .
+        $bulan[(int)date("m", $time)] . " " .
+        date("Y", $time);
 }
 
-// Fungsi struktur alur langkah khusus Ormawa (Mendukung Gedung & Dana)
+// Fungsi struktur alur langkah 
 function getTimelineOrmawa($namaSurat)
 {
     $nama = strtolower($namaSurat);
-    
+
     if (strpos($nama, 'dana') !== false) {
-        // Alur jika Surat Bantuan Dana Ormawa
+        // Alur Surat Pengajuan Dana Kegiatan
         return [
             "Pengajuan Ormawa",
             "Pembina Ormawa",
@@ -63,7 +75,7 @@ function getTimelineOrmawa($namaSurat)
             "Selesai"
         ];
     } else {
-        // Alur jika Surat Peminjaman Ruangan / Gedung
+        // Alur Surat Peminjaman Ruangan
         return [
             "Pengajuan Ormawa",
             "Pembina Ormawa",
@@ -102,10 +114,9 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
     $posisiClean = trim(strtolower($posisiSekarang));
     $statusClean = trim(strtolower($statusAkhir));
 
-    // Cek kecocokan berdasarkan posisi_sekarang atau status_akhir bypass
     foreach ($timeline as $i => $step) {
         $stepClean = strtolower(trim($step));
-        
+
         if ($posisiClean == 'pembina' && $stepClean == 'pembina ormawa') {
             $currentStep = $i;
             break;
@@ -124,7 +135,6 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
         }
     }
 
-    // Jika status terdeteksi baru diajukan awal
     if ($currentStep == 0 && strpos($statusClean, 'pembina') !== false) {
         $currentStep = 1;
     }
@@ -152,147 +162,28 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <style>
-        /* Penyelarasan style kontainer lacak agar rapi di bawah navbar fixed */
-        .container-lacak {
-            padding: 120px 7% 80px;
-            min-height: 85vh;
-            background-color: #f8fafc;
-        }
-        .riwayat-permohonan-header {
-            margin-bottom: 35px;
-        }
-        .card-surat {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 15px;
-            background: transparent;
-        }
-        .card-info h3 {
-            font-size: 18px;
-            color: #1e293b;
-            margin: 0;
-            font-weight: 600;
-        }
-        .card-info h3 i {
-            margin-right: 8px;
-            color: #0284c7;
-        }
-        .tanggal {
-            font-size: 13px;
-            color: #64748b;
-        }
-        .status-sekarang {
-            margin: 20px 0;
-        }
-        .status-sekarang h4 {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .status-sekarang p {
-            font-size: 16px;
-            color: #0f172a;
-            font-weight: 600;
-            margin: 0;
-        }
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-            background-color: #e2e8f0;
-            margin-bottom: 8px;
-        }
-        .progress-bar {
-            background-color: #0284c7;
-        }
-        .progress-text {
-            font-size: 13px;
-            color: #64748b;
-            font-weight: 500;
-            margin-bottom: 25px;
-        }
-        .timeline {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            margin-top: 10px;
-        }
-        .step {
-            text-align: center;
-            position: relative;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .step .circle {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: #e2e8f0;
-            color: #94a3b8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            margin-bottom: 8px;
-            z-index: 2;
-            transition: all 0.3s ease;
-        }
-        .step span {
-            font-size: 12px;
-            color: #64748b;
-            font-weight: 500;
-        }
-        /* State Warna Progres */
-        .step.done .circle {
-            background-color: #10b981;
-            color: #ffffff;
-        }
-        .step.done span {
-            color: #10b981;
-        }
-        .step.active .circle {
-            background-color: #0284c7;
-            color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2);
-        }
-        .step.active span {
-            color: #0284c7;
-            font-weight: 600;
-        }
-        .card-kosong {
-            text-align: center;
-            background: #fff;
-            padding: 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            color: #94a3b8;
-        }
-        .card-kosong i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #cbd5e1;
-        }
-    </style>
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
 
-    <!-- NAVBAR FIXED ORMAWA -->
     <nav class="my-navbar">
+        <a href="#" id="my-hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="my-navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -321,11 +212,10 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
         </div>
     </nav>
 
-    <!-- AREA TIMELINE LACAK SURAT -->
     <section class="container-lacak">
         <div class="riwayat-permohonan-header">
-            <h2>Lacak Pengajuan Surat Organisasi</h2>
-            <p>Pantau perkembangan alur verifikasi berkas surat aktif Anda.</p>
+            <h2>Lacak Surat</h2>
+            <p>Pantau perkembangan surat yang sedang diajukan.</p>
         </div>
 
         <?php if (mysqli_num_rows($query_lacak) > 0): ?>
@@ -339,7 +229,7 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
                     <div class="card-header">
                         <div class="card-info">
                             <h3>
-                                <i class="fa-solid fa-file-signature"></i>
+                                <i class="fa-solid fa-file-lines"></i>
                                 <?= htmlspecialchars($row['nama_surat']) ?>
                             </h3>
                         </div>
@@ -354,8 +244,10 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
                     </div>
 
                     <div class="status-sekarang">
-                        <h4>Posisi & Status Terakhir</h4>
-                        <p><?= htmlspecialchars($row['status_akhir']) ?></p>
+                        <h4>Status Saat Ini</h4>
+                        <p>
+                            <?= htmlspecialchars($row['status_akhir']) ?>
+                        </p>
                     </div>
 
                     <div class="progress">
@@ -363,7 +255,7 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
                     </div>
 
                     <div class="progress-text">
-                        Progres Validasi Berkas <?= round($persen) ?>%
+                        Progres<?= round($persen) ?>%
                     </div>
 
                     <div class="timeline">
@@ -395,13 +287,15 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
         <?php else: ?>
             <div class="card-kosong">
                 <i class="fa-solid fa-folder-open"></i>
-                <h3>Tidak ada permohonan surat yang sedang diproses aktif</h3>
+                <h3>
+                    Tidak ada permohonan surat yang sedang diproses
+                </h3>
             </div>
         <?php endif; ?>
     </section>
 
-    <!-- SCRIPT DROPDOWN NAVBAR -->
     <script>
+        /*fungsi dropdown user*/
         document.addEventListener("DOMContentLoaded", function() {
             const userBtn = document.getElementById("user-btn");
             const dropdown = document.getElementById("user-dropdown");
@@ -416,6 +310,15 @@ function getProgressOrmawa($timeline, $posisiSekarang, $statusAkhir)
                     dropdown.classList.remove("show");
                 }
             });
+        });
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
     </script>
 </body>

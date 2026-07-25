@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_mhs = $_SESSION['id_mhs'];
 if (!isset($_SESSION['id_mhs'])) {
     echo "<script>alert('Silakan login terlebih dahulu'); window.location='index.php';</script>";
     exit;
 }
 
+$id_mhs = $_SESSION['id_mhs'];
 $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
 $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
 $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
@@ -21,7 +21,7 @@ if (!empty($namaParts)) {
 // Query search dan pagination
 $search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
 $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit  = 5;
+$limit  = 3;
 $offset = ($page - 1) * $limit;
 
 $whereClause = "WHERE sp.id_mhs = '$id_mhs' AND (sp.status_akhir = 'Selesai' OR sp.status_akhir LIKE '%Ditolak%')";
@@ -96,6 +96,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
     <?php endif; ?>
 
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -179,7 +180,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                                 <td>
                                     <?php if (!empty($row['dokumen_hash'])) { ?>
-                                        <a href="pimpinan_qr_verif.php?hash=<?= htmlspecialchars($row['dokumen_hash']); ?>"
+                                        <a href="mhs_qr_verif.php?hash=<?= htmlspecialchars($row['dokumen_hash']); ?>"
                                             target="_blank"
                                             class="btn-aksi">
                                             Verifikasi
@@ -273,13 +274,9 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             <?php endif; ?>
     </section>
 
-    <footer class="footer-form-minimal">
-        <p>&copy; 2026 SIPATU FST UIN RIL | Dibuat oleh Ghania Ridha Khairiah.</p>
-    </footer>
-
-    <div id="modalDetail" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center;">
-        <div style="background:white; padding:20px; width:500px; border-radius:8px; position:relative;">
-            <span onclick="tutupModal()" style="position:absolute; right:15px; top:10px; cursor:pointer; font-size:20px;">&times;</span>
+    <div id="modalDetail" class="modal-overlay">
+        <div class="modal-box">
+            <span class="modal-close" onclick="tutupModal()">&times;</span>
             <h3>Detail Pengajuan</h3>
             <div id="kontenDetail">
                 Memuat data...
@@ -290,7 +287,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
     <script>
         function bukaModal(id) {
             document.getElementById('modalDetail').style.display = 'flex';
-            // Mengambil data menggunakan fetch
             fetch('get_detail_surat.php?id=' + id)
                 .then(response => response.text())
                 .then(data => {
@@ -321,6 +317,15 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                     }
                 }
             });
+        });
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
     </script>
 </body>

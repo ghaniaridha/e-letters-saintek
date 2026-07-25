@@ -8,22 +8,37 @@ if (!isset($_SESSION['id_mhs'])) {
 }
 
 $id_mhs = $_SESSION['id_mhs'];
-$id_jenis = $_GET['id_jenis'] ?? 4;
 
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$id_jenis = $_GET['id_jenis'] ?? 4;
 $surat = mysqli_fetch_assoc(mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
     WHERE id_jenis = '$id_jenis'
 "));
 
+if (!$surat) {
+    echo "<script>alert('Jenis surat tidak ditemukan'); window.location='mhs_daftar_surat_akademik.php';</script>";
+    exit;
+}
+
 $mhs = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT * FROM mahasiswa
-    WHERE id_mhs = '$id_mhs'
+    SELECT m.*, p.nama_prodi 
+    FROM mahasiswa m
+    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
+    WHERE m.id_mhs = '$id_mhs'
 "));
 
-$id_prodi = $mhs['id_prodi'];
-
-if (!$surat) {
-    echo "<script>alert('Jenis surat tidak ditemukan'); window.location='mhs_daftar_surat.php';</script>";
+if (!$mhs || empty($mhs['id_prodi'])) {
+    echo "<script>alert('Data prodi mahasiswa belum diatur. Hubungi admin.'); window.location='mhs_daftar_surat_akademik.php';</script>";
     exit;
 }
 ?>
@@ -40,10 +55,13 @@ if (!$surat) {
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -58,17 +76,6 @@ if (!$surat) {
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
@@ -83,14 +90,13 @@ if (!$surat) {
     </nav>
 
     <div class="generate-wrapper">
-
         <div class="page-header">
             <h1><?= htmlspecialchars($surat['nama_surat']); ?></h1>
             <p>Silakan lengkapi data berikut untuk membuat permohonan izin magang.</p>
         </div>
 
         <div class="generate-card">
-            <form action="proses_generate_magang.php" method="POST" enctype="multipart/form-data" onsubmit="confirmAjukanSurat(event)">
+            <form action="generate_surat_magang_mhs.php" method="POST" enctype="multipart/form-data" onsubmit="confirmAjukanSurat(event)">
                 <input type="hidden" name="id_jenis" value="<?= htmlspecialchars($id_jenis); ?>">
 
                 <div class="form-group">
@@ -113,11 +119,14 @@ if (!$surat) {
 
                 <div class="form-group">
                     <label>Semester</label>
-                    <input type="number"
-                        name="semester"
-                        placeholder="Contoh: 6"
-                        min="3"
-                        max="14" required>
+                    <select name="semester" class="form-control flex-1" required>
+                        <option value="" disabled selected>Pilih Semester</option>
+                        <?php
+                        for ($i = 5; $i <= 10; $i++) {
+                            echo "<option value=\"$i\">$i</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -154,7 +163,7 @@ if (!$surat) {
                     <input type="text" name="surat_ditujukan" placeholder="Contoh: Kepala PT Telkom Indonesia" required>
                 </div>
 
-                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e5e7eb;">
+                <hr class="hr-separator">
 
                 <h3 class="section-title">Dokumen Pendukung</h3>
 
@@ -190,9 +199,9 @@ if (!$surat) {
         <p>&copy; 2026 Fakultas Sains dan Teknologi UIN RIL. Dibuat oleh Ghania Ridha Khairiah.</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            //fungsi dropdown user navbar
             const userBtn = document.getElementById('user-btn');
             const dropdown = document.getElementById('user-dropdown');
 
@@ -208,11 +217,37 @@ if (!$surat) {
                     }
                 }
             });
+
+            //fungsi validasi input file (keamanan)
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    if (this.hasAttribute('accept')) {
+                        const acceptedTypes = this.getAttribute('accept').split(',');
+                        const fileName = this.value.toLowerCase();
+
+                        const isValid = acceptedTypes.some(ext => fileName.endsWith(ext.trim()));
+
+                        if (!isValid && fileName !== "") {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Format Tidak Valid!',
+                                text: 'Silakan masukkan format: ' + acceptedTypes.join(", "),
+                                showConfirmButton: true,
+                                confirmButtonText: 'Mengerti',
+                                confirmButtonColor: '#1e3a8a'
+                            });
+
+                            this.value = '';
+                        }
+                    }
+                });
+            });
         });
 
+        //fungsi konfirmasi button kembali
         function confirmBatalAjukanSurat(event, url) {
             event.preventDefault();
-
             Swal.fire({
                 title: 'Batalkan pengisian formulir?',
                 text: "Perubahan yang Anda lakukan tidak akan tersimpan.",
@@ -230,11 +265,10 @@ if (!$surat) {
             });
         }
 
+        //fungsi konfirmasi button ajukan surat
         function confirmAjukanSurat(event) {
             event.preventDefault();
-
             const form = event.target;
-
             Swal.fire({
                 title: 'Konfirmasi Pengajuan Surat',
                 text: "Pastikan semua data dan dokumen pendukung yang Anda unggah sudah benar. Data yang telah dikirim tidak dapat diubah kembali.",
@@ -251,8 +285,16 @@ if (!$surat) {
                 }
             });
         }
-    </script>
 
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
+    </script>
 </body>
 
 </html>
