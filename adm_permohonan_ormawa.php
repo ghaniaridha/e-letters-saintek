@@ -139,8 +139,15 @@ if ($detail_id != "") {
     $query_detail = mysqli_query($koneksi, "
         SELECT 
             sp.*, o.nama_ormawa, js.nama_surat,
+            
+            -- Data Peminjaman Ruangan
             dpr.nama_kegiatan, dpr.ruangan_yang_diajukan, dpr.tanggal_mulai, dpr.proposal,
-            dpd.nama_kegiatan AS nama_kegiatan_dana, dpd.tema_kegiatan, dpd.tempat_kegiatan, dpd.tanggal_kegiatan AS tanggal_kegiatan_dana, dpd.proposal AS proposal_dana
+            dpr.jam_mulai AS jam_mulai_ruangan, dpr.jam_selesai AS jam_selesai_ruangan, dpr.catatan AS catatan_ruangan,
+            
+            -- Data Pengajuan Dana
+            dpd.nama_kegiatan AS nama_kegiatan_dana, dpd.tema_kegiatan, dpd.tempat_kegiatan, dpd.tanggal_kegiatan AS tanggal_kegiatan_dana, dpd.proposal AS proposal_dana,
+            dpd.tanggal_jadwal AS tanggal_jadwal_dana, dpd.jam_mulai AS jam_mulai_dana, dpd.jam_selesai AS jam_selesai_dana, dpd.catatan AS catatan_dana
+            
         FROM surat_pengajuan sp
         JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
         JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
@@ -150,6 +157,29 @@ if ($detail_id != "") {
     ");
     $detail = mysqli_fetch_assoc($query_detail);
 }
+
+$array_bulan = [
+    1 => 'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+];
+
+$tglDana = !empty($detail['tanggal_kegiatan_dana'])
+    ? date('d', strtotime($detail['tanggal_kegiatan_dana'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_kegiatan_dana']))] . ' ' . date('Y', strtotime($detail['tanggal_kegiatan_dana']))
+    : '-';
+
+$tglMulai = !empty($detail['tanggal_mulai'])
+    ? date('d', strtotime($detail['tanggal_mulai'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_mulai']))] . ' ' . date('Y', strtotime($detail['tanggal_mulai']))
+    : '-';
 ?>
 
 <!DOCTYPE html>
@@ -204,7 +234,7 @@ if ($detail_id != "") {
                             </tr>
                             <tr>
                                 <th>Tanggal Kegiatan</th>
-                                <td><?= !empty($detail['tanggal_kegiatan_dana']) ? date('d-m-Y', strtotime($detail['tanggal_kegiatan_dana'])) : '-'; ?></td>
+                                <td><?= $tglDana; ?></td>
                             </tr>
                         <?php } else { ?>
                             <tr>
@@ -217,14 +247,69 @@ if ($detail_id != "") {
                             </tr>
                             <tr>
                                 <th>Tanggal Kegiatan</th>
-                                <td><?= !empty($detail['tanggal_mulai']) ? date('d-m-Y', strtotime($detail['tanggal_mulai'])) : '-'; ?></td>
+                                <td><?= $tglMulai; ?></td>
                             </tr>
                         <?php } ?>
 
+                        <?php
+                        $tgl_jadwal_db  = $isDana ? ($detail['tanggal_jadwal_dana'] ?? '') : ($detail['tanggal_mulai'] ?? '');
+                        $jam_mulai_db   = $isDana ? ($detail['jam_mulai_dana'] ?? '')      : ($detail['jam_mulai_ruangan'] ?? '');
+                        $jam_selesai_db = $isDana ? ($detail['jam_selesai_dana'] ?? '')    : ($detail['jam_selesai_ruangan'] ?? '');
+                        $catatan_db     = $isDana ? ($detail['catatan_dana'] ?? '')        : ($detail['catatan_ruangan'] ?? '');
+
+                        $status_lower = strtolower($detail['status_akhir']);
+                        $status_keputusan_lower = strtolower($detail['status_keputusan'] ?? '');
+
+                        $status_ditolak = (strpos($status_lower, 'ditolak') !== false);
+                        $status_menunggu = (strpos($status_lower, 'menunggu') !== false);
+                        $status_selesai = ($status_lower == 'selesai' || $status_keputusan_lower == 'disetujui');
+
+                        if ($status_ditolak) {
+                            $warna_status = 'color: #dc2626; font-weight: 700;';
+                        } elseif ($status_menunggu) {
+                            $warna_status = 'color: #d97706; font-weight: 700;';
+                        } else {
+                            $warna_status = 'color: #10b981; font-weight: 700;';
+                        }
+                        ?>
+
                         <tr>
-                            <th>Status Saat Ini</th>
-                            <td class="status-text-amber"><?= htmlspecialchars($detail['status_akhir']); ?></td>
+                            <th>Status Akhir Permohonan</th>
+                            <td style="<?= $warna_status; ?>">
+                                <?= htmlspecialchars($detail['status_akhir']); ?>
+                            </td>
                         </tr>
+
+                        <?php if ($status_selesai) { ?>
+                            <tr>
+                                <th>Jadwal Bertemu Pimpinan</th>
+                                <td class="jadwal-pimpinan-cell">
+                                    <?php
+                                    if (!empty($tgl_jadwal_db) && !empty($jam_mulai_db)) {
+                                        $tgl_jadwal = strtotime($tgl_jadwal_db);
+                                        $tanggal = date('d', $tgl_jadwal) . ' ' . $array_bulan[(int)date('m', $tgl_jadwal)] . ' ' . date('Y', $tgl_jadwal);
+
+                                        $waktu = date('H:i', strtotime($jam_mulai_db)) . ' - ' . date('H:i', strtotime($jam_selesai_db)) . ' WIB';
+
+                                        echo '<i class="fa-regular fa-calendar-days icon-jadwal"></i> ' . $tanggal;
+                                        echo '<span class="jadwal-separator" style="margin: 0 10px;">||</span>';
+                                        echo '<i class="fa-regular fa-clock icon-jadwal"></i> ' . $waktu;
+                                    } else {
+                                        echo '<i class="fa-solid fa-circle-exclamation icon-jadwal"></i> Jadwal belum ditentukan';
+                                    }
+                                    ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+
+                        <?php if ($status_ditolak && !empty($catatan_db)) { ?>
+                            <tr>
+                                <th>Catatan Penolakan</th>
+                                <td class="status-tolak" style="color: #dc2626;">
+                                    <?= nl2br(htmlspecialchars($catatan_db)); ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
                     </table>
 
                     <h3 class="section-title mt-4">Dokumen Pendukung</h3>
@@ -256,18 +341,32 @@ if ($detail_id != "") {
                     </div>
 
                     <div class="action-panel">
-                        <a href="adm_permohonan_ormawa.php" class="btn-styled btn-back">
+                        <?php
+                        $asal_halaman = $_GET['asal'] ?? '';
+
+                        if ($asal_halaman == 'laporan') {
+                            $link_kembali = 'adm_laporan_ormawa.php';
+                        } else {
+                            $link_kembali = 'adm_permohonan_ormawa.php';
+                        }
+                        ?>
+
+                        <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
                             Kembali
                         </a>
 
-                        <div class="form-action-group">
-                            <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                                Tolak
-                            </button>
-                            <button type="button" class="btn-styled btn-approve" onclick="bukaModalJadwal()">
-                                Atur Jadwal
-                            </button>
-                        </div>
+                        <?php
+                        if ($asal_halaman != 'laporan'):
+                        ?>
+                            <div class="form-action-group">
+                                <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
+                                    Tolak
+                                </button>
+                                <button type="button" class="btn-styled btn-approve" onclick="bukaModalJadwal()">
+                                    Atur Jadwal
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 

@@ -57,7 +57,7 @@ $username_admin = $_SESSION['nama'] ?? '';
     <?php endif; ?>
 
     <?php if ($username_admin === 'ADM001') : ?>
-        <a href="adm_laporan_surat.php">
+        <a href="adm_laporan_ormawa.php">
             <i class="fa-solid fa-file-export"></i> Laporan Surat Ormawa
         </a>
     <?php else : ?>
