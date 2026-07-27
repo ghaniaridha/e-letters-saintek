@@ -135,7 +135,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                 <input type="text" name="search" id="searchSurat" class="search-input"
                     placeholder="Cari..."
                     value="<?= htmlspecialchars($search); ?>">
-                <button type="submit" style="display: none;"></button>
+                <button type="submit"></button>
             </form>
 
             <table class="custom-table">
@@ -145,7 +145,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                         <th>Tanggal & Waktu</th>
                         <th>Jenis Surat</th>
                         <th>Status Akhir</th>
-                        <th>Verifikasi</th>
                         <th>File Final</th>
                         <th>Aksi</th>
                     </tr>
@@ -179,18 +178,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                                 </td>
 
                                 <td>
-                                    <?php if (!empty($row['dokumen_hash'])) { ?>
-                                        <a href="mhs_qr_verif.php?hash=<?= htmlspecialchars($row['dokumen_hash']); ?>"
-                                            target="_blank"
-                                            class="btn-aksi">
-                                            Verifikasi
-                                        </a>
-                                    <?php } else { ?>
-                                        <span style="color:#94a3b8;">-</span>
-                                    <?php } ?>
-                                </td>
-
-                                <td>
                                     <?php if (!empty($row['file_surat_final'])) { ?>
 
                                         <?php
@@ -198,34 +185,31 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                                         // 1. Kondisi untuk Surat Magang
                                         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         }
-                                        // 2. PERBAIKAN: Kondisi untuk SK Aktif Kuliah Kembali
+                                        // 2. Kondisi untuk SK Aktif Kuliah Kembali
                                         elseif (strpos($namaSurat, 'aktif') !== false) {
-                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         }
                                         // 3. Kondisi Default untuk Surat Riset / Lainnya
                                         else {
-                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         }
                                         ?>
 
-                                        <a href="<?= $linkUnduh; ?>"
-                                            target="_blank"
-                                            class="btn-aksi"
-                                            style="background-color:#10b981; color:white; border-color:#10b981;">
-                                            Unduh
+                                        <a href="<?= $linkUnduh; ?>" target="_blank" class="btn-file-surat">
+                                            <i class="fa-solid fa-file-lines"></i>
                                         </a>
 
                                     <?php } elseif (strpos(strtolower($row['status_akhir']), 'tolak') !== false) { ?>
 
-                                        <span style="color:#ef4444; font-weight:600; font-size:0.85rem;">
+                                        <span class="text-rejected">
                                             Pengajuan Ditolak
                                         </span>
 
                                     <?php } else { ?>
 
-                                        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
+                                        <span class="text-unavailable">
                                             Belum Tersedia
                                         </span>
 
@@ -233,13 +217,13 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                                 </td>
 
                                 <td>
-                                    <button class="btn-aksi" onclick="bukaModal(<?= $row['id_surat']; ?>)">Detail</button>
+                                    <a href="mhs_riwayat_detail.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">Detail</a>
                                 </td>
                             </tr>
                         <?php } ?>
                     <?php } else { ?>
                         <tr>
-                            <td colspan="8" class="text-center">
+                            <td colspan="7" class="text-center">
                                 Belum ada riwayat permohonan surat.
                             </td>
                         </tr>
@@ -272,32 +256,8 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                     </ul>
                 </div>
             <?php endif; ?>
-    </section>
-
-    <div id="modalDetail" class="modal-overlay">
-        <div class="modal-box">
-            <span class="modal-close" onclick="tutupModal()">&times;</span>
-            <h3>Detail Pengajuan</h3>
-            <div id="kontenDetail">
-                Memuat data...
-            </div>
         </div>
-    </div>
-
-    <script>
-        function bukaModal(id) {
-            document.getElementById('modalDetail').style.display = 'flex';
-            fetch('get_detail_surat.php?id=' + id)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('kontenDetail').innerHTML = data;
-                });
-        }
-
-        function tutupModal() {
-            document.getElementById('modalDetail').style.display = 'none';
-        }
-    </script>
+    </section>
 
     <script>
         //fungsi dropdown menu user
@@ -318,6 +278,19 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                 }
             });
         });
+
+        function bukaModal(id) {
+            document.getElementById('modalDetail').style.display = 'flex';
+            fetch('get_detail_surat.php?id=' + id)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('kontenDetail').innerHTML = data;
+                });
+        }
+
+        function tutupModal() {
+            document.getElementById('modalDetail').style.display = 'none';
+        }
 
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();

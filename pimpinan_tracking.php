@@ -93,7 +93,7 @@ $query_tracking = mysqli_query($koneksi, "
 
     <section id="daftar-surat" class="daftar-surat">
         <div class="daftar-surat-header">
-            <h2>Tracking Surat<br>Fakultas Sains dan Teknologi UINRIL</h2>
+            <h2>Tracking Surat<br>Fakultas Sains dan Teknologi</h2>
         </div>
 
         <div class="table-wrapper" id="template-surat">

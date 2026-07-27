@@ -76,7 +76,6 @@ if ($id_jenis_filter != "") {
 
 if ($keyword != "") {
     $keywordAman = mysqli_real_escape_string($koneksi, $keyword);
-    // Mencari berdasarkan NPM atau Nama
     $where .= " AND (m.npm LIKE '%$keywordAman%' OR m.nama_mhs LIKE '%$keywordAman%')";
 }
 
@@ -268,11 +267,11 @@ if ($detail_id != "") {
 
                         <div class="document-buttons">
                             <?php
-                            $filePreview = "preview_surat_riset_mhs.php?id=" . $detail['id_surat'];
+                            $filePreview = "preview_surat_riset_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
                             if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                $filePreview = "preview_surat_magang_mhs.php?id=" . $detail['id_surat'];
+                                $filePreview = "preview_surat_magang_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
                             } elseif (strpos($namaSurat, 'aktif') !== false) {
-                                $filePreview = "preview_sk_aktif_mhs.php?id=" . $detail['id_surat'];
+                                $filePreview = "preview_sk_aktif_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
                             }
                             ?>
 
@@ -339,25 +338,39 @@ if ($detail_id != "") {
                     </div>
 
                     <div class="action-panel">
-                        <a href="adm_permohonan_akademik.php" class="btn-styled btn-back">
-                            </i> Kembali
+                        <?php
+                        $asal_halaman = $_GET['asal'] ?? '';
+
+                        if ($asal_halaman == 'review') {
+                            $link_kembali = 'adm_riwayat_review.php';
+                        } elseif ($asal_halaman == 'laporan') {
+                            $link_kembali = 'adm_laporan_surat.php';
+                        } else {
+                            $link_kembali = 'adm_permohonan_akademik.php';
+                        }
+                        ?>
+
+                        <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
+                            Kembali
                         </a>
 
-                        <form method="POST" class="form-action-group" id="formVerifikasi">
-                            <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
+                        <?php
+                        if ($asal_halaman !== 'review' && $asal_halaman !== 'laporan') {
+                        ?>
+                            <form method="POST" class="form-action-group" id="formVerifikasi">
+                                <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
+                                <input type="hidden" name="aksi_admin" id="aksiInput" value="">
+                                <input type="hidden" name="alasan_penolakan" id="catatanInput" value="">
 
-                            <input type="hidden" name="aksi_admin" id="aksiInput" value="">
+                                <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
+                                    Tolak
+                                </button>
 
-                            <input type="hidden" name="alasan_penolakan" id="catatanInput" value="">
-
-                            <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                                Tolak
-                            </button>
-
-                            <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('lanjut', 'Yakin ingin meneruskan permohonan surat ini ke pimpinan?', 'success')">
-                                Lanjutkan ke Pimpinan
-                            </button>
-                        </form>
+                                <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('lanjut', 'Yakin ingin meneruskan permohonan surat ini ke pimpinan?', 'success')">
+                                    Lanjutkan ke Pimpinan
+                                </button>
+                            </form>
+                        <?php } ?>
                     </div>
                 </div>
 
@@ -433,7 +446,7 @@ if ($detail_id != "") {
                                         <td><span class="badge-warning"><?= htmlspecialchars($row['status_akhir']); ?></span></td>
                                         <td>
                                             <div class="action-group-table">
-                                                <a href="adm_permohonan_akademik.php?detail=<?= $row['id_surat']; ?>" class="btn btn-detail">Review</a>
+                                                <a href="adm_permohonan_akademik.php?detail=<?= $row['id_surat']; ?>" class="btn btn-detail">Tindak Lanjut</a>
                                                 <a href="#" class="btn btn-delete" onclick="hapusData(<?= $row['id_surat']; ?>)">Hapus</a>
                                             </div>
                                         </td>
@@ -481,7 +494,7 @@ if ($detail_id != "") {
     <!-- MODAL PREVIEW -->
     <div id="modalPreview" class="modal-preview-sec">
         <div class="modal-content-preview-sec">
-            <span class="close-preview" onclick="tutupPreview()">&times;</span>
+            <span class="close-btn" onclick="tutupPreview()">&times;</span>
             <iframe id="previewFrame" class="iframe-preview"></iframe>
         </div>
     </div>
@@ -497,18 +510,22 @@ if ($detail_id != "") {
             document.getElementById('previewFrame').src = '';
         }
 
-        function bukaModalTolak() {
-            document.getElementById("modalTolak").style.display = "flex";
-        }
-
-        function tutupModal() {
-            document.getElementById("modalTolak").style.display = "none";
-        }
-
+        // Fungsi Konfirmasi hapus Permohonan
         function hapusData(id) {
-            if (confirm('Yakin ingin menghapus?')) {
-                window.location.href = 'adm_permohonan_akademik.php?hapus=' + id;
-            }
+            Swal.fire({
+                title: 'Yakin ingin menghapus?',
+                text: 'Data permohonan ini akan dihapus secara permanen.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'adm_permohonan_akademik.php?hapus=' + id;
+                }
+            });
         }
 
         // Fungsi Konfirmasi Tolak Permohonan

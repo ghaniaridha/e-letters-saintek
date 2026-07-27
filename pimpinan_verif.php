@@ -137,7 +137,7 @@ $query = mysqli_query($koneksi, "
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Tanggal & Waktu</th>
+                            <th>Tanggal & Waktu Pengajuan</th>
                             <th>Mahasiswa</th>
                             <th>NPM</th>
                             <th>Prodi</th>
@@ -162,7 +162,7 @@ $query = mysqli_query($koneksi, "
                                         <span class="badge-warning"><?= htmlspecialchars($row['status_akhir']); ?></span>
                                     </td>
                                     <td>
-                                        <a href="pimpinan_detail.php?id=<?= $row['id_surat']; ?>" class="btn btn-detail">
+                                        <a href="pimpinan_detail.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">
                                             Detail
                                         </a>
                                     </td>

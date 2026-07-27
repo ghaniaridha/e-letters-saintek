@@ -1681,6 +1681,23 @@ body.swal2-shown {
   color: #fee2e2;
 }
 
+.table-detail td.status-tolak {
+  color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.text-rejected {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.text-unavailable {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
 .disposisi-section {
   margin: 100px auto 40px auto;
   padding: 30px;
@@ -2216,6 +2233,33 @@ body.swal2-shown {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 /*halaman edit profil - end*/
+
+/*style halaman riwayat ormawa - start */
+.btn-file-surat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-file-surat:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.btn-file-surat i {
+  font-size: 20px;
+}
+/*style halaman riwayat ormawa - end */
 
 /*pagination section - start*/
 .pagination-container {

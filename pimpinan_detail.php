@@ -43,7 +43,6 @@ $query_detail = mysqli_query($koneksi, "
         dak.ta_selesai_cuti,
         dak.tahun_akademik,
         
-        -- Gabungan Kolom
         COALESCE(dsm.surat_ditujukan, dsr.surat_ditujukan) AS surat_ditujukan,
         COALESCE(dsr.semester, dsm.semester, dak.semester) AS semester
     FROM surat_pengajuan sp
@@ -51,7 +50,6 @@ $query_detail = mysqli_query($koneksi, "
     JOIN prodi p ON m.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     
-    -- JOIN ke tiga tabel detail
     LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
     LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat
     LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
@@ -77,7 +75,7 @@ if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== fals
     $filePreview = "preview_surat.php?id=" . $data['id_surat'];
 }
 
-// Aksi Setuju/Tolak Permoonan
+// Aksi Setuju/Tolak Permohonan
 if (isset($_POST['aksi'])) {
 
     $aksi = $_POST['aksi'];
@@ -86,9 +84,9 @@ if (isset($_POST['aksi'])) {
     $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
     $status_skrg = trim($data['status_akhir']);
 
-   if ($aksi == 'tolak') {
+    if ($aksi == 'tolak') {
 
-    $sql = "
+        $sql = "
         UPDATE surat_pengajuan
         SET
             status_akhir='Ditolak Pimpinan',
@@ -97,69 +95,64 @@ if (isset($_POST['aksi'])) {
         WHERE id_surat='$id_surat'
     ";
 
-    mysqli_query($koneksi, $sql);
+        mysqli_query($koneksi, $sql);
 
-    $_SESSION['status'] = 'success';
-    $_SESSION['pesan'] = 'Permohonan berhasil ditolak';
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan'] = 'Permohonan berhasil ditolak';
 
-    header("Location: pimpinan_riwayat.php");
-    exit;
-}
-
+        header("Location: pimpinan_riwayat.php");
+        exit;
+    }
 
     // ==========================
-    // BARU PROSES SETUJU
+    // PROSES SETUJU
     // ==========================
     $hash_ttd = hash('sha256', $id_surat . $id_dosen . time());
-
     $status_skrg = trim($data['status_akhir']);
 
-  
-
     // Aksi Setuju
-    // Kondisi Menunggu Wadek 1
+    // 1. Kondisi Menunggu Wadek 1
     if ($status_skrg == 'Menunggu Wadek 1') {
-        if (strpos($namaSurat, 'aktif') !== false) {
-            // SK Aktif Kuliah -> Selesai
-            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+        // Semua jenis surat yang sudah disetujui Wadek 1 dialihkan ke Admin untuk penomoran
+        mysqli_query($koneksi, "
+            UPDATE surat_pengajuan 
+            SET status_akhir = 'Menunggu Penomoran', 
+                status_pimpinan = 'Disetujui', 
+                ttd_pimpinan = '$hash_ttd' 
+            WHERE id_surat = '$id_surat'
+        ");
 
-            $_SESSION['status'] = 'success';
-            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
-            header("Location: generate_sk_aktif_resmi.php?id=$id_surat");
-            exit;
-        } else {
-            // Surat Lain -> Surat Balasan
-            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-
-            $_SESSION['status'] = 'success';
-            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
-            header("Location: generate_surat_riset_resmi.php?id=$id_surat");
-            exit;
-        }
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil disetujui dan diteruskan ke Admin untuk penomoran.';
+        header("Location: pimpinan_riwayat.php");
+        exit;
     }
 
-    // Kondisi Menunggu Dekan
+    // 2. Kondisi Menunggu Dekan
     elseif ($status_skrg == 'Menunggu Dekan') {
-        if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Surat Balasan', status_pimpinan = 'Disetujui', status_balasan = 'Draft', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+        // Semua jenis surat yang sudah disetujui Dekan dialihkan ke Admin untuk penomoran
+        mysqli_query($koneksi, "
+            UPDATE surat_pengajuan 
+            SET status_akhir = 'Menunggu Penomoran', 
+                status_pimpinan = 'Disetujui', 
+                ttd_pimpinan = '$hash_ttd' 
+            WHERE id_surat = '$id_surat'
+        ");
 
-            $_SESSION['status'] = 'success';
-            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
-            header("Location: generate_surat_magang_resmi.php?id=$id_surat");
-            exit;
-        } else {
-            mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Selesai', status_pimpinan = 'Disetujui', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
-
-            $_SESSION['status'] = 'success';
-            $_SESSION['pesan']  = 'Permohonan berhasil disetujui.';
-            header("Location: pimpinan_riwayat.php");
-            exit;
-        }
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil disetujui dan diteruskan ke Admin untuk penomoran.';
+        header("Location: pimpinan_riwayat.php");
+        exit;
     }
 
-    // Kondisi Menunggu Wadek 2 atau Kasubbag TU
+    // 3. Kondisi Menunggu Wadek 2 atau Kasubbag TU (Alur Forwarding)
     elseif ($status_skrg == 'Menunggu Wadek 2' || $status_skrg == 'Menunggu Kasubag') {
-        mysqli_query($koneksi, "UPDATE surat_pengajuan SET status_akhir = 'Menunggu Dekan', ttd_pimpinan = '$hash_ttd' WHERE id_surat = '$id_surat'");
+        mysqli_query($koneksi, "
+            UPDATE surat_pengajuan 
+            SET status_akhir = 'Menunggu Dekan', 
+                ttd_pimpinan = '$hash_ttd' 
+            WHERE id_surat = '$id_surat'
+        ");
 
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Surat berhasil disetujui dan diteruskan ke Dekan.';
@@ -167,7 +160,7 @@ if (isset($_POST['aksi'])) {
         exit;
     }
 
-    // Jika status tidak terdeteksi
+    // 4. Jika status tidak terdeteksi
     else {
         $_SESSION['status'] = 'error';
         $_SESSION['pesan']  = "Status surat tidak valid (saat ini: $status_skrg).";
@@ -326,17 +319,16 @@ if (isset($_POST['aksi'])) {
                 Kembali
             </a>
             <form method="POST" id="formPimpinan" style="display:inline;">
-                <!-- Input hidden untuk menangkap aksi -->
                 <input type="hidden" name="aksi" id="aksiInput" value="">
                 <input type="hidden" name="catatan" id="catatanInput" value="">
 
-                <button type="button" class="btn-styled btn-reject" 
-                        onclick="konfirmasiTolakPimpinan()">
+                <button type="button" class="btn-styled btn-reject"
+                    onclick="konfirmasiTolakPimpinan()">
                     Tolak
                 </button>
 
-                <button type="button" class="btn-styled btn-approve" 
-                        onclick="konfirmasiAksiPimpinan('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
+                <button type="button" class="btn-styled btn-approve"
+                    onclick="konfirmasiAksiPimpinan('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
                     Setujui
                 </button>
             </form>
@@ -345,8 +337,8 @@ if (isset($_POST['aksi'])) {
 
     <div id="modalPreview" class="modal-preview">
         <div class="modal-content-preview">
-            <span class="close-preview" onclick="tutupPreview()">&times;</span>
-            <iframe id="previewFrame" width="100%" height="620px" style="border:none;"></iframe>
+            <span class="close-btn" onclick="tutupPreview()">&times;</span>
+            <iframe id="previewFrame" class="iframe-preview"></iframe>
         </div>
     </div>
 
@@ -380,42 +372,43 @@ if (isset($_POST['aksi'])) {
         }
     </script>
 
+    <script>
+        function konfirmasiTolakPimpinan() {
+            Swal.fire({
+                title: 'Alasan Penolakan',
+                input: 'textarea',
+                inputPlaceholder: 'Masukkan alasan penolakan...',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim',
+                inputValidator: (value) => {
+                    if (!value) return 'Anda harus mengisi alasan penolakan!';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('catatanInput').value = result.value;
+                    document.getElementById('aksiInput').value = 'tolak';
+                    document.getElementById('formPimpinan').submit();
+                }
+            });
+        }
 
-<script>
-function konfirmasiTolakPimpinan() {
-    Swal.fire({
-        title: 'Alasan Penolakan',
-        input: 'textarea',
-        inputPlaceholder: 'Masukkan alasan penolakan...',
-        showCancelButton: true,
-        confirmButtonText: 'Kirim',
-        inputValidator: (value) => {
-            if (!value) return 'Anda harus mengisi alasan penolakan!';
+        function konfirmasiAksiPimpinan(aksi, pesan, icon) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: pesan,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('aksiInput').value = aksi;
+                    document.getElementById('formPimpinan').submit();
+                }
+            });
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('catatanInput').value = result.value;
-            document.getElementById('aksiInput').value = 'tolak';
-            document.getElementById('formPimpinan').submit();
-        }
-    });
-}
-
-function konfirmasiAksiPimpinan(aksi, pesan, icon) {
-    Swal.fire({
-        title: 'Konfirmasi',
-        text: pesan,
-        icon: icon,
-        showCancelButton: true,
-        confirmButtonText: 'Ya, Lanjutkan!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('aksiInput').value = aksi;
-            document.getElementById('formPimpinan').submit();
-        }
-    });
-}
-</script>
+    </script>
 </body>
 
 </html>

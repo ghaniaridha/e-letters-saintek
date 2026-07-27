@@ -266,10 +266,6 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
             e.preventDefault();
             document.querySelector('.navbar-nav')?.classList.toggle('active');
         });
-        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
-        });
     </script>
 </body>
 

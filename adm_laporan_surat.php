@@ -6,7 +6,16 @@ $jenis = $_GET['jenis'] ?? '';
 $prodi = $_GET['prodi'] ?? '';
 $periode = $_GET['periode'] ?? '';
 
+$keyword = $_GET['keyword'] ?? '';
+$jenis = $_GET['jenis'] ?? '';
+$prodi = $_GET['prodi'] ?? '';
+
 $where = "WHERE sp.status_akhir = 'Selesai'";
+
+if ($keyword != '') {
+    $keywordAman = mysqli_real_escape_string($koneksi, $keyword);
+    $where .= " AND (m.npm LIKE '%$keywordAman%' OR m.nama_mhs LIKE '%$keywordAman%')";
+}
 
 if ($jenis != '') {
     $jenisAman = mysqli_real_escape_string($koneksi, $jenis);
@@ -18,20 +27,10 @@ if ($prodi != '') {
     $where .= " AND m.id_prodi = '$prodiAman'";
 }
 
-if ($periode != '') {
-    $tahun = date('Y', strtotime($periode));
-    $bulan = date('m', strtotime($periode));
-
-    $where .= "
-        AND YEAR(sp.tanggal_pengajuan) = '$tahun'
-        AND MONTH(sp.tanggal_pengajuan) = '$bulan'
-    ";
-}
-
 $params = [];
+if ($keyword != '') $params['keyword'] = $keyword;
 if ($jenis != '') $params['jenis'] = $jenis;
 if ($prodi != '') $params['prodi'] = $prodi;
-if ($periode != '') $params['periode'] = $periode;
 $query_string = !empty($params) ? '&' . http_build_query($params) : '';
 
 $limit = 10;
@@ -97,19 +96,12 @@ $jenisSurat = mysqli_query($koneksi, "
         <main class="main-content">
             <div class="page-title">
                 <h1>Laporan Surat Keluar</h1>
-                <p>Filter laporan berdasarkan jenis surat, prodi, dan periode bulan.</p>
+                <p>Arsip surat permohonan mahasiswa.</p>
             </div>
 
             <div class="table-card-table">
                 <form method="GET" action="" class="filter-section">
-                    <select name="jenis">
-                        <option value="">Semua Jenis Surat</option>
-                        <?php while ($j = mysqli_fetch_assoc($jenisSurat)) { ?>
-                            <option value="<?= $j['id_jenis']; ?>" <?= $jenis == $j['id_jenis'] ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($j['nama_surat']); ?>
-                            </option>
-                        <?php } ?>
-                    </select>
+                    <input type="text" name="keyword" placeholder="Cari NPM atau Nama..." value="<?= htmlspecialchars($keyword ?? '') ?>">
 
                     <select name="prodi">
                         <option value="">Semua Prodi</option>
@@ -122,7 +114,14 @@ $jenisSurat = mysqli_query($koneksi, "
                         ?>
                     </select>
 
-                    <input type="month" name="periode" value="<?= htmlspecialchars($periode); ?>">
+                    <select name="jenis">
+                        <option value="">Semua Jenis Surat</option>
+                        <?php while ($j = mysqli_fetch_assoc($jenisSurat)) { ?>
+                            <option value="<?= $j['id_jenis']; ?>" <?= $jenis == $j['id_jenis'] ? 'selected' : ''; ?>>
+                                <?= htmlspecialchars($j['nama_surat']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
 
                     <button type="submit" class="btn-filter">
                         <i class="fa-solid fa-search"></i> Cari
@@ -137,13 +136,13 @@ $jenisSurat = mysqli_query($koneksi, "
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Tanggal</th>
+                            <th>Tanggal & Waktu</th>
                             <th>Nomor Surat</th>
                             <th>NPM</th>
                             <th>Nama Mahasiswa</th>
-                            <th>Prodi</th>
+                            <th>Program Studi</th>
                             <th>Jenis Surat</th>
-                            <th>File</th>
+                            <th>File Surat Final</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -161,18 +160,32 @@ $jenisSurat = mysqli_query($koneksi, "
                                     <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_surat']); ?></td>
                                     <td>
-                                        <?php if (!empty($row['file_surat_final'])) { ?>
-                                            <a href="uploads/surat_final/<?= htmlspecialchars($row['file_surat_final']); ?>" target="_blank" class="btn btn-detail">
-                                                Lihat
+                                        <?php
+                                        if (!empty($row['file_surat_final'])) {
+                                            $namaSurat = strtolower($row['nama_surat']);
+
+                                            // 1. Kondisi untuk Surat Magang
+                                            if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                                                $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            }
+                                            // 2. Kondisi untuk SK Aktif Kuliah Kembali
+                                            elseif (strpos($namaSurat, 'aktif') !== false) {
+                                                $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            }
+                                            // 3. Kondisi Default untuk Surat Riset / Lainnya
+                                            else {
+                                                $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            }
+                                        ?>
+                                            <a href="generate_surat_magang_resmi.php?id=<?= $row['id_surat']; ?>&view=true&asal=laporan" target="_blank" class="btn btn-detail">
+                                                <i class="fa-solid fa-file-lines"></i> Lihat
                                             </a>
                                         <?php } else { ?>
                                             -
                                         <?php } ?>
                                     </td>
                                     <td>
-                                        <a href="javascript:void(0)"
-                                            onclick="bukaDetail('adm_detail_surat_popup.php?id=<?= $row['id_surat']; ?>')"
-                                            class="btn btn-detail">
+                                        <a href="adm_permohonan_akademik.php?detail=<?= $row['id_surat']; ?>&asal=laporan" class="btn btn-detail">
                                             Detail
                                         </a>
                                     </td>

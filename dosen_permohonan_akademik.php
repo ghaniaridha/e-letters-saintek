@@ -3,11 +3,19 @@ session_start();
 include "koneksi.php";
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
-    echo "<script>alert('Silakan login sebagai dosen'); window.location='login.php';</script>";
+    echo "<script>alert('Silakan login sebagai dosen'); window.location='index.php';</script>";
     exit;
 }
 
 $id_dosen = $_SESSION['id_dosen'];
+
+$is_pembina = false;
+$cek_pembina = mysqli_query($koneksi, "SELECT id_ormawa FROM ormawa WHERE id_pembina = '$id_dosen'");
+
+if ($cek_pembina && mysqli_num_rows($cek_pembina) > 0) {
+    $is_pembina = true;
+}
+
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
 $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'Dosen';
@@ -88,23 +96,35 @@ $query = mysqli_query($koneksi, "
     <nav class="navbar">
         <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo"><img src="images/LOGO2.png" alt="navbar-logo"></a>
+
         <div class="navbar-nav">
             <a href="dosen_beranda.php#home">Beranda</a>
-            <div class="nav-dropdown">
-                <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
-                <div class="dropdown-content">
-                    <a href="dosen_permohonan_akademik.php">Akademik</a>
-                    <a href="dosen_permohonan_ormawa.php">Ormawa</a>
+
+            <?php if ($is_pembina): ?>
+                <div class="nav-dropdown">
+                    <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                    <div class="dropdown-content">
+                        <a href="dosen_permohonan_akademik.php">Akademik</a>
+                        <a href="dosen_permohonan_ormawa.php">Ormawa</a>
+                    </div>
                 </div>
-            </div>
+            <?php else: ?>
+                <a href="dosen_permohonan_akademik.php">Verifikasi Permohonan</a>
+            <?php endif; ?>
+
             <a href="dosen_beranda.php#riwayat">Informasi Persuratan</a>
-            <div class="nav-dropdown">
-                <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
-                <div class="dropdown-content">
-                    <a href="dosen_riwayat_akademik.php">Akademik</a>
-                    <a href="dosen_riwayat_ormawa.php">Ormawa</a>
+
+            <?php if ($is_pembina): ?>
+                <div class="nav-dropdown">
+                    <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
+                    <div class="dropdown-content">
+                        <a href="dosen_riwayat_akademik.php">Akademik</a>
+                        <a href="dosen_riwayat_ormawa.php">Ormawa</a>
+                    </div>
                 </div>
-            </div>
+            <?php else: ?>
+                <a href="dosen_riwayat_akademik.php">Riwayat Verifikasi</a>
+            <?php endif; ?>
         </div>
 
         <div class="navbar-extra">

@@ -7,6 +7,8 @@ if (!isset($_SESSION['role'])) {
     exit;
 }
 
+$username_admin = $_SESSION['nama'] ?? '';
+
 $id_surat = $_GET['id'] ?? '';
 
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
@@ -34,33 +36,21 @@ if (!$data) {
     exit;
 }
 
-// Logika Penomoran Surat 
-if (empty($data['nomor_surat'])) {
-    $tahun = date('Y');
+$query_dekan = mysqli_query($koneksi, "
+    SELECT nama_dosen, nip 
+    FROM dosen 
+    WHERE jabatan = 'Dekan' OR jabatan LIKE 'Dekan Fakultas%' 
+    LIMIT 1
+");
 
-    $cekNomor = mysqli_fetch_assoc(mysqli_query($koneksi, "
-        SELECT COUNT(*) AS total
-        FROM surat_pengajuan
-        WHERE status_akhir = 'Selesai'
-        AND YEAR(tanggal_pengajuan) = '$tahun'
-    "));
+$data_dekan = mysqli_fetch_assoc($query_dekan);
 
-    $nomorUrut = str_pad($cekNomor['total'] + 1, 3, '0', STR_PAD_LEFT);
+$nama_dekan = $data_dekan['nama_dosen'] ?? 'Nama Dekan Belum Diatur';
+$nip_dekan  = $data_dekan['nip'] ?? '-';
 
-    // Format Surat
-    $nomorSurat = "B-" . $nomorUrut . "/Un.16/DST/PP.009/" . $tahun;
-
-    mysqli_query($koneksi, "
-        UPDATE surat_pengajuan
-        SET nomor_surat = '$nomorSurat'
-        WHERE id_surat = '$id_surat'
-    ");
-} else {
-    $nomorSurat = $data['nomor_surat'];
-}
+$nomorSurat = !empty($data['nomor_surat']) ? $data['nomor_surat'] : "BELUM DIBERI NOMOR";
 
 if (isset($_POST['kirim_balasan'])) {
-    // Nama File
     $nama_file = "surat_resmi_sk_aktif_" . $id_surat . "_" . time() . ".pdf";
 
     $update_query = mysqli_query($koneksi, "
@@ -75,7 +65,7 @@ if (isset($_POST['kirim_balasan'])) {
     if ($update_query) {
         echo "<script>
             alert('Surat berhasil disetujui dan disimpan.');
-            window.location='pimpinan_verif.php';
+            window.location='adm_riwayat_review.php';
         </script>";
     } else {
         echo "<script>alert('Gagal memperbarui database.');</script>";
@@ -83,7 +73,23 @@ if (isset($_POST['kirim_balasan'])) {
     exit;
 }
 
-$tanggalSurat = date('d-m-Y');
+$bulanIndo = [
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
+];
+
+$tanggalSurat = date('d') . ' ' . $bulanIndo[date('m')] . ' ' . date('Y');
+
 $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode("http://192.168.18.174/localhost/e-letters-saintek/verifikasi_surat.php?hash=" . $data['dokumen_hash']);
 ?>
 
@@ -95,54 +101,9 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
     <title>SK Resmi Aktif Kuliah Kembali</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="preview.css?v=<?= time(); ?>">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body {
-            font-family: "Times New Roman", serif;
-            padding: 30px;
-            background: #f3f4f6;
-        }
-
-        .surat {
-            background: white;
-            max-width: 850px;
-            margin: auto;
-            padding: 45px 60px;
-            line-height: 1.5;
-            color: black;
-        }
-
-        .kop {
-            text-align: center;
-            border-bottom: 2px solid black;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .ttd {
-            width: 300px;
-            margin-left: auto;
-            margin-top: 30px;
-        }
-
-        .action {
-            max-width: 850px;
-            margin: 20px auto;
-            text-align: right;
-        }
-
-        @media print {
-            .action {
-                display: none;
-            }
-
-            body {
-                background: white;
-                padding: 0;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -163,99 +124,139 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
         ?>
     <?php endif; ?>
 
-    <div class="surat">
-        <div class="kop">
-            <table style="width:100%">
+    <div class="preview-container">
+        <div class="surat-wrapper-resmi">
+            <table class="kop-surat">
                 <tr>
-                    <td style="width:100px"><img src="images/Logo UINRIL(2).png" style="width:90px;"></td>
-                    <td style="text-align:center;">
-                        <h3 style="margin:0;">KEMENTERIAN AGAMA</h3>
-                        <h3 style="margin:0;">UNIVERSITAS ISLAM NEGERI RADEN INTAN LAMPUNG</h3>
-                        <h2 style="margin:0;">FAKULTAS SAINS DAN TEKNOLOGI</h2>
-                        <small>Jln. Letkol H. Endro Suratmin Sukarame I, Bandar Lampung 35131</small>
+                    <td class="kop-logo">
+                        <img src="images/Logo UINRIL(2).png" alt="Logo UIN RIL">
+                    </td>
+                    <td class="kop-teks">
+                        <h3>KEMENTERIAN AGAMA</h3>
+                        <h3>UNIVERSITAS ISLAM NEGERI RADEN INTAN LAMPUNG</h3>
+                        <h2>FAKULTAS SAINS DAN TEKNOLOGI</h2>
+                        <small>
+                            Alamat: Jl. Endro Suratmin Sukarame I, Telp (0721) 703289 Bandar Lampung
+                        </small>
                     </td>
                 </tr>
             </table>
+            <hr class="garis-kop">
+
+
+            <div style="text-align: center;">
+                <h3 style="margin:0; text-decoration:underline;">SURAT AKTIF KULIAH KEMBALI</h3>
+                <p>Nomor: <?= $nomorSurat; ?></p>
+            </div>
+
+            <p>Yang bertandatangan di bawah ini :</p>
+            <table style="width:100%; margin-left:20px;">
+                <tr>
+                    <td class="col-label">Nama</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($nama_dekan); ?></td>
+                </tr>
+                <tr>
+                    <td>NIP</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($nip_dekan); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Pangkat/Gol</td>
+                    <td class="col-separator">:</td>
+                    <td>Pembina Utama Madya/ (IV/d)</td>
+                </tr>
+                <tr>
+                    <td class="col-label">Jabatan</td>
+                    <td class="col-separator">:</td>
+                    <td>Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung</td>
+                </tr>
+            </table>
+
+            <p>Dengan ini menerangkan dengan sesungguhnya bahwa :</p>
+            <table style="width:100%; margin-left:20px;">
+                <tr>
+                    <td class="col-label">Nama</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">NPM</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($data['npm']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Jurusan</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($data['nama_prodi']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Semester</td>
+                    <td class="col-separator">:</td>
+                    <td><?= htmlspecialchars($data['semester']); ?></td>
+                </tr>
+            </table>
+
+            <p>Adalah benar mahasiswa Fakultas Sains dan Teknologi UIN Raden Intan Lampung. Surat keterangan ini diberikan untuk <b>Kuliah Kembali</b> pada semester <?= $data['semester']; ?> Tahun Akademik <?= $data['tahun_akademik']; ?>, berdasarkan surat Cuti Kuliah.</p>
+
+            <p>Demikian surat keterangan ini dibuat untuk diperhatikan dan dilaksanakan sebagaimana mestinya.</p>
+
+            <div class="ttd-container">
+                <p class="tgl-surat">Bandar Lampung, <?= $tanggalSurat; ?></p>
+
+                <p>Dekan,</p>
+
+                <?php if (!empty($data['dokumen_hash'])) { ?>
+                    <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
+                <?php } else { ?>
+                    <br><br><br>
+                <?php } ?>
+
+                <p>
+                    <strong><?= htmlspecialchars($nama_dekan); ?></strong><br>
+                    NIP. <?= htmlspecialchars($nip_dekan); ?>
+                </p>
+            </div>
+
+            <div class="tembusan-surat">
+                <p>Tembusan Yth.:<br>
+                    1. Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung;<br>
+                    2. Kabag Keuangan UIN Raden Intan Lampung;<br>
+                    3. Kabag Akademik & Kemahasiswaan UIN Raden Intan Lampung;<br>
+                    4. Ketua Jurusan <?= htmlspecialchars($data['nama_prodi']); ?>;<br>
+                    5. Pembimbing Akademik</p>
+            </div>
         </div>
 
-        <div style="text-align: center;">
-            <h3 style="margin:0; text-decoration:underline;">SURAT AKTIF KULIAH KEMBALI</h3>
-            <p>Nomor: <?= $nomorSurat; ?></p>
+        <div class="action">
+            <?php
+            $asal_halaman = $_GET['asal'] ?? '';
+
+            if ($asal_halaman == 'laporan') {
+                $link_kembali = 'adm_laporan_surat.php';
+            } else {
+                $link_kembali = 'mhs_riwayat.php';
+            }
+            ?>
+            <a href="<?= $link_kembali; ?>" class="btn-back">Kembali</a>
+
+
+            <button onclick="window.print()" class="btn-print">
+                Unduh Surat
+            </button>
+
+            <?php
+            $is_view_only = (isset($_GET['view']) && $_GET['view'] == 'true');
+
+            if (isset($_SESSION['role']) && strtolower($_SESSION['role']) == 'admin' && $username_admin !== 'ADM001' && !$is_view_only) {
+            ?>
+                <form action="?id=<?= $id_surat; ?>" method="POST">
+                    <button type="submit" name="kirim_balasan" class="btn-approve">
+                        Terbitkan Surat
+                    </button>
+                </form>
+            <?php } ?>
         </div>
-
-        <p>Yang bertandatangan di bawah ini :</p>
-        <table style="width:100%; margin-left:20px;">
-            <tr>
-                <td width="150">Nama</td>
-                <td>: Prof. Ir. H. Andi Thahir, S.Psi., M.A., Ed.D</td>
-            </tr>
-            <tr>
-                <td>NIP</td>
-                <td>: 197604272007011015</td>
-            </tr>
-            <tr>
-                <td>Pangkat/Gol</td>
-                <td>: Pembina Utama Madya/ (IV/d)</td>
-            </tr>
-            <tr>
-                <td>Jabatan</td>
-                <td>: Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung</td>
-            </tr>
-        </table>
-
-        <p>Dengan ini menerangkan dengan sesungguhnya bahwa :</p>
-        <table style="width:100%; margin-left:20px;">
-            <tr>
-                <td width="150">Nama</td>
-                <td>: <?= htmlspecialchars($data['nama_mhs']); ?></td>
-            </tr>
-            <tr>
-                <td>NPM</td>
-                <td>: <?= htmlspecialchars($data['npm']); ?></td>
-            </tr>
-            <tr>
-                <td>Jurusan</td>
-                <td>: <?= htmlspecialchars($data['nama_prodi']); ?></td>
-            </tr>
-            <tr>
-                <td>Semester</td>
-                <td>: <?= htmlspecialchars($data['semester']); ?></td>
-            </tr>
-        </table>
-
-        <p>Adalah benar mahasiswa Fakultas Sains dan Teknologi UIN Raden Intan Lampung. Surat keterangan ini diberikan untuk <b>Kuliah Kembali</b> pada semester <?= $data['semester']; ?> Tahun Akademik <?= $data['tahun_akademik']; ?>, berdasarkan surat Cuti Kuliah.</p>
-
-        <p>Demikian surat keterangan ini dibuat untuk diperhatikan dan dilaksanakan sebagaimana mestinya.</p>
-
-        <div style="margin-left:500px;">
-            <p>Bandar Lampung, <?= $tanggalSurat; ?></p>
-            <p>Dekan,</p>
-            <img src="<?= $qr_url; ?>" style="width:85px; height:85px;" alt="QR Code">
-            <p><b>Prof. Ir. H. Andi Thahir, S.Psi., M.A., Ed.D</b><br>NIP. 197604272007011015</p>
-        </div>
-
-        <div style="margin-top:20px; font-size:12px;">
-            <p>Tembusan Yth.:<br>
-                1. Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung;<br>
-                2. Kabag Keuangan UIN Raden Intan Lampung;<br>
-                3. Kabag Akademik & Kemahasiswaan UIN Raden Intan Lampung;<br>
-                4. Ketua Jurusan <?= htmlspecialchars($data['nama_prodi']); ?>;<br>
-                5. Pembimbing Akademik</p>
-        </div>
-    </div>
-
-    <div class="action">
-        <button onclick="window.print()" class="btn-print">
-            Download Surat (PDF)
-        </button>
-
-        <?php if ($_SESSION['role'] == 'pimpinan') { ?>
-            <form action="generate_sk_aktif_resmi.php?id=<?= $id_surat; ?>" method="POST">
-                <button type="submit" name="kirim_balasan" class="btn-approve">
-                    Setujui & Kirim ke Mahasiswa
-                </button>
-            </form>
-        <?php } ?>
     </div>
 </body>
 

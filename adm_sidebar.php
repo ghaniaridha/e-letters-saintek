@@ -25,11 +25,11 @@ $username_admin = $_SESSION['nama'] ?? '';
 
     <?php if ($username_admin === 'ADM001') : ?>
         <a href="adm_permohonan_ormawa.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Ormawa
         </a>
     <?php else : ?>
         <a href="adm_permohonan_akademik.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Mhs
         </a>
     <?php endif; ?>
 
@@ -57,18 +57,15 @@ $username_admin = $_SESSION['nama'] ?? '';
     <?php endif; ?>
 
     <?php if ($username_admin === 'ADM001') : ?>
-        <a href="adm_riwayat_review.php">
-            <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Surat Ormawa
-        </a>
         <a href="adm_laporan_surat.php">
             <i class="fa-solid fa-file-export"></i> Laporan Surat Ormawa
         </a>
     <?php else : ?>
-        <a href="adm_riwayat_review.php">
-            <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Surat Mhs
+        <a href="adm_proses_penomoran.php">
+            <i class="fa-solid fa-file-pen"></i> Proses & Penomoran
         </a>
         <a href="adm_laporan_surat.php">
-            <i class="fa-solid fa-file-export"></i> Laporan Surat Mhs
+            <i class="fa-solid fa-file-export"></i> Laporan Surat Keluar
         </a>
     <?php endif; ?>
 

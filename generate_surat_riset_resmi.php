@@ -7,6 +7,8 @@ if (!isset($_SESSION['role'])) {
     exit;
 }
 
+$username_admin = $_SESSION['nama'] ?? '';
+
 $id_surat = $_GET['id'] ?? '';
 
 $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
@@ -46,47 +48,41 @@ $nama_wadek1 = $data_pimpinan['nama_dosen'] ?? 'Nama Pimpinan Belum Diatur';
 $nip_wadek1  = $data_pimpinan['nip'] ?? '-';
 
 if (isset($_POST['kirim_balasan'])) {
-    $nama_file = "surat_resmi_izin_riset" . $id_surat . "_" . time() . ".pdf";
+    $nama_file = "surat_resmi_izin_riset_" . $id_surat . "_" . time() . ".pdf";
 
     mysqli_query($koneksi, "
         UPDATE surat_pengajuan
         SET
             status_akhir = 'Selesai',
             status_balasan = 'Disetujui',
-            file_surat_final = '$nama_file',
             file_surat_final = '$nama_file'
         WHERE id_surat = '$id_surat'
     ");
 
     $_SESSION['status'] = 'success';
     $_SESSION['pesan']  = 'Surat balasan berhasil dibuat dan dikirim ke mahasiswa.';
-    header("Location: pimpinan_riwayat.php");
+    header("Location: adm_riwayat_review.php");
     exit;
 }
 
-if (empty($data['nomor_surat'])) {
-    $tahun = date('Y');
+$nomorSurat = !empty($data['nomor_surat']) ? $data['nomor_surat'] : "BELUM DIBERI NOMOR";
 
-    $cekNomor = mysqli_fetch_assoc(mysqli_query($koneksi, "
-        SELECT COUNT(*) AS total
-        FROM surat_pengajuan
-        WHERE status_akhir IN ('Menunggu Surat Balasan', 'Selesai')
-        AND YEAR(tanggal_pengajuan) = '$tahun'
-    "));
+$bulanIndo = [
+    '01' => 'Januari',
+    '02' => 'Februari',
+    '03' => 'Maret',
+    '04' => 'April',
+    '05' => 'Mei',
+    '06' => 'Juni',
+    '07' => 'Juli',
+    '08' => 'Agustus',
+    '09' => 'September',
+    '10' => 'Oktober',
+    '11' => 'November',
+    '12' => 'Desember'
+];
 
-    $nomorUrut = str_pad($cekNomor['total'], 3, '0', STR_PAD_LEFT);
-    $nomorSurat = "B-" . $nomorUrut . "/Un.16/DST/PP.009/" . $tahun;
-
-    mysqli_query($koneksi, "
-        UPDATE surat_pengajuan
-        SET nomor_surat = '$nomorSurat'
-        WHERE id_surat = '$id_surat'
-    ");
-} else {
-    $nomorSurat = $data['nomor_surat'];
-}
-
-$tanggalSurat = date('d-m-Y');
+$tanggalSurat = date('d') . ' ' . $bulanIndo[date('m')] . ' ' . date('Y');
 
 $host = $_SERVER['HTTP_HOST'];
 $base_url = "http://" . $host . "/e letters saintek";
@@ -147,8 +143,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
             <table class="info-surat">
                 <tr>
-                    <td style="width: 70px;">Nomor</td>
-                    <td style="width: 15px;">:</td>
+                    <td>Nomor</td>
+                    <td>:</td>
                     <td colspan="3"><?= htmlspecialchars($nomorSurat); ?></td>
                 </tr>
                 <tr>
@@ -239,32 +235,33 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
         </div>
     </div>
 
-    <div class="preview-actions">
+    <div class="action">
         <?php
-        $isViewMode = isset($_GET['view']);
-        $roleUser = $_SESSION['role'] ?? '';
+        $asal_halaman = $_GET['asal'] ?? '';
 
-        if ($roleUser == 'pimpinan' && !$isViewMode) {
+        if ($asal_halaman == 'laporan') {
+            $link_kembali = 'adm_laporan_surat.php';
+        } else {
+            $link_kembali = 'mhs_riwayat.php';
+        }
         ?>
-            <form method="POST" style="margin: 0; padding: 0;">
-                <button type="submit" name="kirim_balasan" class="btn-action btn-acc">
-                    <i class="fa-solid fa-paper-plane"></i> Kirim Surat
+        <a href="<?= $link_kembali; ?>" class="btn-back">Kembali</a>
+
+        <button onclick="window.print()" class="btn-print">
+            Unduh Surat
+        </button>
+
+        <?php
+        $is_view_only = (isset($_GET['view']) && $_GET['view'] == 'true');
+
+        if (isset($_SESSION['role']) && strtolower($_SESSION['role']) == 'admin' && $username_admin !== 'ADM001' && !$is_view_only) {
+        ?>
+            <form action="?id=<?= $id_surat; ?>" method="POST">
+                <button type="submit" name="kirim_balasan" class="btn-approve">
+                    Terbitkan Surat
                 </button>
             </form>
-        <?php
-        }
-
-        if ($isViewMode) {
-            $linkKembali = ($roleUser == 'pimpinan') ? 'pimpinan_riwayat.php' : 'mhs_riwayat.php';
-        ?>
-            <a href="<?= $linkKembali; ?>" class="btn-action btn-back">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
-            </a>
         <?php } ?>
-
-        <button onclick="window.print()" class="btn-action btn-fill">
-            <i class="fa-solid fa-print"></i> Unduh Surat
-        </button>
     </div>
 </body>
 

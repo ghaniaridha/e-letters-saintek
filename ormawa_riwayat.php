@@ -19,31 +19,59 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_escape = mysqli_real_escape_string($koneksi, $search);
+
+$limit = 10;
+$halaman = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($halaman - 1) * $limit;
+
+$where_clause = "WHERE sp.id_ormawa = '$id_ormawa' AND sp.status_keputusan != 'Menunggu'";
+
+if (!empty($search)) {
+    $where_clause .= " AND (sp.nomor_surat LIKE '%$search_escape%' OR js.nama_surat LIKE '%$search_escape%' OR dpr.nama_kegiatan LIKE '%$search_escape%')";
+}
+
+$query_count = mysqli_query($koneksi, "
+    SELECT COUNT(sp.id_surat) as total
+    FROM surat_pengajuan sp
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    LEFT JOIN detail_peminjaman_ruangan dpr ON sp.id_surat = dpr.id_surat
+    LEFT JOIN detail_pengajuan_dana dpd ON sp.id_surat = dpd.id_surat
+    $where_clause
+");
+$row_count = mysqli_fetch_assoc($query_count);
+$total_data = $row_count['total'];
+$total_halaman = ceil($total_data / $limit);
+
+$query_string = !empty($search) ? '&search=' . urlencode($search) : '';
+
 $query_riwayat = mysqli_query($koneksi, "
-SELECT
-    sp.id_surat,
-    sp.tanggal_pengajuan,
-    sp.status_akhir,
-    sp.status_keputusan,
-    js.nama_surat,
-    dpr.nama_kegiatan AS kegiatan_gedung,
-    dpr.ruangan_yang_diajukan,
-    dpr.tanggal_mulai,
-    COALESCE(dpr.catatan, dpd.catatan) AS catatan
-FROM surat_pengajuan sp
-JOIN jenis_surat js
-ON sp.id_jenis = js.id_jenis
+    SELECT
+        sp.id_surat,
+        sp.nomor_surat,
+        sp.tanggal_pengajuan,
+        sp.status_akhir,
+        sp.status_keputusan,
+        js.nama_surat,
+        dpr.nama_kegiatan AS kegiatan_gedung,
+        dpr.ruangan_yang_diajukan,
+        dpr.tanggal_mulai,
+        COALESCE(dpr.catatan, dpd.catatan) AS catatan
+    FROM surat_pengajuan sp
+    JOIN jenis_surat js
+    ON sp.id_jenis = js.id_jenis
 
-LEFT JOIN detail_peminjaman_ruangan dpr
-ON sp.id_surat = dpr.id_surat
+    LEFT JOIN detail_peminjaman_ruangan dpr
+    ON sp.id_surat = dpr.id_surat
 
-LEFT JOIN detail_pengajuan_dana dpd
-ON sp.id_surat = dpd.id_surat
+    LEFT JOIN detail_pengajuan_dana dpd
+    ON sp.id_surat = dpd.id_surat
 
-WHERE sp.id_ormawa = '$id_ormawa'
-AND sp.status_keputusan != 'Menunggu'
+    $where_clause
 
-ORDER BY sp.tanggal_pengajuan DESC
+    ORDER BY sp.tanggal_pengajuan DESC
+    LIMIT $limit OFFSET $offset
 ");
 ?>
 
@@ -98,14 +126,22 @@ ORDER BY sp.tanggal_pengajuan DESC
         </div>
 
         <div class="table-wrapper" id="template-surat">
+            <form method="GET" action="" class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="search" id="searchSurat" class="search-input"
+                    placeholder="Cari nomor surat atau jenis surat..."
+                    value="<?= htmlspecialchars($search); ?>">
+                <button type="submit"></button>
+            </form>
+
             <table class="custom-table">
                 <thead>
                     <tr>
                         <th>No</th>
                         <th>Tanggal & Waktu</th>
+                        <th>Nomor Surat</th>
                         <th>Jenis Surat</th>
                         <th>Status Akhir</th>
-                        <th>File Surat Peangajuan</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -113,91 +149,75 @@ ORDER BY sp.tanggal_pengajuan DESC
                 <tbody>
                     <?php if ($query_riwayat && mysqli_num_rows($query_riwayat) > 0) { ?>
                         <?php
-                        $no = 1;
+                        $no = $offset + 1;
                         while ($row = mysqli_fetch_assoc($query_riwayat)) {
-                            $statusKeputusan = strtolower($row['status_keputusan']);
+                            $status = $row['status_akhir'];
 
-                            $isDitolak = ($statusKeputusan == 'ditolak');
-                            $isDisetujui = ($statusKeputusan == 'disetujui');
-
-                            if ($isDitolak) {
-                                $statusTampil = "Ditolak";
-                                $badge_class = "badge-danger";
-                            } elseif ($isDisetujui) {
-                                $statusTampil = "Disetujui";
-                                $badge_class = "badge-success";
+                            if ($status == 'Selesai') {
+                                $badge_class = 'status-selesai';
+                            } elseif (strpos($status, 'Ditolak') !== false) {
+                                $badge_class = 'status-ditolak';
                             } else {
-                                $statusTampil = htmlspecialchars($row['status_akhir']);
-                                $badge_class = "badge-warning";
+                                $badge_class = 'status-proses';
                             }
 
+                            $isDitolak = (strpos(strtolower($status), 'ditolak') !== false);
                             $isDana = (strpos(strtolower($row['nama_surat']), 'dana') !== false);
                         ?>
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                <td><?= !empty($row['nomor_surat']) ? htmlspecialchars($row['nomor_surat']) : '<span class="text-muted">-</span>'; ?></td>
                                 <td><b><?= htmlspecialchars($row['nama_surat']); ?></b></td>
 
                                 <td>
-                                    <?php if ($isDana) { ?>
-                                        <i class="fa-solid fa-money-bill-wave" style="color: #10b981; margin-right: 4px;"></i> Pengajuan Dana
-                                    <?php } else { ?>
-                                        <i class="fa-solid fa-building" style="color: #64748b; margin-right: 4px;"></i> <?= htmlspecialchars($row['ruangan_yang_diajukan'] ?? '-'); ?>
-                                    <?php } ?>
-                                </td>
-
-                                <td><?= !empty($row['tanggal_mulai']) ? date('d-m-Y', strtotime($row['tanggal_mulai'])) : '-'; ?></td>
-                                <td><?= htmlspecialchars($row['catatan'] ?? '-'); ?></td>
-
-                                <td>
-                                    <span class="badge <?= $badge_class; ?>">
-                                        <?= $statusTampil; ?>
+                                    <span class="badge-status <?= $badge_class; ?>">
+                                        <?= htmlspecialchars($status); ?>
                                     </span>
                                 </td>
 
-                                <td style="text-align: center;">
-                                    <?php if ($isDitolak) { ?>
-                                        <span class="text-muted">Tidak Tersedia</span>
-                                    <?php } else { ?>
-                                        <?php
-                                        $linkCetak = "preview_peminjaman_ruangan.php?id=" . $row['id_surat'];
-
-                                        if ($isDana) {
-                                            $linkCetak = "preview_pengajuan_dana.php?id=" . $row['id_surat'] . "&mode=view";
-                                        }
-                                        ?>
-                                        <a href="<?= $linkCetak; ?>" target="_blank" class="btn-view">
-                                            <i class="fa-solid fa-print"></i> Cetak
-                                        </a>
-                                    <?php } ?>
-                                </td>
-
                                 <td>
-                                    <button onclick="bukaModal(<?= $row['id_surat']; ?>)">Detail</button>
+                                    <a href="ormawa_riwayat_detail.php?id=<?= $row['id_surat']; ?>" class="btn-aksi">Detail</a>
                                 </td>
                             </tr>
                         <?php } ?>
                     <?php } else { ?>
                         <tr>
                             <td colspan="6" class="text-center">
-                                Belum ada riwayat permohonan surat.
+                                Belum ada riwayat permohonan surat yang ditemukan.
                             </td>
                         </tr>
                     <?php } ?>
                 </tbody>
             </table>
+
+            <?php if ($total_halaman > 1): ?>
+                <div class="pagination-container">
+                    <ul class="pagination">
+                        <?php if ($halaman > 1): ?>
+                            <li><a href="?page=<?= $halaman - 1 ?><?= $query_string ?>">Sebelumnya</a></li>
+                        <?php else: ?>
+                            <li class="disabled"><span>Sebelumnya</span></li>
+                        <?php endif; ?>
+
+                        <?php for ($i = 1; $i <= $total_halaman; $i++): ?>
+                            <?php if ($i == $halaman): ?>
+                                <li class="active"><span><?= $i ?></span></li>
+                            <?php else: ?>
+                                <li><a href="?page=<?= $i ?><?= $query_string ?>"><?= $i ?></a></li>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($halaman < $total_halaman): ?>
+                            <li><a href="?page=<?= $halaman + 1 ?><?= $query_string ?>">Selanjutnya</a></li>
+                        <?php else: ?>
+                            <li class="disabled"><span>Selanjutnya</span></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
-
-    <div id="modalDetail" class="modal-overlay">
-        <div class="modal-box">
-            <span class="modal-close" onclick="tutupModal()">&times;</span>
-            <h3>Detail Pengajuan</h3>
-            <div id="kontenDetail">
-                Memuat data...
-            </div>
-        </div>
-    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -217,6 +237,19 @@ ORDER BY sp.tanggal_pengajuan DESC
                 }
             });
         });
+
+        function bukaModal(id) {
+            document.getElementById('modalDetail').style.display = 'flex';
+            fetch('get_detail_surat.php?id=' + id)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('kontenDetail').innerHTML = data;
+                });
+        }
+
+        function tutupModal() {
+            document.getElementById('modalDetail').style.display = 'none';
+        }
 
         function confirmLogout(event, url) {
             event.preventDefault();
@@ -240,10 +273,6 @@ ORDER BY sp.tanggal_pengajuan DESC
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelector('.navbar-nav')?.classList.toggle('active');
-        });
-        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
     </script>
 </body>

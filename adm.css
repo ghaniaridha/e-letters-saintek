@@ -906,6 +906,14 @@ table tbody td {
 .action-group-sec .btn:last-child {
   margin-bottom: 0 !important;
 }
+
+.jadwal-pimpinan-cell .icon-jadwal {
+  margin-right: 6px;
+}
+
+.jadwal-pimpinan-cell .jadwal-separator {
+  margin: 0 12px;
+}
 /*kelola ormawa section*/
 
 .btn-detail {
@@ -924,6 +932,25 @@ table tbody td {
 .btn-edit {
   background-color: #ffc107;
   color: #000;
+}
+
+.btn-beri-nomor {
+  width: 100%;
+  padding: 8px 2px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.status-menunggu-pimpinan {
+  color: #d97706;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .btn-reset {
@@ -985,6 +1012,23 @@ table tbody td {
   background-color: #f8f9fa;
   border-color: #dee2e6;
   cursor: not-allowed;
+}
+
+.swal-nomor-label {
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.swal-input-custom {
+  text-align: center;
+  width: 85%;
+}
+
+.swal-nomor-help {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 15px;
 }
 
 .text-muted {
@@ -1895,6 +1939,11 @@ table tbody td {
   letter-spacing: 0.5px;
 }
 
+.table-detail td.status-tolak {
+  color: #dc2626;
+  background-color: #fef2f2;
+}
+
 .mt-4 {
   margin-top: 30px;
 }
@@ -2162,6 +2211,7 @@ table tbody td {
   justify-content: center;
   align-items: center;
 }
+
 .modal-content-frame {
   background: #fff;
   width: 85%;
@@ -2169,14 +2219,17 @@ table tbody td {
   border-radius: 10px;
   position: relative;
   padding: 20px;
+  box-sizing: border-box;
 }
+
 .close-btn {
   position: absolute;
   right: 20px;
-  top: 10px;
+  top: 1px;
   font-size: 30px;
   cursor: pointer;
-  color: #333;
+  color: #dc2626;
+  z-index: 10001;
 }
 
 /* ============================================================

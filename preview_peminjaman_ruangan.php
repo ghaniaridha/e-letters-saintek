@@ -276,14 +276,20 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
                 <div class="ormawa-jabatan-pembina">DOSEN PEMBINA <?= strtoupper(htmlspecialchars($ormawa['singkatan_ormawa'] ?? 'ORMAWA')) ?></div>
 
                 <?php
-                $is_disetujui = ($status_pembina !== "Menunggu Persetujuan Pembina" && !empty($status_pembina));
+                $status_lower = strtolower($status_pembina);
+                $is_ditolak = (strpos($status_lower, 'ditolak') !== false);
+
+                $is_disetujui = ($status_pembina !== "Menunggu Persetujuan Pembina" && !empty($status_pembina) && !$is_ditolak);
+
                 if ($view_mode && $is_disetujui && !empty($ormawa['qr_pembina'])) {
                     $link_pembina = $base_url . "/verifikasi.php?hash=" . $ormawa['qr_pembina'];
                     $qr_pembina_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_pembina);
                 ?>
                     <img src="<?= $qr_pembina_url ?>" alt="QR Pembina">
                 <?php } else { ?>
-                    <div class="ormawa-qr-placeholder">QR Belum Tersedia</div>
+                    <div class="ormawa-qr-placeholder" style="<?= $is_ditolak ? 'color: #dc2626; border-color: #dc2626;' : '' ?>">
+                        <?= $is_ditolak ? 'Ditolak' : 'QR Belum Tersedia' ?>
+                    </div>
                 <?php } ?>
 
                 <span class="ormawa-nama-ttd"><?= htmlspecialchars($ormawa['nama_pembina'] ?? '-') ?></span>

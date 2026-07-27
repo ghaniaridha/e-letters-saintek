@@ -26,8 +26,6 @@ if (isset($_GET['id'])) {
     $nama_kegiatan    = $data_kombinasi['nama_kegiatan'];
     $tema_kegiatan      = $data_kombinasi['tema_kegiatan'];
     $tempat_kegiatan    = $data_kombinasi['tempat_kegiatan'];
-    $nominal_pengajuan  = $data_kombinasi['nominal_pengajuan'];
-    $deskripsi_kegiatan = $data_kombinasi['deskripsi_kegiatan'];
     $tanggal_kegiatan   = $data_kombinasi['tanggal_kegiatan'];
     $status_pembina   = $data_kombinasi['status_akhir'];
 
@@ -274,14 +272,20 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
                 <div class="ormawa-jabatan-pembina">DOSEN PEMBINA <?= strtoupper(htmlspecialchars($ormawa['singkatan_ormawa'] ?? 'ORMAWA')) ?></div>
 
                 <?php
-                $is_disetujui = ($status_pembina !== "Menunggu Persetujuan Pembina" && !empty($status_pembina));
+                $status_lower = strtolower($status_pembina);
+                $is_ditolak = (strpos($status_lower, 'ditolak') !== false);
+
+                $is_disetujui = ($status_pembina !== "Menunggu Persetujuan Pembina" && !empty($status_pembina) && !$is_ditolak);
+
                 if ($view_mode && $is_disetujui && !empty($ormawa['qr_pembina'])) {
                     $link_pembina = $base_url . "/verifikasi.php?hash=" . $ormawa['qr_pembina'];
                     $qr_pembina_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_pembina);
                 ?>
                     <img src="<?= $qr_pembina_url ?>" alt="QR Pembina">
                 <?php } else { ?>
-                    <div class="ormawa-qr-placeholder">QR Belum Tersedia</div>
+                    <div class="ormawa-qr-placeholder" style="<?= $is_ditolak ? 'color: #dc2626; border-color: #dc2626;' : '' ?>">
+                        <?= $is_ditolak ? 'Ditolak' : 'QR Belum Tersedia' ?>
+                    </div>
                 <?php } ?>
 
                 <span class="ormawa-nama-ttd"><?= htmlspecialchars($ormawa['nama_pembina'] ?? '-') ?></span>
@@ -331,10 +335,6 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
                     <input type="hidden"
                         name="tempat_kegiatan"
                         value="<?= htmlspecialchars($tempat_kegiatan) ?>">
-
-                    <input type="hidden"
-                        name="deskripsi_kegiatan"
-                        value="<?= htmlspecialchars($deskripsi_kegiatan) ?>">
 
                     <button class="btn-action btn-fill" type="submit">
                         Ajukan Surat
