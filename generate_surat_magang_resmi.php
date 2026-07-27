@@ -263,11 +263,15 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
             if ($asal_halaman == 'laporan') {
                 $link_kembali = 'adm_laporan_surat.php';
+            } elseif ($asal_halaman == 'pimpinan') {
+                $link_kembali = 'pimpinan_riwayat.php';
+            } elseif ($asal_halaman == 'review') {
+                $link_kembali = 'adm_riwayat_review.php';
             } else {
                 $link_kembali = 'mhs_riwayat.php';
             }
             ?>
-            <a href="<?= $link_kembali; ?>" class="btn-back">Kembali</a>
+            <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
 
             <button onclick="window.print()" class="btn-print">
                 Unduh Surat

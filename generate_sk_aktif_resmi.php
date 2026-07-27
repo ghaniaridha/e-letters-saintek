@@ -36,17 +36,17 @@ if (!$data) {
     exit;
 }
 
-$query_dekan = mysqli_query($koneksi, "
+$query_pimpinan = mysqli_query($koneksi, "
     SELECT nama_dosen, nip 
     FROM dosen 
-    WHERE jabatan = 'Dekan' OR jabatan LIKE 'Dekan Fakultas%' 
+    WHERE jabatan LIKE '%wadek 1%' OR jabatan LIKE '%wakil dekan 1%' 
     LIMIT 1
 ");
 
-$data_dekan = mysqli_fetch_assoc($query_dekan);
+$data_pimpinan = mysqli_fetch_assoc($query_pimpinan);
 
-$nama_dekan = $data_dekan['nama_dosen'] ?? 'Nama Dekan Belum Diatur';
-$nip_dekan  = $data_dekan['nip'] ?? '-';
+$nama_wadek1 = $data_pimpinan['nama_dosen'] ?? 'Nama Pimpinan Belum Diatur';
+$nip_wadek1  = $data_pimpinan['nip'] ?? '-';
 
 $nomorSurat = !empty($data['nomor_surat']) ? $data['nomor_surat'] : "BELUM DIBERI NOMOR";
 
@@ -154,22 +154,17 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <tr>
                     <td class="col-label">Nama</td>
                     <td class="col-separator">:</td>
-                    <td><?= htmlspecialchars($nama_dekan); ?></td>
+                    <td><?= htmlspecialchars($nama_wadek1); ?></td>
                 </tr>
                 <tr>
                     <td>NIP</td>
                     <td class="col-separator">:</td>
-                    <td><?= htmlspecialchars($nip_dekan); ?></td>
-                </tr>
-                <tr>
-                    <td class="col-label">Pangkat/Gol</td>
-                    <td class="col-separator">:</td>
-                    <td>Pembina Utama Madya/ (IV/d)</td>
+                    <td><?= htmlspecialchars($nip_wadek1); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">Jabatan</td>
                     <td class="col-separator">:</td>
-                    <td>Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung</td>
+                    <td>Wakil Dekan 1 Fakultas Sains dan Teknologi UIN Raden Intan Lampung</td>
                 </tr>
             </table>
 
@@ -201,30 +196,32 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
             <p>Demikian surat keterangan ini dibuat untuk diperhatikan dan dilaksanakan sebagaimana mestinya.</p>
 
-            <div class="ttd-container">
-                <p class="tgl-surat">Bandar Lampung, <?= $tanggalSurat; ?></p>
-
-                <p>Dekan,</p>
-
-                <?php if (!empty($data['dokumen_hash'])) { ?>
-                    <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
-                <?php } else { ?>
-                    <br><br><br>
-                <?php } ?>
-
-                <p>
-                    <strong><?= htmlspecialchars($nama_dekan); ?></strong><br>
-                    NIP. <?= htmlspecialchars($nip_dekan); ?>
-                </p>
-            </div>
-
-            <div class="tembusan-surat">
-                <p>Tembusan Yth.:<br>
+            <div class="surat-footer-section">
+                <div class="tembusan-area">
+                    <u>Tembusan Yth.:</u><br>
                     1. Dekan Fakultas Sains dan Teknologi UIN Raden Intan Lampung;<br>
                     2. Kabag Keuangan UIN Raden Intan Lampung;<br>
                     3. Kabag Akademik & Kemahasiswaan UIN Raden Intan Lampung;<br>
-                    4. Ketua Jurusan <?= htmlspecialchars($data['nama_prodi']); ?>;<br>
-                    5. Pembimbing Akademik</p>
+                    4. Ketua Jurusan Sistem Informasi;<br>
+                    5. Pembimbing Akademik
+                </div>
+
+                <div class="ttd-container-sk">
+                    <p class="tgl-surat-sk">Bandar Lampung, <?= $tanggalSurat; ?></p>
+                    <p class="ttd-no-margin">An. Dekan</p>
+                    <p class="ttd-margin-bottom"><b>Wakil Dekan 1,</b></p>
+
+                    <?php if (!empty($data['dokumen_hash'])) { ?>
+                        <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
+                    <?php } else { ?>
+                        <br><br><br>
+                    <?php } ?>
+
+                    <p class="ttd-margin-top">
+                        <span class="nama-penandatangan"><?= htmlspecialchars($nama_wadek1); ?></span><br>
+                        NIP. <?= htmlspecialchars($nip_wadek1); ?>
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -234,12 +231,15 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
             if ($asal_halaman == 'laporan') {
                 $link_kembali = 'adm_laporan_surat.php';
+            } elseif ($asal_halaman == 'pimpinan') {
+                $link_kembali = 'pimpinan_riwayat.php';
+            } elseif ($asal_halaman == 'review') {
+                $link_kembali = 'adm_riwayat_review.php';
             } else {
                 $link_kembali = 'mhs_riwayat.php';
             }
             ?>
-            <a href="<?= $link_kembali; ?>" class="btn-back">Kembali</a>
-
+            <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
 
             <button onclick="window.print()" class="btn-print">
                 Unduh Surat

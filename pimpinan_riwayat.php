@@ -2,12 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai pimpinan'); window.location='index.php';</script>";
     exit;
 }
 
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'pimpinan';
 $idLogin = $_SESSION['nama'] ?? '';
 $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'pimpinan';
@@ -16,6 +16,17 @@ $inisial = '';
 $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+$query_dosen = mysqli_query($koneksi, "SELECT jabatan FROM dosen WHERE id_dosen = '$id_dosen' LIMIT 1");
+$data_dosen = mysqli_fetch_assoc($query_dosen);
+$jabatan_pimpinan = strtolower($data_dosen['jabatan'] ?? '');
+
+$filter_jabatan = "";
+if (strpos($jabatan_pimpinan, 'dekan') !== false && strpos($jabatan_pimpinan, 'wakil') === false && strpos($jabatan_pimpinan, 'wadek') === false) {
+    $filter_jabatan = " AND (LOWER(js.nama_surat) LIKE '%magang%' OR LOWER(js.nama_surat) LIKE '%pkl%')";
+} elseif (strpos($jabatan_pimpinan, 'wakil') !== false || strpos($jabatan_pimpinan, 'wadek') !== false) {
+    $filter_jabatan = " AND (LOWER(js.nama_surat) NOT LIKE '%magang%' AND LOWER(js.nama_surat) NOT LIKE '%pkl%')";
 }
 
 $search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
@@ -47,6 +58,7 @@ $query_riwayat = mysqli_query($koneksi, "
         OR sp.status_pimpinan = 'Disetujui'
         OR sp.status_akhir LIKE '%Ditolak Pimpinan%'
     )
+    $filter_jabatan
     $search_sql
     ORDER BY sp.tanggal_pengajuan DESC
 ");
@@ -119,7 +131,7 @@ $query_riwayat = mysqli_query($koneksi, "
                         <th>Prodi</th>
                         <th>Jenis Surat</th>
                         <th>Status Akhir</th>
-                        <th>File Final</th>
+                        <th>File Surat Final</th>
                     </tr>
                 </thead>
 
@@ -167,22 +179,21 @@ $query_riwayat = mysqli_query($koneksi, "
                                         $namaSurat = strtolower($row['nama_surat']);
 
                                         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=pimpinan";
                                         } elseif (strpos($namaSurat, 'aktif') !== false) {
-                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=pimpinan";
                                         } else {
-                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                            $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=pimpinan";
                                         }
                                     ?>
-                                        <a href="<?= $linkUnduh; ?>" target="_blank" class="btn btn-detail">
-                                            <i class="fa-solid fa-eye"></i> Lihat Surat
-                                        </a>
+                                        <a href="<?= $linkUnduh; ?>" target="_blank" class="btn-file-surat">
+                                            <i class="fa-solid fa-file-lines"></i>
 
-                                    <?php else: ?>
-                                        <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
-                                            Belum disetujui
-                                        </span>
-                                    <?php endif; ?>
+                                        <?php else: ?>
+                                            <span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">
+                                                Belum disetujui
+                                            </span>
+                                        <?php endif; ?>
                                 </td>
                             </tr>
                         <?php } ?>

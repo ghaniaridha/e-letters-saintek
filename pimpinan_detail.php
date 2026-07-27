@@ -353,26 +353,6 @@ if (isset($_POST['aksi'])) {
             document.getElementById('previewFrame').src = '';
         }
 
-        function konfirmasiAksi(aksi, pesan, icon) {
-            Swal.fire({
-                title: 'Konfirmasi',
-                text: pesan,
-                icon: icon,
-                showCancelButton: true,
-                confirmButtonColor: (aksi === 'setujui') ? '#10b981' : '#ef4444',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Ya, Lanjutkan!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('aksiInput').value = aksi;
-                    document.getElementById('formVerifikasi').submit();
-                }
-            });
-        }
-    </script>
-
-    <script>
         function konfirmasiTolakPimpinan() {
             Swal.fire({
                 title: 'Alasan Penolakan',
@@ -380,6 +360,8 @@ if (isset($_POST['aksi'])) {
                 inputPlaceholder: 'Masukkan alasan penolakan...',
                 showCancelButton: true,
                 confirmButtonText: 'Kirim',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#dc2626',
                 inputValidator: (value) => {
                     if (!value) return 'Anda harus mengisi alasan penolakan!';
                 }

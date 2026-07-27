@@ -223,6 +223,31 @@ body {
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
 }
 
+.btn-secondary {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb;
+  color: #111827;
+  border-color: #9ca3af;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 @media print {
   .no-print,
   .btn,
@@ -473,6 +498,38 @@ body {
   page-break-before: avoid;
 }
 
+.surat-footer-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 30px;
+}
+
+.tembusan-area {
+  font-size: 7pt;
+}
+
+.ttd-container-sk {
+  text-align: left;
+  min-width: 250px;
+}
+
+.tgl-surat-sk {
+  margin-bottom: 5px;
+}
+
+.ttd-no-margin {
+  margin: 0;
+}
+
+.ttd-margin-bottom {
+  margin: 0 0 5px 0;
+}
+
+.ttd-margin-top {
+  margin: 5px 0 0 0;
+}
+
 .tembusan-surat {
   font-size: 13px;
 }
@@ -542,7 +599,12 @@ body {
   margin-bottom: 2px !important;
 }
 
+.nama-penandatangan {
+  font-weight: bold;
+}
+
 .ttd-container p {
+  font-weight: normal !important;
   margin-top: 0;
   margin-bottom: 5px;
 }
@@ -651,10 +713,10 @@ body {
     break-inside: avoid !important;
   }
 
-  qr-ttd {
+  .qr-ttd {
     width: 70px !important;
     height: 70px !important;
-    margin: 5px 0 !important;
+    margin: 8px 0 !important;
   }
 
   p,
