@@ -63,7 +63,7 @@ if (isset($_POST['kirim_balasan'])) {
     $_SESSION['status'] = 'success';
     $_SESSION['pesan']  = 'Surat balasan berhasil diselesaikan dan diterbitkan.';
 
-    header("Location: adm_riwayat_review.php");
+    header("Location: adm_laporan_surat.php");
     exit;
 }
 
@@ -260,13 +260,10 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
         <div class="action">
             <?php
             $asal_halaman = $_GET['asal'] ?? '';
-
             if ($asal_halaman == 'laporan') {
                 $link_kembali = 'adm_laporan_surat.php';
             } elseif ($asal_halaman == 'pimpinan') {
                 $link_kembali = 'pimpinan_riwayat.php';
-            } elseif ($asal_halaman == 'review') {
-                $link_kembali = 'adm_riwayat_review.php';
             } else {
                 $link_kembali = 'mhs_riwayat.php';
             }

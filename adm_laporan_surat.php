@@ -86,9 +86,27 @@ $jenisSurat = mysqli_query($koneksi, "
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="adm.css?v=1.3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
+    <?php if (isset($_SESSION['pesan'])): ?>
+        <script>
+            Swal.fire({
+                icon: '<?= $_SESSION['status']; ?>',
+                title: '<?= ($_SESSION['status'] == "success") ? "Berhasil!" : "Gagal!"; ?>',
+                text: <?= json_encode($_SESSION['pesan']); ?>,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        </script>
+        <?php
+        unset($_SESSION['pesan']);
+        unset($_SESSION['status']);
+        ?>
+    <?php endif; ?>
 
     <div class="admin-wrapper">
         <?php include "adm_sidebar.php"; ?>
@@ -164,20 +182,20 @@ $jenisSurat = mysqli_query($koneksi, "
                                         if (!empty($row['file_surat_final'])) {
                                             $namaSurat = strtolower($row['nama_surat']);
 
-                                            // 1. Kondisi untuk Surat Magang
+                                            // Kondisi untuk Surat Magang
                                             if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                                $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                                $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
                                             }
-                                            // 2. Kondisi untuk SK Aktif Kuliah Kembali
+                                            // Kondisi untuk SK Aktif Kuliah Kembali
                                             elseif (strpos($namaSurat, 'aktif') !== false) {
-                                                $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                                $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
                                             }
-                                            // 3. Kondisi Default untuk Surat Riset / Lainnya
+                                            // Kondisi Default untuk Surat Riset / Lainnya
                                             else {
-                                                $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true";
+                                                $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
                                             }
                                         ?>
-                                            <a href="generate_surat_magang_resmi.php?id=<?= $row['id_surat']; ?>&view=true&asal=laporan" target="_blank" class="btn btn-detail">
+                                            <a href="<?= $linkUnduh; ?>" target="_blank" class="btn btn-detail">
                                                 <i class="fa-solid fa-file-lines"></i> Lihat
                                             </a>
                                         <?php } else { ?>

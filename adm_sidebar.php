@@ -61,7 +61,7 @@ $username_admin = $_SESSION['nama'] ?? '';
             <i class="fa-solid fa-file-export"></i> Laporan Surat Ormawa
         </a>
     <?php else : ?>
-        <a href="adm_proses_penomoran.php">
+        <a href="adm_riwayat_review.php">
             <i class="fa-solid fa-file-pen"></i> Proses & Penomoran
         </a>
         <a href="adm_laporan_surat.php">

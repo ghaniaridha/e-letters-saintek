@@ -46,16 +46,16 @@ if (isset($_GET['id']) && isset($_GET['metode'])) {
     ");
 
     if (strpos($namaSurat, 'aktif') !== false) {
-        header("Location: generate_sk_aktif_resmi.php?id=$id_surat&view=true&asal=review");
+        header("Location: generate_sk_aktif_resmi.php?id=$id_surat");
         exit;
     } elseif (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-        header("Location: generate_surat_magang_resmi.php?id=$id_surat&view=true&asal=review");
+        header("Location: generate_surat_magang_resmi.php?id=$id_surat");
         exit;
     } else {
-        header("Location: generate_surat_riset_resmi.php?id=$id_surat&view=true&asal=review");
+        header("Location: generate_surat_riset_resmi.php?id=$id_surat");
         exit;
     }
 } else {
-    header("Location: adm_riwayat_review.php");
+    header("Location: adm_laporan_surat.php");
     exit;
 }
