@@ -22,7 +22,7 @@ session_destroy();
         document.addEventListener("DOMContentLoaded", function() {
             Swal.fire({
                 icon: 'success',
-                title: 'Berhasil Berhasil!',
+                title: 'Berhasil!',
                 text: 'Anda telah berhasil Keluar dari sistem.',
                 timer: 2000,
                 showConfirmButton: false,

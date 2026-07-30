@@ -159,23 +159,25 @@ if ($aksi == 'setujui') {
         ");
 
         mysqli_query($koneksi, "
-        INSERT INTO riwayat_disposisi
-        (
-            id_surat,
-            pengirim,
-            penerima,
-            waktu_disposisi,
-            intruksi_catatan
-        )
-        VALUES
-        (
-            '$id_surat',
-            'PEMBINA',
-            'ADMIN1',
-            NOW(),
-            'Pengajuan dana telah disetujui pembina dan diteruskan ke Admin 1.'
-        )
-    ");
+            INSERT INTO riwayat_disposisi 
+            (
+                id_surat, 
+                pengirim, 
+                penerima, 
+                waktu_disposisi, 
+                intruksi_catatan, 
+                status_tindakan
+            ) 
+            VALUES 
+            (
+                '$id_surat', 
+                'PEMBINA', 
+                'ADMIN1', 
+                NOW(), 
+                'Pengajuan dana telah disetujui pembina dan diteruskan ke Admin 1.', 
+                'MENUNGGU'
+            )
+        ");
 
         $_SESSION['status'] = 'success';
         $_SESSION['pesan']  = 'Pengajuan Ormawa berhasil disetujui dan diteruskan ke Admin 1';
