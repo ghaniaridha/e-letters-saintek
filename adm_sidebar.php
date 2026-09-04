@@ -25,11 +25,11 @@ $username_admin = $_SESSION['nama'] ?? '';
 
     <?php if ($username_admin === 'ADM001') : ?>
         <a href="adm_permohonan_ormawa.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Ormawa
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
         </a>
     <?php else : ?>
         <a href="adm_permohonan_akademik.php">
-            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat Mhs
+            <i class="fa-solid fa-envelope-open-text"></i> Permohonan Surat
         </a>
     <?php endif; ?>
 
@@ -51,12 +51,15 @@ $username_admin = $_SESSION['nama'] ?? '';
             </a>
             <ul class="sidebar-dropdown-menu">
                 <li><a href="adm_kelola_mhs.php">Kelola Mahasiswa</a></li>
-                <li><a href="adm_kelola_dosen.php">Kelola Dosen</a></li>
+                <li><a href="adm_kelola_dosen.php">Kelola Dosen & TK</a></li>
             </ul>
         </div>
     <?php endif; ?>
 
     <?php if ($username_admin === 'ADM001') : ?>
+        <a href="adm_riwayat_ormawa.php">
+            <i class="fa-solid fa-calendar-check"></i> Proses & Atur Jadwal
+        </a>
         <a href="adm_laporan_ormawa.php">
             <i class="fa-solid fa-file-export"></i> Laporan Surat Ormawa
         </a>
@@ -69,16 +72,28 @@ $username_admin = $_SESSION['nama'] ?? '';
         </a>
     <?php endif; ?>
 
-    <a href="logout.php" class="logout">
+    <a href="adm_statistik.php">
+        <i class="fa-solid fa-chart-line"></i> Statistik Layanan
+    </a>
+
+    <a href="logout.php" class="logout" onclick="confirmLogout(event, this.href)">
         <i class="fa-solid fa-right-from-bracket"></i> Keluar
     </a>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.querySelector('.dropdown-btn').addEventListener('click', function() {
-        this.nextElementSibling.classList.toggle('show');
-        this.querySelector('.dropdown-arrow').classList.toggle('rotate-arrow');
-    });
+    const dropdownBtn = document.querySelector('.dropdown-btn');
+    if (dropdownBtn) {
+        dropdownBtn.addEventListener('click', function() {
+            this.nextElementSibling.classList.toggle('show');
+
+            const arrow = this.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.classList.toggle('rotate-arrow');
+            }
+        });
+    }
 
     // Mobile sidebar toggle
     const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -94,6 +109,27 @@ $username_admin = $_SESSION['nama'] ?? '';
         sidebarOverlay.addEventListener('click', function() {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // Fungsi Konfirmasi Logout
+    function confirmLogout(event, url) {
+        event.preventDefault();
+
+        Swal.fire({
+            title: 'Yakin ingin keluar?',
+            text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#aaa',
+            confirmButtonText: 'Ya, Keluar',
+            cancelButtonText: 'Batal',
+            heightAuto: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
         });
     }
 </script>

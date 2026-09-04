@@ -180,31 +180,31 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             </p>
 
             <table class="tabel-data-mhs">
-                <tr?>
+                <tr>
                     <td class="col-label">Nama / NPM:</td>
                     <td class="col-titik">:</td>
                     <td><?= htmlspecialchars($data['nama_mhs']); ?> / <?= htmlspecialchars($data['npm']); ?></td>
-                    </tr>
-                    <tr>
-                        <td class="col-label">Semester / Program Studi</td>
-                        <td class="col-titik">:</td>
-                        <td><?= htmlspecialchars($data['semester']); ?> / <?= htmlspecialchars($data['nama_prodi']); ?></td>
-                    </tr>
-                    <tr>
-                        <td class="col-label">Judul Skripsi</td>
-                        <td class="col-titik">:</td>
-                        <td class="paragraf-isi"><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
-                    </tr>
-                    <tr>
-                        <td class="col-label">Lokasi Penelitian</td>
-                        <td class="col-titik">:</td>
-                        <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
-                    </tr>
-                    <tr>
-                        <td class="col-label">Penanggung Jawab</td>
-                        <td class="col-titik">:</td>
-                        <td>Dosen Pembimbing</td>
-                    </tr>
+                </tr>
+                <tr>
+                    <td class="col-label">Semester / Program Studi</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['semester']); ?> / <?= htmlspecialchars($data['nama_prodi']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Judul Skripsi</td>
+                    <td class="col-titik">:</td>
+                    <td class="paragraf-isi"><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Lokasi Penelitian</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Penanggung Jawab</td>
+                    <td class="col-titik">:</td>
+                    <td>Dosen Pembimbing</td>
+                </tr>
             </table>
 
             <p class="paragraf-isi">
@@ -237,27 +237,36 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
     <div class="action">
         <?php
+        $is_preview = (isset($_GET['view']) && $_GET['view'] == 'true');
         $asal_halaman = $_GET['asal'] ?? '';
-        if ($asal_halaman == 'laporan') {
-            $link_kembali = 'adm_laporan_surat.php';
-        } elseif ($asal_halaman == 'pimpinan') {
-            $link_kembali = 'pimpinan_riwayat.php';
-        } else {
-            $link_kembali = 'mhs_riwayat.php';
-        }
-        ?>
-        <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
 
-        <button onclick="window.print()" class="btn-print">
-            Unduh Surat
-        </button>
+        if (!$is_preview || $asal_halaman == 'riwayat_pimpinan' || $asal_halaman == 'pimpinan' || $asal_halaman == 'laporan') :
+
+            if ($asal_halaman == 'laporan') {
+                $link_kembali = 'adm_laporan_surat.php';
+            } elseif ($asal_halaman == 'pimpinan' || $asal_halaman == 'riwayat_pimpinan') {
+                $link_kembali = 'pimpinan_riwayat.php';
+            } elseif ($asal_halaman == 'tracking') {
+                $link_kembali = 'pimpinan_tracking.php';
+            } else {
+                $link_kembali = 'mhs_riwayat.php';
+            }
+        ?>
+            <div class="action-button-container">
+                <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
+
+                <button onclick="window.print()" class="btn-print">
+                    Unduh Surat
+                </button>
+            </div>
+        <?php endif; ?>
 
         <?php
         $is_view_only = (isset($_GET['view']) && $_GET['view'] == 'true');
 
         if (isset($_SESSION['role']) && strtolower($_SESSION['role']) == 'admin' && $username_admin !== 'ADM001' && !$is_view_only) {
         ?>
-            <form action="?id=<?= $id_surat; ?>" method="POST">
+            <form action="?id=<?= $id_surat; ?>" method="POST" class="action-button-container">
                 <button type="submit" name="kirim_balasan" class="btn-approve">
                     Terbitkan Surat
                 </button>

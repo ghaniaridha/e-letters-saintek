@@ -7,14 +7,22 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin' || $_SESSION['rol
     exit;
 }
 
+date_default_timezone_set('Asia/Jakarta');
+$waktu_sekarang = date('Y-m-d H:i:s');
+
 $prodi           = $_GET['prodi'] ?? '';
 $id_jenis_filter = $_GET['id_jenis'] ?? '';
 $keyword         = $_GET['keyword'] ?? '';
 $detail_id       = $_GET['detail'] ?? '';
 
+// ==========================================
+// PROSES AKSI ADMIN (VALIDASI, REVISI, LANJUT)
+// ==========================================
 if (isset($_POST['aksi_admin'])) {
     $id_surat = (int) $_POST['id_surat'];
     $aksi     = $_POST['aksi_admin'];
+
+    $validasi_dikirim = $_POST['validasi'] ?? [];
 
     $dataSurat = mysqli_fetch_assoc(mysqli_query($koneksi, "
         SELECT sp.*, js.nama_surat
@@ -24,28 +32,54 @@ if (isset($_POST['aksi_admin'])) {
     "));
 
     if ($dataSurat) {
-        if ($aksi == 'tolak') {
+        $q_semua_lampiran = mysqli_query($koneksi, "SELECT id_syarat FROM lampiran_pengajuan WHERE id_surat = '$id_surat'");
+
+        while ($row_syarat = mysqli_fetch_assoc($q_semua_lampiran)) {
+            $id_syarat = $row_syarat['id_syarat'];
+
+            if (isset($validasi_dikirim[$id_syarat]) && $validasi_dikirim[$id_syarat] == 'Valid') {
+                $status_aman = 'Valid';
+            } else {
+                $status_aman = 'Tidak Valid';
+            }
+
+            mysqli_query($koneksi, "
+                UPDATE lampiran_pengajuan 
+                SET status_validasi = '$status_aman' 
+                WHERE id_surat = '$id_surat' AND id_syarat = '$id_syarat'
+            ");
+        }
+
+        // ==========================================
+        // EKSEKUSI AKSI (REVISI / LANJUT)
+        // ==========================================
+        if ($aksi == 'revisi') {
             $alasan = mysqli_real_escape_string($koneksi, $_POST['alasan_penolakan']);
             mysqli_query($koneksi, "
                 UPDATE surat_pengajuan
-                SET status_akhir='Ditolak Admin', posisi_sekarang='Selesai', alasan_penolakan='$alasan'
+                SET status_akhir='Perbaikan', 
+                    posisi_sekarang='Mahasiswa', 
+                    alasan_penolakan='$alasan',
+                    waktu_verif_admin=NOW()
                 WHERE id_surat='$id_surat'
             ");
             $_SESSION['status'] = 'success';
-            $_SESSION['pesan'] = 'Permohonan berhasil ditolak';
+            $_SESSION['pesan'] = 'Permohonan berhasil dikembalikan ke mahasiswa untuk diperbaiki';
             header("Location: adm_permohonan_akademik.php");
             exit;
         }
 
         if ($aksi == 'lanjut') {
             $namaSurat = strtolower($dataSurat['nama_surat']);
-            if (strpos($namaSurat, 'riset') !== false || strpos($namaSurat, 'aktif') !== false) {
-                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Wadek 1', posisi_sekarang='Wadek 1', status_pimpinan='Menunggu' WHERE id_surat='$id_surat'";
+
+            if (strpos($namaSurat, 'riset') !== false || strpos($namaSurat, 'aktif') !== false || strpos($namaSurat, 'lulus') !== false || strpos($namaSurat, 'masih kuliah') !== false || strpos($namaSurat, 'skmk') !== false) {
+                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Wadek 1', posisi_sekarang='Wadek 1', status_pimpinan='Menunggu', waktu_verif_admin=NOW() WHERE id_surat='$id_surat'";
             } elseif (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Dekan', posisi_sekarang='Dekan', tujuan_admin='admin2', status_pimpinan='Menunggu' WHERE id_surat='$id_surat'";
+                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Wadek 1', posisi_sekarang='Wadek 1', tujuan_admin='admin2', status_pimpinan='Menunggu', waktu_verif_admin=NOW() WHERE id_surat='$id_surat'";
             } else {
-                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Dekan', posisi_sekarang='Dekan', status_pimpinan='Menunggu' WHERE id_surat='$id_surat'";
+                $queryUpdate = "UPDATE surat_pengajuan SET status_akhir='Menunggu Wadek 1', posisi_sekarang='Wadek 1', status_pimpinan='Menunggu', waktu_verif_admin=NOW() WHERE id_surat='$id_surat'";
             }
+
             mysqli_query($koneksi, $queryUpdate);
             $_SESSION['status'] = 'success';
             $_SESSION['pesan']  = 'Surat berhasil diteruskan ke pimpinan';
@@ -55,25 +89,31 @@ if (isset($_POST['aksi_admin'])) {
     }
 }
 
+// ==========================================
+// PROSES HAPUS PERMOHONAN
+// ==========================================
 if (isset($_GET['hapus'])) {
     $id = (int) $_GET['hapus'];
     mysqli_query($koneksi, "DELETE FROM surat_pengajuan WHERE id_surat = $id");
-    echo "<script>alert('Permohonan berhasil dihapus'); window.location='adm_permohonan_akademik.php';</script>";
+    $_SESSION['status'] = 'success';
+    $_SESSION['pesan']  = 'Permohonan berhasil dihapus';
+    header("Location: adm_permohonan_akademik.php");
     exit;
 }
 
+// ==========================================
+// QUERY UNTUK TABEL UTAMA & PAGINATION
+// ==========================================
 $where = "WHERE sp.status_akhir = 'Menunggu Admin' AND sp.tujuan_admin = 'admin2' AND sp.id_mhs IS NOT NULL";
 
 if ($prodi != "") {
     $prodiAman = mysqli_real_escape_string($koneksi, $prodi);
     $where .= " AND m.id_prodi = '$prodiAman'";
 }
-
 if ($id_jenis_filter != "") {
     $idJenisAman = (int) $id_jenis_filter;
     $where .= " AND sp.id_jenis = '$idJenisAman'";
 }
-
 if ($keyword != "") {
     $keywordAman = mysqli_real_escape_string($koneksi, $keyword);
     $where .= " AND (m.npm LIKE '%$keywordAman%' OR m.nama_mhs LIKE '%$keywordAman%')";
@@ -110,6 +150,9 @@ if (!empty($query_string)) {
     $query_string = '&' . $query_string;
 }
 
+// ==========================================
+// QUERY UNTUK MENAMPILKAN DETAIL
+// ==========================================
 $detail = null;
 $lampiran = [];
 
@@ -121,8 +164,26 @@ if ($detail_id != "") {
             dsr.judul_skripsi, dsr.lokasi_penelitian, 
             dsm.lokasi_magang, dsm.tanggal_mulai_magang, dsm.tanggal_selesai_magang,
             dak.lama_cuti, dak.ta_mulai_cuti, dak.ta_selesai_cuti, dak.tahun_akademik,
+            dsl.tempat_lahir,
+            dsl.tanggal_lahir,
+            dsl.tahun_akademik AS tahun_akademik_lulus,
+            dsl.tanggal_lulus,
+            dsl.ipk,
+            dsl.nilai_skripsi,
+            dsl.predikat_kelulusan,
+            dsl.keperluan AS keperluan_lulus,
+
+            -- Detail SK Masih Kuliah (SKMK)
+            dsk.tahun_akademik AS tahun_akademik_skmk,
+            dsk.keperluan AS keperluan_skmk,
+            dsk.nama_ortu,
+            dsk.nip_ortu,
+            dsk.instansi_ortu,
+            dsk.alamat_ortu,
+
             COALESCE(dsm.surat_ditujukan, dsr.surat_ditujukan) AS surat_ditujukan,
-            COALESCE(dsr.semester, dsm.semester, dak.semester) AS semester
+            COALESCE(dsr.semester, dsm.semester, dak.semester, dsl.semester, dsk.semester) AS semester,
+            COALESCE(dsl.keperluan, dsk.keperluan) AS keperluan
         FROM surat_pengajuan sp
         JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
         JOIN prodi p ON m.id_prodi = p.id_prodi
@@ -130,32 +191,57 @@ if ($detail_id != "") {
         LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
         LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat
         LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
+        LEFT JOIN detail_sk_lulus dsl ON sp.id_surat = dsl.id_surat
+        LEFT JOIN detail_skmk dsk ON sp.id_surat = dsk.id_surat
         WHERE sp.id_surat = '$detail_id'
     ");
+
     $detail = mysqli_fetch_assoc($query_detail);
 
     if ($detail) {
         $q_lampiran = mysqli_query($koneksi, "
-            SELECT ms.nama_syarat, lp.file_upload 
+            SELECT lp.id_syarat, ms.nama_syarat, lp.file_upload, lp.status_validasi 
             FROM lampiran_pengajuan lp
             JOIN master_syarat ms ON lp.id_syarat = ms.id_syarat
             WHERE lp.id_surat = '$detail_id'
         ");
         while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
-            $nama_syarat = strtolower($row_lamp['nama_syarat']);
-            if (strpos($nama_syarat, 'proposal') !== false) {
-                $lampiran['proposal'] = $row_lamp['file_upload'];
-            } elseif (strpos($nama_syarat, 'khs') !== false) {
-                $lampiran['khs'] = $row_lamp['file_upload'];
-            } elseif (strpos($nama_syarat, 'ukt') !== false) {
-                $lampiran['ukt'] = $row_lamp['file_upload'];
-            } elseif (strpos($nama_syarat, 'ktm') !== false) {
-                $lampiran['ktm'] = $row_lamp['file_upload'];
-            } elseif (strpos($nama_syarat, 'cuti') !== false) {
-                $lampiran['sk_cuti'] = $row_lamp['file_upload'];
-            }
+            $lampiran[] = $row_lamp;
         }
     }
+}
+
+function tgl_indo($tanggal)
+{
+    if (empty($tanggal) || $tanggal == '0000-00-00') {
+        return '-';
+    }
+
+    $array_bulan = [
+        1 => 'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
+    ];
+
+    $timestamp = strtotime($tanggal);
+    if (!$timestamp) {
+        return $tanggal;
+    }
+
+    $hari = date('d', $timestamp);
+    $bulan = (int)date('m', $timestamp);
+    $tahun = date('Y', $timestamp);
+
+    return $hari . ' ' . $array_bulan[$bulan] . ' ' . $tahun;
 }
 ?>
 
@@ -178,10 +264,11 @@ if ($detail_id != "") {
     <div class="admin-wrapper">
         <?php include "adm_sidebar.php"; ?>
         <main class="main-content">
+
             <?php if ($detail) {
-                // Tampilan Mode "Review"
                 $namaSurat = strtolower($detail['nama_surat']);
             ?>
+                <!-- HALAMAN DETAIL & VERIFIKASI -->
                 <div class="table-card-table">
                     <h3 class="section-title-verif">Detail Permohonan Surat Mahasiswa</h3>
 
@@ -229,7 +316,8 @@ if ($detail_id != "") {
                             <tr>
                                 <th>Tanggal Pelaksanaan</th>
                                 <td>
-                                    <?= htmlspecialchars($detail['tanggal_mulai_magang'] ?? '-'); ?> s/d <?= htmlspecialchars($detail['tanggal_selesai_magang'] ?? '-'); ?>
+                                    <?= tgl_indo($detail['tanggal_mulai_magang'] ?? ''); ?> s/d
+                                    <?= tgl_indo($detail['tanggal_selesai_magang'] ?? ''); ?>
                                 </td>
                             </tr>
                             <tr>
@@ -244,14 +332,70 @@ if ($detail_id != "") {
                             </tr>
                             <tr>
                                 <th>Periode Masa Cuti</th>
-                                <td>
-                                    Gasal: <?= htmlspecialchars($detail['ta_mulai_cuti'] ?? '-'); ?> <br>
-                                    Genap: <?= htmlspecialchars($detail['ta_selesai_cuti'] ?? '-'); ?>
-                                </td>
+                                <td>Gasal: <?= htmlspecialchars($detail['ta_mulai_cuti'] ?? '-'); ?> <br>Genap: <?= htmlspecialchars($detail['ta_selesai_cuti'] ?? '-'); ?></td>
                             </tr>
                             <tr>
                                 <th>Tahun Akademik Aktif</th>
                                 <td><?= htmlspecialchars($detail['tahun_akademik'] ?? '-'); ?></td>
+                            </tr>
+
+                        <?php } else if (strpos($namaSurat, 'lulus') !== false) { ?>
+                            <tr>
+                                <th>Tempat, Tanggal Lahir</th>
+                                <td>
+                                    <?= htmlspecialchars($detail['tempat_lahir'] ?? '-'); ?>,
+                                    <?= (!empty($detail['tanggal_lahir']) && function_exists('tgl_indo')) ? tgl_indo($detail['tanggal_lahir']) : ($detail['tanggal_lahir'] ?? '-'); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tahun Akademik Kelulusan</th>
+                                <td><?= htmlspecialchars($detail['tahun_akademik_lulus'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Tanggal Lulus (Munaqasah)</th>
+                                <td><?= (!empty($detail['tanggal_lulus']) && function_exists('tgl_indo')) ? tgl_indo($detail['tanggal_lulus']) : ($detail['tanggal_lulus'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>IPK Terakhir</th>
+                                <td><?= htmlspecialchars($detail['ipk'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Nilai Skripsi</th>
+                                <td><?= htmlspecialchars($detail['nilai_skripsi'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Predikat Kelulusan</th>
+                                <td><?= htmlspecialchars($detail['predikat_kelulusan'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Keperluan</th>
+                                <td><?= htmlspecialchars($detail['keperluan'] ?? '-'); ?></td>
+                            </tr>
+
+                        <?php } else if (strpos($namaSurat, 'masih kuliah') !== false || strpos($namaSurat, 'skmk') !== false) { ?>
+                            <tr>
+                                <th>Tahun Akademik</th>
+                                <td><?= htmlspecialchars($detail['tahun_akademik_skmk'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Keperluan</th>
+                                <td><?= htmlspecialchars($detail['keperluan'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Nama Orang Tua / Wali</th>
+                                <td><?= htmlspecialchars($detail['nama_ortu'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>NIP Orang Tua</th>
+                                <td><?= htmlspecialchars($detail['nip_ortu'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Instansi Orang Tua</th>
+                                <td><?= htmlspecialchars($detail['instansi_ortu'] ?? '-'); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Alamat Orang Tua</th>
+                                <td><?= nl2br(htmlspecialchars($detail['alamat_ortu'] ?? '-')); ?></td>
                             </tr>
                         <?php } ?>
 
@@ -261,122 +405,96 @@ if ($detail_id != "") {
                         </tr>
                     </table>
 
-                    <h3 class="section-title mt-4">Dokumen Pendukung</h3>
-                    <div class="document-box">
-                        <p><i class="fa-solid fa-file-circle-check icon-spacing"></i> Klik tombol di bawah untuk memeriksa lampiran sebelum melanjutkan ke pimpinan.</p>
 
-                        <div class="document-buttons">
-                            <?php
-                            $filePreview = "preview_surat_riset_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
-                            if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                                $filePreview = "preview_surat_magang_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
-                            } elseif (strpos($namaSurat, 'aktif') !== false) {
-                                $filePreview = "preview_sk_aktif_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
-                            }
-                            ?>
+                    <form method="POST" class="document-box" id="formVerifikasi">
+                        <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
+                        <input type="hidden" name="aksi_admin" id="aksiInput" value="">
+                        <input type="hidden" name="alasan_penolakan" id="catatanInput" value="">
 
-                            <!-- Surat Hasil Sistem -->
-                            <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
-                                Surat Permohonan
-                            </a>
+                        <h3 class="section-title mt-4">Dokumen Pendukung</h3>
+                        <div class="document-box">
+                            <p><i class="fa-solid fa-file-circle-check icon-spacing"></i> Periksa kelengkapan berkas di bawah ini dan ubah status validasinya jika diperlukan.</p>
 
-                            <?php
-                            // --- BERKAS SURAT RISET ---
-                            if (strpos($namaSurat, 'riset') !== false) {
-                            ?>
-                                <?php if (!empty($lampiran['proposal'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['proposal']); ?>')">Proposal Penelitian</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">Proposal Penelitian Belum Ada</span>
-                                <?php } ?>
+                            <div class="document-buttons-custom">
 
-                                <?php if (!empty($lampiran['khs'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['khs']); ?>')">KHS</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">KHS Belum Ada</span>
-                                <?php } ?>
+                                <!-- Preview Surat Permohonan-->
+                                <?php
+                                $filePreview = "preview_surat_riset_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
 
-                                <?php if (!empty($lampiran['ukt'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ukt']); ?>')">Bukti Pembayaran UKT</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
-                                <?php } ?>
+                                if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
+                                    $filePreview = "preview_surat_magang_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
+                                } elseif (strpos($namaSurat, 'aktif') !== false) {
+                                    $filePreview = "preview_sk_aktif_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
+                                } elseif (strpos($namaSurat, 'lulus') !== false) {
+                                    $filePreview = "preview_sk_lulus_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
+                                } elseif (strpos($namaSurat, 'masih kuliah') !== false || strpos($namaSurat, 'skmk') !== false) {
+                                    $filePreview = "preview_skmk_mhs.php?id=" . $detail['id_surat'] . "&mode=view";
+                                }
+                                ?>
+                                <div class="document-item-row document-item-draft">
+                                    <a href="#" class="document-link-item" onclick="bukaPreview('<?= $filePreview; ?>')">
+                                        <i class="fa-solid fa-file-lines document-icon-blue"></i> Surat Permohonan
+                                    </a>
+                                    <span class="document-system-note">Dihasilkan oleh sistem</span>
+                                </div>
 
-                            <?php
-                                // --- BERKAS SURAT MAGANG ---
-                            } else if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
-                            ?>
-                                <?php if (!empty($lampiran['ktm'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ktm']); ?>')">KTM</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">KTM Belum Ada</span>
-                                <?php } ?>
-
-                                <?php if (!empty($lampiran['ukt'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['ukt']); ?>')">Bukti Pembayaran UKT</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">Bukti Pembayaran UKT Belum Ada</span>
-                                <?php } ?>
-
-                                <?php if (!empty($lampiran['khs'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['khs']); ?>')">KHS</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">KHS Belum Ada</span>
-                                <?php } ?>
-
-                            <?php
-                                // --- BERKAS AKTIF KULIAH ---
-                            } else if (strpos($namaSurat, 'aktif') !== false) {
-                            ?>
-                                <?php if (!empty($lampiran['sk_cuti'])) { ?>
-                                    <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lampiran['sk_cuti']); ?>')">SK Cuti</a>
-                                <?php } else { ?>
-                                    <span class="btn-disabled">SK Cuti Belum Ada</span>
-                                <?php } ?>
-                            <?php } ?>
+                                <!-- Looping Dinamis dari Tabel lampiran_pengajuan -->
+                                <?php if (!empty($lampiran)) {
+                                    foreach ($lampiran as $lamp) {
+                                        $isChecked = ($lamp['status_validasi'] == 'Valid') ? 'checked' : '';
+                                ?>
+                                        <div class="document-item-row">
+                                            <a href="#" class="document-link-item" onclick="bukaPreview('uploads/dokumen_hss/<?= htmlspecialchars($lamp['file_upload']); ?>')">
+                                                <i class="fa-solid fa-paperclip document-icon-amber"></i> <?= htmlspecialchars($lamp['nama_syarat']); ?>
+                                            </a>
+                                            <label class="checkbox-label-valid">
+                                                <input type="checkbox" name="validasi[<?= $lamp['id_syarat']; ?>]" value="Valid" class="checkbox-input-custom" <?= $isChecked; ?>>Sesuai
+                                            </label>
+                                        </div>
+                                <?php
+                                    }
+                                } else {
+                                    echo "<p class='text-error-doc'>Tidak ada dokumen lampiran tambahan.</p>";
+                                }
+                                ?>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="action-panel">
-                        <?php
-                        $asal_halaman = $_GET['asal'] ?? '';
+                        <div class="action-panel-sec action-panel-custom-sec">
+                            <?php
+                            $asal = isset($_GET['asal']) ? $_GET['asal'] : '';
 
-                        if ($asal_halaman == 'review') {
-                            $link_kembali = 'adm_riwayat_review.php';
-                        } elseif ($asal_halaman == 'laporan') {
-                            $link_kembali = 'adm_laporan_surat.php';
-                        } else {
-                            $link_kembali = 'adm_permohonan_akademik.php';
-                        }
-                        ?>
+                            if ($asal == 'review') {
+                                $link_kembali = 'adm_riwayat_review.php';
+                            } elseif ($asal == 'laporan') {
+                                $link_kembali = 'adm_laporan_surat.php';
+                            } else {
+                                $link_kembali = 'adm_permohonan_akademik.php';
+                            }
 
-                        <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
-                            Kembali
-                        </a>
+                            $is_menunggu_admin = ($detail['status_akhir'] == 'Menunggu Admin');
+                            ?>
 
-                        <?php
-                        if ($asal_halaman !== 'review' && $asal_halaman !== 'laporan') {
-                        ?>
-                            <form method="POST" class="form-action-group" id="formVerifikasi">
-                                <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
-                                <input type="hidden" name="aksi_admin" id="aksiInput" value="">
-                                <input type="hidden" name="alasan_penolakan" id="catatanInput" value="">
-
-                                <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                                    Tolak
-                                </button>
-
-                                <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('lanjut', 'Yakin ingin meneruskan permohonan surat ini ke pimpinan?', 'success')">
-                                    Lanjutkan ke Pimpinan
-                                </button>
-                            </form>
-                        <?php } ?>
-                    </div>
+                            <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">Kembali</a>
+                            <?php
+                            if ($is_menunggu_admin):
+                            ?>
+                                <div class="action-buttons-group">
+                                    <button type="button" class="btn-styled btn-reject-amber" onclick="konfirmasiRevisi()" title="Kembalikan untuk direvisi mahasiswa">
+                                        Kembalikan Permohonan
+                                    </button>
+                                    <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('lanjut', 'Yakin ingin meneruskan permohonan surat ini ke pimpinan?', 'success')">
+                                        Lanjutkan ke Pimpinan
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </form>
                 </div>
 
-            <?php } else {
-                // Tampilan Awal Tabel 
-            ?>
+            <?php } else { ?>
+
+                <!-- HALAMAN TABEL DAFTAR PERMOHONAN -->
                 <div class="page-title">
                     <h1>Kelola Surat Permohonan Mahasiswa</h1>
                 </div>
@@ -384,7 +502,6 @@ if ($detail_id != "") {
                 <div class="table-card-table">
                     <form method="GET" action="" class="filter-section">
                         <input type="text" name="keyword" placeholder="Cari NPM atau Nama..." value="<?= htmlspecialchars($keyword ?? '') ?>">
-
                         <select name="prodi">
                             <option value="">Semua Prodi</option>
                             <?php
@@ -395,7 +512,6 @@ if ($detail_id != "") {
                             }
                             ?>
                         </select>
-
                         <select name="id_jenis">
                             <option value="">Semua Jenis Surat</option>
                             <?php
@@ -406,13 +522,8 @@ if ($detail_id != "") {
                             }
                             ?>
                         </select>
-
-                        <button type="submit" class="btn-filter">
-                            <i class="fa-solid fa-search"></i> Cari
-                        </button>
-                        <a href="adm_permohonan_akademik.php" class="btn-reset-filter">
-                            <i class="fa-solid fa-rotate-left"></i> Reset
-                        </a>
+                        <button type="submit" class="btn-filter"><i class="fa-solid fa-search"></i> Cari</button>
+                        <a href="adm_permohonan_akademik.php" class="btn-reset-filter"><i class="fa-solid fa-rotate-left"></i> Reset</a>
                     </form>
 
                     <table>
@@ -429,16 +540,13 @@ if ($detail_id != "") {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($query && mysqli_num_rows($query) > 0) { ?>
-                                <?php
+                            <?php if ($query && mysqli_num_rows($query) > 0) {
                                 $no = ($offset ?? 0) + 1;
                                 while ($row = mysqli_fetch_assoc($query)) {
-                                ?>
+                            ?>
                                     <tr>
                                         <td><?= $no++; ?></td>
-                                        <td>
-                                            <?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?> WIB
-                                        </td>
+                                        <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?> WIB</td>
                                         <td><?= htmlspecialchars($row['npm']); ?></td>
                                         <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
                                         <td><?= htmlspecialchars($row['nama_prodi']); ?></td>
@@ -486,8 +594,7 @@ if ($detail_id != "") {
                         </div>
                     <?php endif; ?>
                 </div>
-            <?php }
-            ?>
+            <?php } ?>
         </main>
     </div>
 
@@ -510,7 +617,6 @@ if ($detail_id != "") {
             document.getElementById('previewFrame').src = '';
         }
 
-        // Fungsi Konfirmasi hapus Permohonan
         function hapusData(id) {
             Swal.fire({
                 title: 'Yakin ingin menghapus?',
@@ -528,32 +634,30 @@ if ($detail_id != "") {
             });
         }
 
-        // Fungsi Konfirmasi Tolak Permohonan
-        function konfirmasiTolak() {
+        function konfirmasiRevisi() {
             Swal.fire({
-                title: 'Alasan Penolakan',
+                title: 'Catatan Revisi Kesalahan',
                 input: 'textarea',
-                inputPlaceholder: 'Masukkan alasan spesifik penolakan permohonan...',
+                inputPlaceholder: 'Sebutkan bagian data atau berkas yang salah agar diperbaiki oleh mahasiswa...',
                 showCancelButton: true,
                 confirmButtonText: 'Kirim',
                 cancelButtonText: 'Batal',
-                confirmButtonColor: '#dc2626',
+                confirmButtonColor: '#16a34a',
                 cancelButtonColor: '#64748b',
                 inputValidator: (value) => {
                     if (!value) {
-                        return 'Anda harus mengisi alasan penolakan terlebih dahulu!';
+                        return 'Anda harus menuliskan catatan atau alasan revisi terlebih dahulu!';
                     }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('catatanInput').value = result.value;
-                    document.getElementById('aksiInput').value = 'tolak';
+                    document.getElementById('aksiInput').value = 'revisi';
                     document.getElementById('formVerifikasi').submit();
                 }
             });
         }
 
-        // Fungsi Konfirmasi Lanjutkan ke Pimpinan
         function konfirmasiAksi(aksi, pesan, icon) {
             Swal.fire({
                 title: 'Konfirmasi Tindakan',

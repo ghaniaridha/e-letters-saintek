@@ -17,8 +17,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['nama'] = $dataAdmin['npa'];
         $_SESSION['role'] = 'admin';
 
-        // TENTUKAN ADMIN 1 ATAU 2 BERDASARKAN NPA
-        // GANTI 'NPA_ADMIN_1' DENGAN NPA ASLI ADMIN 1 ANDA
         if ($dataAdmin['npa'] == 'ADM001') {
             $_SESSION['role_admin'] = 'admin1';
         } elseif ($dataAdmin['npa'] == 'ADM002') {
@@ -150,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <div class="box-input-data">
                     <i class="fa-regular fa-user"></i>
-                    <input type="text" name="login_id" placeholder="Nomor Identitas atau Nama Pengguna" required>
+                    <input type="text" name="login_id" placeholder="NPM / NIP / Username" required>
                 </div>
                 <div class="box-input-pass">
                     <i class="fa-solid fa-lock"></i>
@@ -161,7 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <button type="submit" class="btn-input">Masuk</button>
 
                 <div class="register-link">
-                    Belum punya akun? <a href="mhs_register.php">Daftar di sini</a>
+                    Ingin mengetahui status pengajuan? <a href="mhs_lacak.php">Lacak Surat Anda</a>
                 </div>
 
             </div>

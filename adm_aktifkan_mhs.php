@@ -1,4 +1,5 @@
 <?php
+session_start();
 include "koneksi.php";
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -6,12 +7,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+$success = false;
+
 if (isset($_GET['npm'])) {
     $npm = $_GET['npm'];
 
-    $stmt = $koneksi->prepare("UPDATE mahasiswa SET status = ? WHERE npm = ?");
-    $status = STATUS_AKTIF;
+    $status = 1;
 
+    $stmt = $koneksi->prepare("UPDATE mahasiswa SET status = ? WHERE npm = ?");
     $stmt->bind_param("is", $status, $npm);
 
     $success = $stmt->execute();

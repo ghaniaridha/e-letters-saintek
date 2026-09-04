@@ -21,13 +21,41 @@ if (!empty($namaParts)) {
 // Query search dan pagination
 $search = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
 $page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit  = 3;
+$limit  = 10;
 $offset = ($page - 1) * $limit;
 
-$whereClause = "WHERE sp.id_mhs = '$id_mhs' AND (sp.status_akhir = 'Selesai' OR sp.status_akhir LIKE '%Ditolak%')";
+$search        = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, trim($_GET['search'])) : '';
+$filter_jenis  = isset($_GET['id_jenis']) ? mysqli_real_escape_string($koneksi, trim($_GET['id_jenis'])) : '';
+$filter_status = isset($_GET['status']) ? mysqli_real_escape_string($koneksi, trim($_GET['status'])) : '';
 
-if ($search != '') {
-    $whereClause .= " AND (js.nama_surat LIKE '%$search%' OR sp.status_akhir LIKE '%$search%' OR sp.tanggal_pengajuan LIKE '%$search%')";
+$query_params = [];
+if (!empty($search)) $query_params['search'] = $search;
+if (!empty($filter_jenis)) $query_params['id_jenis'] = $filter_jenis;
+if (!empty($filter_status)) $query_params['status'] = $filter_status;
+
+$query_string = "";
+if (!empty($query_params)) {
+    $query_string = "&" . http_build_query($query_params);
+}
+
+$whereClause = "WHERE sp.id_mhs = '$id_mhs'";
+
+if (!empty($search)) {
+    $whereClause .= " AND (sp.kode_pelacakan LIKE '%$search%' OR js.nama_surat LIKE '%$search%')";
+}
+
+if (!empty($filter_jenis)) {
+    $whereClause .= " AND sp.id_jenis = '$filter_jenis'";
+}
+
+if (!empty($filter_status)) {
+    if ($filter_status == 'Selesai') {
+        $whereClause .= " AND sp.status_akhir = 'Selesai'";
+    } elseif ($filter_status == 'Ditolak') {
+        $whereClause .= " AND LOWER(sp.status_akhir) LIKE '%tolak%'";
+    } elseif ($filter_status == 'Diproses') {
+        $whereClause .= " AND sp.status_akhir != 'Selesai' AND LOWER(sp.status_akhir) NOT LIKE '%tolak%'";
+    }
 }
 
 $count_query = mysqli_query($koneksi, "
@@ -39,7 +67,8 @@ $count_query = mysqli_query($koneksi, "
 
 $count_row = mysqli_fetch_assoc($count_query);
 $total_data = $count_row['total'];
-$total_pages = ceil($total_data / $limit);
+$total_halaman = ceil($total_data / $limit);
+$halaman = $page;
 
 $query_riwayat = mysqli_query($koneksi, "
     SELECT 
@@ -57,9 +86,7 @@ $query_riwayat = mysqli_query($koneksi, "
     LIMIT $limit OFFSET $offset
 ");
 
-$halaman = $page;
-$total_halaman = $total_pages;
-$query_string = ($search != '') ? "&search=" . urlencode($search) : "";
+$q_jenis = mysqli_query($koneksi, "SELECT * FROM jenis_surat ORDER BY nama_surat ASC");
 ?>
 
 <!DOCTYPE html>
@@ -105,7 +132,6 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             <a href="mhs_beranda.php#home">Beranda</a>
             <a href="mhs_beranda.php#services">Pengajuan Surat</a>
             <a href="mhs_beranda.php#status-info">Status & Informasi</a>
-            <a href="mhs_lacak.php">Lacak Surat</a>
             <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
@@ -115,10 +141,17 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -130,12 +163,37 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
         </div>
 
         <div class="table-wrapper" id="template-surat">
-            <form method="GET" action="" class="search-container">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" name="search" id="searchSurat" class="search-input"
-                    placeholder="Cari..."
-                    value="<?= htmlspecialchars($search); ?>">
-                <button type="submit"></button>
+            <form method="GET" action="" class="filter-container">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="search" id="searchSurat" class="search-input"
+                        placeholder="Cari Kode Lacak / Nama Surat..."
+                        value="<?= htmlspecialchars($search); ?>">
+                </div>
+
+                <!-- Filter Jenis Surat -->
+                <select name="id_jenis" class="filter-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Jenis Surat --</option>
+                    <?php while ($j = mysqli_fetch_assoc($q_jenis)): ?>
+                        <option value="<?= $j['id_jenis']; ?>" <?= ($filter_jenis == $j['id_jenis']) ? 'selected' : ''; ?>>
+                            <?= htmlspecialchars($j['nama_surat']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+
+                <!-- Filter Status Surat -->
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Status --</option>
+                    <option value="Diproses" <?= ($filter_status == 'Diproses') ? 'selected' : ''; ?>>Sedang Diproses</option>
+                    <option value="Selesai" <?= ($filter_status == 'Selesai') ? 'selected' : ''; ?>>Selesai</option>
+                    <option value="Ditolak" <?= ($filter_status == 'Ditolak') ? 'selected' : ''; ?>>Ditolak</option>
+                </select>
+
+                <button type="submit" class="btn-filter-submit">Cari</button>
+
+                <?php if (!empty($search) || !empty($filter_jenis) || !empty($filter_status)): ?>
+                    <a href="?" class="btn-filter-reset">Reset</a>
+                <?php endif; ?>
             </form>
 
             <table class="custom-table">
@@ -143,6 +201,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                     <tr>
                         <th>No</th>
                         <th>Tanggal & Waktu</th>
+                        <th>Kode Lacak</th>
                         <th>Jenis Surat</th>
                         <th>Status Akhir</th>
                         <th>File Final</th>
@@ -152,23 +211,31 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                 <tbody>
                     <?php if ($query_riwayat && mysqli_num_rows($query_riwayat) > 0) { ?>
-                        <?php $no = 1;
-                        while ($row = mysqli_fetch_assoc($query_riwayat)) { ?>
-                            <?php
+                        <?php
+                        $no = $offset + 1;
+                        while ($row = mysqli_fetch_assoc($query_riwayat)) {
                             $tanggal = date('d-m-Y H:i', strtotime($row['tanggal_pengajuan']));
                             $status = $row['status_akhir'];
+                            $status_lower = strtolower($status);
 
                             if ($status == 'Selesai') {
                                 $badge_class = 'status-selesai';
-                            } elseif (strpos($status, 'Ditolak') !== false) {
+                            } elseif (strpos($status_lower, 'tolak') !== false) {
                                 $badge_class = 'status-ditolak';
+                            } elseif (strpos($status_lower, 'perbaikan') !== false || strpos($status_lower, 'dikembalikan') !== false) {
+                                $badge_class = 'status-warning';
                             } else {
                                 $badge_class = 'status-proses';
                             }
-                            ?>
+                        ?>
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= $tanggal; ?></td>
+                                <td>
+                                    <span class="badge-kode-lacak">
+                                        <?= htmlspecialchars($row['kode_pelacakan'] ?? '-'); ?>
+                                    </span>
+                                </td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
 
                                 <td>
@@ -179,20 +246,14 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
 
                                 <td>
                                     <?php if (!empty($row['file_surat_final'])) { ?>
-
                                         <?php
                                         $namaSurat = strtolower($row['nama_surat']);
 
-                                        // 1. Kondisi untuk Surat Magang
                                         if (strpos($namaSurat, 'magang') !== false || strpos($namaSurat, 'pkl') !== false) {
                                             $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
-                                        }
-                                        // 2. Kondisi untuk SK Aktif Kuliah Kembali
-                                        elseif (strpos($namaSurat, 'aktif') !== false) {
+                                        } elseif (strpos($namaSurat, 'aktif') !== false) {
                                             $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
-                                        }
-                                        // 3. Kondisi Default untuk Surat Riset / Lainnya
-                                        else {
+                                        } else {
                                             $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         }
                                         ?>
@@ -202,17 +263,9 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                                         </a>
 
                                     <?php } elseif (strpos(strtolower($row['status_akhir']), 'tolak') !== false) { ?>
-
-                                        <span class="text-rejected">
-                                            Pengajuan Ditolak
-                                        </span>
-
+                                        <span class="text-rejected">Pengajuan Ditolak</span>
                                     <?php } else { ?>
-
-                                        <span class="text-unavailable">
-                                            Belum Tersedia
-                                        </span>
-
+                                        <span class="text-unavailable">Belum Tersedia</span>
                                     <?php } ?>
                                 </td>
 
@@ -224,7 +277,7 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
                     <?php } else { ?>
                         <tr>
                             <td colspan="7" class="text-center">
-                                Belum ada riwayat permohonan surat.
+                                Belum ada riwayat permohonan surat yang sesuai filter.
                             </td>
                         </tr>
                     <?php } ?>
@@ -300,6 +353,26 @@ $query_string = ($search != '') ? "&search=" . urlencode($search) : "";
             e.preventDefault();
             document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
+
+        function confirmLogout(event, url) {
+            event.preventDefault();
+
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: 'Anda harus login kembali untuk mengakses layanan akademik.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
     </script>
 </body>
 

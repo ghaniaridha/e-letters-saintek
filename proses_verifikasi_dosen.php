@@ -10,6 +10,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     exit;
 }
 
+date_default_timezone_set('Asia/Jakarta');
+$waktu_sekarang = date('Y-m-d H:i:s');
+
 $id_dosen = $_SESSION['id_dosen'];
 $id_surat = (int) $_POST['id_surat'];
 $aksi     = $_POST['aksi'];
@@ -27,7 +30,9 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         dak.id_pa,
         dak.status_pa,
 
-        o.id_pembina
+        o.id_pembina,
+        o.jenis_organisasi,
+        p.id_kaprodi
 
     FROM surat_pengajuan sp
 
@@ -39,6 +44,9 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
 
     LEFT JOIN ormawa o
         ON sp.id_ormawa = o.id_ormawa
+        
+    LEFT JOIN prodi p 
+        ON o.id_prodi = p.id_prodi
 
     WHERE sp.id_surat = '$id_surat'
 "));
@@ -74,7 +82,8 @@ if ($aksi == 'setujui') {
         mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb2='Disetujui',
-                ttd_pb2='$hash_ttd'
+                ttd_pb2='$hash_ttd',
+                waktu_pb2='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
@@ -103,7 +112,8 @@ if ($aksi == 'setujui') {
         mysqli_query($koneksi, "
             UPDATE detail_surat_riset
             SET status_pb1='Disetujui',
-                ttd_pb1='$hash_ttd'
+                ttd_pb1='$hash_ttd',
+                waktu_pb1='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
@@ -131,7 +141,8 @@ if ($aksi == 'setujui') {
         mysqli_query($koneksi, "
             UPDATE detail_aktif_kuliah
             SET status_pa='Disetujui',
-                ttd_pa='$hash_ttd'
+                ttd_pa='$hash_ttd',
+                waktu_pa='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
@@ -142,12 +153,14 @@ if ($aksi == 'setujui') {
         exit;
     }
 
-    /* Pembina Ormawa (Ormawa) */
-    if (
-        !empty($data['id_pembina']) &&
-        $data['id_pembina'] == $id_dosen &&
-        $data['posisi_sekarang'] == 'Pembina'
-    ) {
+    /* Penanggung Jawab Organisasi (Pembina UKM ATAU Kaprodi Ormawa) */
+    $is_pembina_surat = (isset($data['id_pembina']) && $data['id_pembina'] == $id_dosen);
+    $is_kaprodi_surat = (isset($data['id_kaprodi']) && $data['id_kaprodi'] == $id_dosen);
+
+    if (($is_pembina_surat || $is_kaprodi_surat) && $data['posisi_sekarang'] == 'Pembina') {
+
+        $nama_pengirim = (isset($data['jenis_organisasi']) && $data['jenis_organisasi'] == 'Ormawa') ? 'KAPRODI' : 'PEMBINA';
+        $teks_pengirim = (isset($data['jenis_organisasi']) && $data['jenis_organisasi'] == 'Ormawa') ? 'Kaprodi' : 'Pembina';
 
         mysqli_query($koneksi, "
             UPDATE surat_pengajuan
@@ -157,6 +170,14 @@ if ($aksi == 'setujui') {
                 tujuan_admin='admin1'
             WHERE id_surat='$id_surat'
         ");
+
+        $cek_jenis = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT js.nama_surat FROM surat_pengajuan sp JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.id_surat='$id_surat'"));
+
+        if (stripos($cek_jenis['nama_surat'], 'dana') !== false) {
+            mysqli_query($koneksi, "UPDATE detail_pengajuan_dana SET waktu_pembina = NOW() WHERE id_surat='$id_surat'");
+        } else {
+            mysqli_query($koneksi, "UPDATE detail_peminjaman_ruangan SET waktu_pembina = NOW() WHERE id_surat='$id_surat'");
+        }
 
         mysqli_query($koneksi, "
             INSERT INTO riwayat_disposisi 
@@ -171,27 +192,26 @@ if ($aksi == 'setujui') {
             VALUES 
             (
                 '$id_surat', 
-                'PEMBINA', 
+                '$nama_pengirim', 
                 'ADMIN1', 
                 NOW(), 
-                'Pengajuan dana telah disetujui pembina dan diteruskan ke Admin 1.', 
+                'Pengajuan telah disetujui $teks_pengirim dan diteruskan ke Admin.', 
                 'MENUNGGU'
             )
         ");
 
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Pengajuan Ormawa berhasil disetujui dan diteruskan ke Admin 1';
+        $_SESSION['pesan']  = "Pengajuan Organisasi berhasil disetujui $teks_pengirim dan diteruskan ke Admin";
 
         header("Location: dosen_riwayat_ormawa.php");
         exit;
     }
 }
 
-
 /* =====================================================
-   TOLAK
+   KEMBALIKAN (REVISI)
 ===================================================== */
-if ($aksi == 'tolak') {
+if ($aksi == 'kembalikan' || $aksi == 'tolak') {
 
     /* Dospem 2 (Akademik) */
     if (
@@ -202,20 +222,21 @@ if ($aksi == 'tolak') {
 
         mysqli_query($koneksi, "
            UPDATE surat_pengajuan
-            SET status_akhir='Ditolak Dospem 2',
-                posisi_sekarang='Selesai',
+            SET status_akhir='Perbaikan',
                 catatan='$catatan'
             WHERE id_surat='$id_surat'
         ");
 
         mysqli_query($koneksi, "
             UPDATE detail_surat_riset
-            SET status_pb2='Ditolak'
+            SET status_pb2='Perbaikan',
+                catatan_pb2='$catatan',
+                waktu_pb2='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
+        $_SESSION['pesan']  = 'Permohonan berhasil dikembalikan ke mahasiswa untuk direvisi.';
 
         header("Location: dosen_riwayat_akademik.php");
         exit;
@@ -231,20 +252,21 @@ if ($aksi == 'tolak') {
 
         mysqli_query($koneksi, "
             UPDATE surat_pengajuan
-            SET status_akhir='Ditolak Dospem 1',
-                posisi_sekarang='Selesai',
+            SET status_akhir='Perbaikan',
                 catatan='$catatan'
             WHERE id_surat='$id_surat'
         ");
 
         mysqli_query($koneksi, "
             UPDATE detail_surat_riset
-            SET status_pb1='Ditolak'
+            SET status_pb1='Perbaikan',
+                catatan_pb1='$catatan',
+                waktu_pb1='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
+        $_SESSION['pesan']  = 'Permohonan berhasil dikembalikan ke mahasiswa untuk direvisi.';
 
         header("Location: dosen_riwayat_akademik.php");
         exit;
@@ -259,48 +281,80 @@ if ($aksi == 'tolak') {
 
         mysqli_query($koneksi, "
             UPDATE surat_pengajuan
-            SET status_akhir='Ditolak Pembimbing Akademik',
-                posisi_sekarang='Selesai',
+            SET status_akhir='Perbaikan',
                 catatan='$catatan'
             WHERE id_surat='$id_surat'
         ");
 
         mysqli_query($koneksi, "
             UPDATE detail_aktif_kuliah
-            SET status_pa='Ditolak'
+            SET status_pa='Perbaikan',
+                catatan_pa='$catatan',
+                waktu_pa='$waktu_sekarang'
             WHERE id_surat='$id_surat'
         ");
 
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Permohonan berhasil ditolak.';
+        $_SESSION['pesan']  = 'Permohonan berhasil dikembalikan ke mahasiswa untuk direvisi.';
 
         header("Location: dosen_riwayat_akademik.php");
         exit;
     }
 
-    /* Pembina Ormawa */
-    if (
-        !empty($data['id_pembina']) &&
-        $data['id_pembina'] == $id_dosen &&
-        $data['posisi_sekarang'] == 'Pembina'
-    ) {
+    /* Penanggung Jawab Organisasi (Pembina UKM ATAU Kaprodi Ormawa) */
+    $is_pembina_surat = (isset($data['id_pembina']) && $data['id_pembina'] == $id_dosen);
+    $is_kaprodi_surat = (isset($data['id_kaprodi']) && $data['id_kaprodi'] == $id_dosen);
+
+    if (($is_pembina_surat || $is_kaprodi_surat) && $data['posisi_sekarang'] == 'Pembina') {
+
+        $nama_pengirim = (isset($data['jenis_organisasi']) && $data['jenis_organisasi'] == 'Ormawa') ? 'KAPRODI' : 'PEMBINA';
+        $teks_pengirim = (isset($data['jenis_organisasi']) && $data['jenis_organisasi'] == 'Ormawa') ? 'Kaprodi' : 'Pembina';
 
         mysqli_query($koneksi, "
-           UPDATE surat_pengajuan
-            SET status_akhir='Ditolak Pembina',
-                posisi_sekarang='Selesai',
+            UPDATE surat_pengajuan
+            SET status_akhir='Perbaikan',
                 catatan='$catatan'
             WHERE id_surat='$id_surat'
         ");
 
+        $cek_jenis = mysqli_fetch_assoc(mysqli_query($koneksi, "SELECT js.nama_surat FROM surat_pengajuan sp JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.id_surat='$id_surat'"));
+
+        if (stripos($cek_jenis['nama_surat'], 'dana') !== false) {
+            mysqli_query($koneksi, "UPDATE detail_pengajuan_dana SET waktu_pembina = NOW() WHERE id_surat='$id_surat'");
+        } else {
+            mysqli_query($koneksi, "UPDATE detail_peminjaman_ruangan SET waktu_pembina = NOW() WHERE id_surat='$id_surat'");
+        }
+
+        mysqli_query($koneksi, "
+            INSERT INTO riwayat_disposisi 
+            (
+                id_surat, 
+                pengirim, 
+                penerima, 
+                waktu_disposisi, 
+                intruksi_catatan, 
+                status_tindakan
+            ) 
+            VALUES 
+            (
+                '$id_surat', 
+                '$nama_pengirim', 
+                'MAHASISWA', 
+                NOW(), 
+                '$catatan', 
+                'PERBAIKAN'
+            )
+        ");
+
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Pengajuan Ormawa ditolak';
+        $_SESSION['pesan']  = "Pengajuan Organisasi dikembalikan oleh $teks_pengirim untuk direvisi.";
 
         header("Location: dosen_riwayat_ormawa.php");
         exit;
     }
 }
 
+// Jika gagal / tidak masuk skenario mana pun
 $_SESSION['status'] = 'error';
 $_SESSION['pesan']  = 'Aksi tidak valid atau Anda tidak memiliki hak verifikasi.';
 header("Location: dosen_permohonan_akademik.php");

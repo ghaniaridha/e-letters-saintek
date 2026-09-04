@@ -7,14 +7,29 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'];
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 
-$is_pembina = false;
+$is_pembina_ukm = false;
 $cek_pembina = mysqli_query($koneksi, "SELECT id_ormawa FROM ormawa WHERE id_pembina = '$id_dosen'");
-
 if ($cek_pembina && mysqli_num_rows($cek_pembina) > 0) {
-    $is_pembina = true;
+    $is_pembina_ukm = true;
 }
+
+$is_kaprodi = false;
+$cek_kaprodi = mysqli_query($koneksi, "SELECT id_prodi FROM prodi WHERE id_kaprodi = '$id_dosen'");
+if ($cek_kaprodi && mysqli_num_rows($cek_kaprodi) > 0) {
+    $is_kaprodi = true;
+}
+
+$punya_akses_ormawa = ($is_pembina_ukm || $is_kaprodi);
+
+$is_pembina_akademik = false;
+$cek_akademik = mysqli_query($koneksi, "SELECT id_surat FROM detail_surat_riset WHERE id_pb1 = '$id_dosen' OR id_pb2 = '$id_dosen' LIMIT 1");
+if ($cek_akademik && mysqli_num_rows($cek_akademik) > 0) {
+    $is_pembina_akademik = true;
+}
+
+$punya_keduanya = ($is_pembina_akademik && $punya_akses_ormawa);
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -32,8 +47,10 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         sp.*,
         m.nama_mhs,
         m.npm,
-        o.nama_ormawa,      
+        o.nama_ormawa,
+        o.jenis_organisasi,    
         p.nama_prodi,
+        p.id_kaprodi,
         js.nama_surat,
         
         -- Detail Surat Riset
@@ -43,6 +60,8 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         dsr.id_pb2,         
         dsr.status_pb1,
         dsr.status_pb2,
+        dsr.catatan_pb1,   
+        dsr.catatan_pb2,
         
         -- Detail Surat Magang
         dsm.lokasi_magang,
@@ -56,6 +75,7 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
         dak.ta_selesai_cuti,
         dak.tahun_akademik,
         dak.status_pa,
+        dak.catatan_pa,
         
         -- Detail Peminjaman Ruangan (Ormawa)
         dpr.nama_kegiatan,
@@ -65,7 +85,6 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
 
         -- Detail Pengajuan Dana
         dpd.nama_kegiatan AS nama_kegiatan_dana,
-        dpd.tema_kegiatan,
         dpd.tempat_kegiatan,
         dpd.tanggal_kegiatan,
         dpd.proposal AS proposal_dana,
@@ -76,7 +95,8 @@ $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
     LEFT JOIN mahasiswa m ON sp.id_mhs = m.id_mhs
     LEFT JOIN ormawa o ON sp.id_ormawa = o.id_ormawa 
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
-    LEFT JOIN prodi p ON m.id_prodi = p.id_prodi
+
+    LEFT JOIN prodi p ON (m.id_prodi = p.id_prodi OR o.id_prodi = p.id_prodi)
     LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
     LEFT JOIN detail_surat_magang dsm ON sp.id_surat = dsm.id_surat
     LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
@@ -107,12 +127,15 @@ if (isset($data['id_pa']) && $data['id_pa'] == $id_dosen && $data['status_pa'] =
     $boleh_verifikasi = true;
 }
 
-// BARU: Skenario D: Jika Dosen ini adalah Pembina Ormawa
-if (isset($data['id_pembina']) && $data['id_pembina'] == $id_dosen && $data['posisi_sekarang'] == 'Pembina') {
+// Skenario D: Jika Dosen ini adalah Penenggung Jawab Organisasi
+$is_pembina_surat_ini = (isset($data['id_pembina']) && $data['id_pembina'] == $id_dosen);
+$is_kaprodi_surat_ini = (isset($data['id_kaprodi']) && $data['id_kaprodi'] == $id_dosen);
+
+if (($is_pembina_surat_ini || $is_kaprodi_surat_ini) && $data['posisi_sekarang'] == 'Pembina') {
     $boleh_verifikasi = true;
 }
 
-// AMBIL DATA LAMPIRAN DARI TABEL LAMPIRAN_PENGAJUAN (Khusus Mahasiswa)
+// DATA LAMPIRAN DARI TABEL LAMPIRAN_PENGAJUAN (Khusus Mahasiswa)
 $q_lampiran = mysqli_query($koneksi, "
     SELECT ms.nama_syarat, lp.file_upload 
     FROM lampiran_pengajuan lp
@@ -137,6 +160,7 @@ while ($row_lamp = mysqli_fetch_assoc($q_lampiran)) {
     }
 }
 
+$hari_array = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
 $array_bulan = [
     1 => 'Januari',
     'Februari',
@@ -163,6 +187,7 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
     <title>Detail Permohonan</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
@@ -179,7 +204,7 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
         <div class="navbar-nav">
             <a href="dosen_beranda.php">Beranda</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -187,13 +212,15 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                         <a href="dosen_permohonan_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_permohonan_ormawa.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php else: ?>
-                <a href="dosen_permohonan_akademik.php">Verifikasi Permohonan</a>
+                <a href="dosen_permohonan_akademik.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php endif; ?>
 
             <a href="dosen_beranda.php#riwayat">Informasi Persuratan</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -201,8 +228,10 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                         <a href="dosen_riwayat_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_riwayat_ormawa.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php else: ?>
-                <a href="dosen_riwayat_akademik.php">Riwayat Verifikasi</a>
+                <a href="dosen_riwayat_akademik.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php endif; ?>
         </div>
 
@@ -217,6 +246,13 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                         <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
                         <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
                     </div>
+
+                    <div class="divider"></div>
+
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -248,21 +284,17 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                     </tr>
 
                     <tr>
-                        <th>Tema Kegiatan</th>
-                        <td><?= htmlspecialchars($data['tema_kegiatan'] ?? '-'); ?></td>
-                    </tr>
-
-                    <tr>
                         <th>Tempat Kegiatan</th>
                         <td><?= htmlspecialchars($data['tempat_kegiatan'] ?? '-'); ?></td>
                     </tr>
 
                     <tr>
                         <th>Tanggal Kegiatan</th>
-                        <td><?php
+                        <td>
+                            <?php
                             if (!empty($data['tanggal_kegiatan'])) {
-                                $timestamp = strtotime($data['tanggal_kegiatan']);
-                                echo date('d', $timestamp) . ' ' . $array_bulan[(int)date('m', $timestamp)] . ' ' . date('Y', $timestamp);
+                                $ts = strtotime($data['tanggal_kegiatan']);
+                                echo $hari_array[date('w', $ts)] . ', ' . date('d', $ts) . ' ' . $array_bulan[(int)date('m', $ts)] . ' ' . date('Y', $ts);
                             } else {
                                 echo '-';
                             }
@@ -279,10 +311,23 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                     </tr>
 
                     <tr>
-                        <th>Ruangan & Tanggal</th>
+                        <th>Hari & Tanggal</th>
+                        <td>
+                            <?php
+                            if (!empty($data['tanggal_mulai'])) {
+                                $ts = strtotime($data['tanggal_mulai']);
+                                echo $hari_array[date('w', $ts)] . ', ' . date('d', $ts) . ' ' . $array_bulan[(int)date('m', $ts)] . ' ' . date('Y', $ts);
+                            } else {
+                                echo '-';
+                            }
+                            ?>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Ruangan</th>
                         <td>
                             <?= htmlspecialchars($data['ruangan_yang_diajukan'] ?? '-'); ?>
-                            (<?= !empty($data['tanggal_mulai']) ? date('d-m-Y', strtotime($data['tanggal_mulai'])) : '-'; ?>)
                         </td>
                     </tr>
 
@@ -365,14 +410,25 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
             <?php
             $asal_halaman = $_GET['asal'] ?? '';
             $dari_riwayat = (strpos($asal_halaman, 'riwayat') !== false);
+            $status_tampil = $data['status_akhir'];
 
-            $status_lower = strtolower($data['status_akhir']);
-            $status_ditolak = (strpos($status_lower, 'ditolak') !== false);
-            $status_menunggu = (strpos($status_lower, 'menunggu') !== false);
+            if (!empty($data['id_ormawa']) && ($data['jenis_organisasi'] ?? '') == 'Ormawa') {
+                $status_tampil = str_ireplace('Pembina', 'Kaprodi', $status_tampil);
+            }
 
-            $label_status = ($dari_riwayat && $status_ditolak) ? 'Status Akhir Permohonan' : 'Status Saat Ini';
+            $status_lower = strtolower($status_tampil);
 
-            if ($status_ditolak) {
+            // Deteksi Status
+            $status_perbaikan = (strpos($status_lower, 'perbaikan') !== false || strpos($status_lower, 'dikembalikan') !== false);
+            $status_ditolak   = (strpos($status_lower, 'ditolak') !== false || strpos($status_lower, 'tolak') !== false);
+            $status_menunggu  = (strpos($status_lower, 'menunggu') !== false);
+
+            $label_status = ($dari_riwayat && ($status_ditolak || $status_perbaikan)) ? 'Status Akhir Permohonan' : 'Status Saat Ini';
+
+            // Penentuan Warna Status
+            if ($status_perbaikan) {
+                $warna_status = 'color: #d97706; font-weight: 700;';
+            } elseif ($status_ditolak) {
                 $warna_status = 'color: #dc2626; font-weight: 700;';
             } elseif ($status_menunggu) {
                 $warna_status = 'color: #d97706; font-weight: 700;';
@@ -380,20 +436,70 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                 $warna_status = 'color: #10b981; font-weight: 700;';
             }
             ?>
+
             <tr>
                 <th><?= $label_status; ?></th>
                 <td style="<?= $warna_status; ?>">
-                    <?= htmlspecialchars($data['status_akhir']); ?>
+                    <?= htmlspecialchars($status_tampil); ?>
                 </td>
             </tr>
 
             <?php
-            if (strpos(strtolower($data['status_akhir']), 'ditolak') !== false && !empty($data['catatan'])) {
-            ?>
+            // Semua catatan
+            $catatan_admin = $data['alasan_penolakan'] ?? '';
+            $catatan_umum  = $data['catatan'] ?? '';
+            $catatan_pb1   = $data['catatan_pb1'] ?? '';
+            $catatan_pb2   = $data['catatan_pb2'] ?? '';
+            $catatan_pa    = $data['catatan_pa'] ?? '';
+
+            // Jika status adalah Perbaikan / Dikembalikan
+            if ($status_perbaikan) { ?>
+                <tr>
+                    <th>Catatan Revisi</th>
+                    <td class="catatan-perbaikan-td">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <?php
+                        // Cek surat ORMAWA
+                        if (!empty($data['id_ormawa'])) {
+                            $pengirim = (($data['jenis_organisasi'] ?? '') == 'Ormawa') ? 'Kaprodi' : 'Pembina';
+                            if (!empty($catatan_umum)) {
+                                echo "<strong>Dari $pengirim / Admin:</strong><br>" . nl2br(htmlspecialchars($catatan_umum)) . "<br><br>";
+                            }
+                        } else {
+                            // Surat AKADEMIK (Mahasiswa)
+                            $ada_ditampilkan = false;
+
+                            if (!empty($catatan_admin)) {
+                                echo "<strong>Dari Bagian Akademik:</strong><br>" . nl2br(htmlspecialchars($catatan_admin)) . "<br><br>";
+                                $ada_ditampilkan = true;
+                            }
+                            if (!empty($catatan_pb2)) {
+                                echo "<strong>Dari Dosen Pembimbing 2:</strong><br>" . nl2br(htmlspecialchars($catatan_pb2)) . "<br><br>";
+                                $ada_ditampilkan = true;
+                            }
+                            if (!empty($catatan_pb1)) {
+                                echo "<strong>Dari Dosen Pembimbing 1:</strong><br>" . nl2br(htmlspecialchars($catatan_pb1)) . "<br><br>";
+                                $ada_ditampilkan = true;
+                            }
+                            if (!empty($catatan_pa)) {
+                                echo "<strong>Dari Pembimbing Akademik:</strong><br>" . nl2br(htmlspecialchars($catatan_pa)) . "<br><br>";
+                                $ada_ditampilkan = true;
+                            }
+
+                            if (!$ada_ditampilkan && !empty($catatan_umum)) {
+                                echo "<strong>Catatan:</strong><br>" . nl2br(htmlspecialchars($catatan_umum)) . "<br><br>";
+                            }
+                        }
+                        ?>
+                    </td>
+                </tr>
+            <?php
+                // Jika statusnya Ditolak
+            } elseif ($status_ditolak && !empty($catatan_umum)) { ?>
                 <tr>
                     <th>Catatan Penolakan</th>
                     <td class="status-tolak">
-                        <?= nl2br(htmlspecialchars($data['catatan'])); ?>
+                        <?= nl2br(htmlspecialchars($catatan_umum)); ?>
                     </td>
                 </tr>
             <?php } ?>
@@ -402,7 +508,7 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
         <h3 class="section-title mt-4">Dokumen Pendukung</h3>
 
         <div class="document-box">
-            <p><i class="fa-solid fa-file-circle-check" style="margin-right: 8px;"></i> Klik tombol di bawah untuk memeriksa lampiran sebelum melakukan verifikasi.</p>
+            <p><i class="fa-solid fa-file-circle-check"></i> Klik tombol di bawah untuk memeriksa lampiran sebelum melakukan verifikasi.</p>
 
             <div class="document-buttons">
                 <?php
@@ -542,9 +648,10 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                     <input type="hidden" name="aksi" id="aksiInput" value="">
                     <input type="hidden" name="catatan" id="catatanInput" value="">
 
-                    <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                        Tolak
+                    <button type="button" class="btn-styled btn-reject-amber" onclick="konfirmasiKembalikan()">
+                        Kembalikan Permohonan
                     </button>
+
                     <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('setujui', 'Yakin ingin menyetujui permohonan ini?', 'success')">
                         Setujui
                     </button>
@@ -561,6 +668,24 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userBtn = document.getElementById('user-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            userBtn.addEventListener('click', function(event) {
+                dropdown.classList.toggle('show');
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.matches('#user-btn') && !event.target.closest('#user-btn')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+        });
+
         function bukaPreview(file) {
             document.getElementById('previewFrame').src = file;
             document.getElementById('modalPreview').style.display = 'flex';
@@ -578,32 +703,23 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
             }
         }
 
-        function tampilkanCatatan() {
-            const div = document.getElementById('divCatatan');
-            if (div.style.display === "none") {
-                div.style.display = "block";
-            } else {
-                konfirmasiAksi('tolak', 'Yakin ingin menolak permohonan ini?', 'error');
-            }
-        }
-
-        // Fungsi khusus untuk Tolak
-        function konfirmasiTolak() {
+        function konfirmasiKembalikan() {
             Swal.fire({
-                title: 'Alasan Penolakan',
+                title: 'Catatan Revisi / Pengembalian',
                 input: 'textarea',
-                inputPlaceholder: 'Masukkan alasan penolakan...',
+                inputPlaceholder: 'Masukkan instruksi revisi atau alasan pengembalian ke mahasiswa/ormawa...',
                 showCancelButton: true,
-                confirmButtonText: 'Kirim Penolakan',
+                confirmButtonText: 'Kirim',
                 cancelButtonText: 'Batal',
-                confirmButtonColor: '#ef4444',
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#6b7280',
                 inputValidator: (value) => {
-                    if (!value) return 'Anda harus mengisi alasan penolakan!';
+                    if (!value) return 'Anda harus mengisi catatan revisi untuk mahasiswa!';
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('catatanInput').value = result.value;
-                    document.getElementById('aksiInput').value = 'tolak';
+                    document.getElementById('aksiInput').value = 'kembalikan';
                     document.getElementById('formVerifikasi').submit();
                 }
             });
@@ -623,6 +739,26 @@ $tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y'
                 if (result.isConfirmed) {
                     document.getElementById('aksiInput').value = aksi;
                     document.getElementById('formVerifikasi').submit();
+                }
+            });
+        }
+
+        function confirmLogout(event, url) {
+            event.preventDefault();
+
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: 'Anda harus login kembali untuk mengakses layanan akademik.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
                 }
             });
         }

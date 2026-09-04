@@ -368,29 +368,6 @@ body {
   box-sizing: border-box;
 }
 
-@media (max-width: 900px) {
-  .preview-container {
-    margin: 10px auto;
-    padding: 0 10px;
-  }
-  .surat-wrapper-resmi {
-    padding: 30px 20px !important;
-    font-size: 13px !important;
-  }
-  .kop-logo img {
-    width: 60px !important;
-  }
-  .kop-teks h3 {
-    font-size: 10pt !important;
-  }
-  .kop-teks h2 {
-    font-size: 12pt !important;
-  }
-  .kop-teks small {
-    font-size: 8pt !important;
-  }
-}
-
 .surat-wrapper-resmi {
   background-color: #ffffff;
   padding: 60px 70px;
@@ -452,6 +429,20 @@ body {
   margin-bottom: 20px;
 }
 
+.surat-header-center {
+  text-align: center;
+}
+
+.surat-title-underline {
+  margin: 0;
+  text-decoration: underline;
+}
+
+.surat-info-table {
+  width: 100%;
+  margin-left: 20px;
+}
+
 .info-surat {
   width: 100%;
   border-collapse: collapse;
@@ -467,12 +458,29 @@ body {
   vertical-align: top;
 }
 
+.info-surat-magang {
+  width: 100%;
+}
+
+.info-surat-magang td {
+  padding: 2px 5px;
+  vertical-align: top;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}
+
 .spacer-info-surat {
-  width: 180px;
+  width: 100%;
 }
 
 .isi {
   text-align: justify;
+}
+
+.paragraf-jarak {
+  margin-top: 15px;
 }
 
 .tabel-mhs {
@@ -674,6 +682,7 @@ body {
     padding: 0 !important;
     width: 100% !important;
     height: auto !important;
+    overflow-x: hidden !important;
   }
 
   .preview-container {
@@ -683,6 +692,8 @@ body {
     padding: 0 !important;
     background-color: white !important;
     display: block !important;
+    overflow: hidden !important;
+    overflow-x: hidden !important;
   }
 
   .surat-wrapper-resmi {
@@ -694,6 +705,7 @@ body {
     max-width: none !important;
     min-height: auto !important;
     display: block !important;
+    overflow: hidden !important;
   }
 
   .action-buttons {
@@ -952,107 +964,14 @@ body {
   .preview-container {
     padding: 0 10px;
     margin: 10px auto;
-  }
-
-  .surat-wrapper {
-    margin: 20px auto;
-  }
-
-  .surat-document {
-    padding: 30px 20px;
-    font-size: 14px;
-  }
-
-  .surat-wrapper-resmi {
-    padding: 25px 15px !important;
-    font-size: 12px !important;
-  }
-
-  .kop-logo {
-    width: 70px;
-  }
-
-  .kop-logo img {
-    width: 60px !important;
-  }
-
-  .kop-teks h3 {
-    font-size: 9pt !important;
-  }
-
-  .kop-teks h2 {
-    font-size: 11pt !important;
-  }
-
-  .kop-teks small {
-    font-size: 7pt !important;
-  }
-
-  .surat-signatures {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .signature-block {
-    width: 80%;
-  }
-
-  .ttd-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 10px;
-    padding: 15px;
-  }
-
-  .btn-action {
-    width: 100%;
-    text-align: center;
-  }
-
-  .preview-actions {
-    padding: 15px 10px;
+    overflow-x: auto;
   }
 }
 
-@media (max-width: 576px) {
-  .surat-document {
-    padding: 20px 12px;
-    font-size: 13px;
-  }
-
-  .surat-wrapper-resmi {
-    padding: 18px 10px !important;
-    font-size: 11px !important;
-  }
-
-  .col-label {
-    width: 130px;
-  }
-
-  .kop-logo img {
-    width: 50px !important;
-  }
-
-  .kop-teks h3 {
-    font-size: 8pt !important;
-  }
-
-  .kop-teks h2 {
-    font-size: 10pt !important;
-  }
-
-  .signature-block {
-    width: 100%;
-  }
-
-  .qr-img {
-    width: 70px;
-    height: 70px;
+@media (max-width: 900px) {
+  .preview-container {
+    margin: 10px auto;
+    padding: 0 10px;
+    overflow-x: auto;
   }
 }

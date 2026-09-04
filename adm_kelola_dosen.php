@@ -7,22 +7,28 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit;
 }
 
+$query_prodi = mysqli_query($koneksi, "SELECT * FROM prodi ORDER BY nama_prodi ASC");
+$list_prodi = [];
+while ($p = mysqli_fetch_assoc($query_prodi)) {
+    $list_prodi[] = $p;
+}
+
 /* ===========================
    PENCARIAN, FILTER & PAGINATION
 =========================== */
 $keyword = $_GET['keyword'] ?? '';
-$filter_role = $_GET['role'] ?? '';
+$filter_prodi = $_GET['prodi'] ?? '';
 
 $where_clauses = [];
 
 if ($keyword != '') {
     $keyword_safe = mysqli_real_escape_string($koneksi, $keyword);
-    $where_clauses[] = "(nip LIKE '%$keyword_safe%' OR nama_dosen LIKE '%$keyword_safe%' OR jabatan LIKE '%$keyword_safe%')";
+    $where_clauses[] = "(dosen.nip LIKE '%$keyword_safe%' OR dosen.nama_dosen LIKE '%$keyword_safe%' OR dosen.jabatan LIKE '%$keyword_safe%')";
 }
 
-if ($filter_role != '') {
-    $role_safe = mysqli_real_escape_string($koneksi, $filter_role);
-    $where_clauses[] = "role_akses = '$role_safe'";
+if ($filter_prodi != '') {
+    $prodi_safe = mysqli_real_escape_string($koneksi, $filter_prodi);
+    $where_clauses[] = "dosen.id_prodi = '$prodi_safe'";
 }
 
 $where_sql = "";
@@ -41,7 +47,7 @@ $total_halaman = ceil($total_data / $limit);
 
 $params = [];
 if ($keyword != '') $params['keyword'] = $keyword;
-if ($filter_role != '') $params['role'] = $filter_role;
+if ($filter_prodi != '') $params['prodi'] = $filter_prodi;
 $query_string = !empty($params) ? '&' . http_build_query($params) : '';
 
 /* ===========================
@@ -54,27 +60,13 @@ if (isset($_POST['tambah'])) {
     $jabatan     = mysqli_real_escape_string($koneksi, $_POST['jabatan']);
     $role_akses  = mysqli_real_escape_string($koneksi, $_POST['role_akses']);
 
+    $id_prodi    = !empty($_POST['id_prodi']) ? "'" . mysqli_real_escape_string($koneksi, $_POST['id_prodi']) . "'" : "NULL";
+
     $kode_ttd_qr = hash('sha256', $nip . time());
 
     mysqli_query($koneksi, "
-        INSERT INTO dosen
-        (
-            nip,
-            nama_dosen,
-            password,
-            jabatan,
-            role_akses,
-            kode_ttd_qr
-        )
-        VALUES
-        (
-            '$nip',
-            '$nama_dosen',
-            '$password',
-            '$jabatan',
-            '$role_akses',
-            '$kode_ttd_qr'
-        )
+        INSERT INTO dosen (nip, nama_dosen, password, jabatan, role_akses, id_prodi, kode_ttd_qr)
+        VALUES ('$nip', '$nama_dosen', '$password', '$jabatan', '$role_akses', $id_prodi, '$kode_ttd_qr')
     ");
 
     $_SESSION['status'] = 'success';
@@ -90,10 +82,7 @@ if (isset($_POST['tambah'])) {
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
 
-    mysqli_query($koneksi, "
-        DELETE FROM dosen
-        WHERE id_dosen = '$id'
-    ");
+    mysqli_query($koneksi, "DELETE FROM dosen WHERE id_dosen = '$id'");
 
     $_SESSION['status'] = 'success';
     $_SESSION['pesan'] = 'Data dosen berhasil dihapus';
@@ -112,12 +101,15 @@ if (isset($_POST['update'])) {
     $jabatan    = mysqli_real_escape_string($koneksi, $_POST['jabatan']);
     $role       = mysqli_real_escape_string($koneksi, $_POST['role_akses']);
 
+    $id_prodi   = !empty($_POST['id_prodi']) ? "'" . mysqli_real_escape_string($koneksi, $_POST['id_prodi']) . "'" : "NULL";
+
     mysqli_query($koneksi, "
         UPDATE dosen
         SET nip='$nip',
             nama_dosen='$nama',
             jabatan='$jabatan',
-            role_akses='$role'
+            role_akses='$role',
+            id_prodi=$id_prodi
         WHERE id_dosen='$id'
     ");
 
@@ -129,13 +121,24 @@ if (isset($_POST['update'])) {
 }
 
 /* ===========================
-   DATA DOSEN DENGAN LIMIT
+   DATA DOSEN DENGAN LIMIT & JOIN PRODI
 =========================== */
 $query = mysqli_query($koneksi, "
-    SELECT *
-    FROM dosen
+    SELECT dosen.*, prodi.nama_prodi 
+    FROM dosen 
+    LEFT JOIN prodi ON dosen.id_prodi = prodi.id_prodi
     $where_sql
-    ORDER BY nama_dosen ASC
+    ORDER BY 
+        CASE 
+            WHEN dosen.jabatan LIKE '%Dekan%' AND dosen.jabatan NOT LIKE '%Wakil%' AND dosen.jabatan NOT LIKE '%Wadek%' THEN 1
+            WHEN dosen.jabatan LIKE '%Wakil Dekan 1%' OR dosen.jabatan LIKE '%Wakil Dekan I%' OR dosen.jabatan LIKE '%Wadek 1%' THEN 2
+            WHEN dosen.jabatan LIKE '%Wakil Dekan 2%' OR dosen.jabatan LIKE '%Wakil Dekan II%' OR dosen.jabatan LIKE '%Wadek 2%' THEN 3
+            WHEN dosen.jabatan LIKE '%Kasubbag%' OR dosen.jabatan LIKE '%Kasubag%' OR dosen.jabatan LIKE '%Tata Usaha%' THEN 4
+            WHEN dosen.jabatan LIKE '%Ketua Program Studi%' OR dosen.jabatan LIKE '%Kaprodi%' OR dosen.jabatan LIKE '%Ketua Jurusan%' OR dosen.jabatan LIKE '%Kajur%' THEN 5
+            WHEN dosen.jabatan LIKE '%Sekretaris Program Studi%' OR dosen.jabatan LIKE '%Sekprodi%' OR dosen.jabatan LIKE '%Sekretaris Jurusan%' OR dosen.jabatan LIKE '%Sekjur%' THEN 6
+            ELSE 7
+        END ASC,
+        dosen.nama_dosen ASC
     LIMIT $limit OFFSET $offset
 ");
 ?>
@@ -160,7 +163,7 @@ $query = mysqli_query($koneksi, "
 
         <main class="main-content">
             <div class="page-title">
-                <h1>Kelola Data Dosen</h1>
+                <h1>Kelola Data Dosen & Tenaga Kerja FST</h1>
             </div>
 
             <?php if (isset($_SESSION['pesan'])) { ?>
@@ -181,15 +184,20 @@ $query = mysqli_query($koneksi, "
             <?php } ?>
 
             <div class="table-card-table">
-                <form method="GET" action="" class="filter-section" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0;">
+                <form method="GET" action="" class="filter-section filter-section-split">
 
                     <div class="filter-left-group">
-                        <input type="text" name="keyword" class="input-keyword" placeholder="Cari NIP, Nama, Jabatan..." value="<?= htmlspecialchars($keyword); ?>" style="width: 250px; padding: 8px 12px; margin: 0;">
+                        <input type="text" name="keyword" placeholder="Cari NIP, Nama, Jabatan..." value="<?= htmlspecialchars($keyword); ?>">
 
-                        <select name="role" class="select-role">
-                            <option value="">Semua Role</option>
-                            <option value="dosen" <?= ($filter_role == 'dosen') ? 'selected' : ''; ?>>Dosen</option>
-                            <option value="pimpinan" <?= ($filter_role == 'pimpinan') ? 'selected' : ''; ?>>Pimpinan</option>
+                        <select name="prodi" class="select-role">
+                            <option value="">Semua Prodi</option>
+                            <?php
+                            $res_prodi = mysqli_query($koneksi, "SELECT * FROM prodi ORDER BY nama_prodi ASC");
+                            while ($p = mysqli_fetch_assoc($res_prodi)) {
+                                $selected = ($filter_prodi == $p['id_prodi']) ? 'selected' : '';
+                                echo "<option value='" . $p['id_prodi'] . "' $selected>" . htmlspecialchars($p['nama_prodi']) . "</option>";
+                            }
+                            ?>
                         </select>
 
                         <button type="submit" class="btn-filter">
@@ -202,7 +210,7 @@ $query = mysqli_query($koneksi, "
 
                     <div>
                         <button type="button" class="btn-tambah-dosen" onclick="bukaTambah()">
-                            <i class="fa-solid fa-plus"></i> Tambah Dosen
+                            <i class="fa-solid fa-plus"></i> Tambah Data
                         </button>
                     </div>
                 </form>
@@ -212,24 +220,24 @@ $query = mysqli_query($koneksi, "
                         <tr>
                             <th>No</th>
                             <th>NIP</th>
-                            <th>Nama Dosen</th>
+                            <th>Nama</th>
+                            <th>Program Studi</th>
                             <th>Jabatan</th>
                             <th>Role</th>
-                            <th width="150">Aksi</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         <?php
                         if ($query && mysqli_num_rows($query) > 0) {
                             $no = $offset + 1;
-
                             while ($row = mysqli_fetch_assoc($query)) {
                         ?>
                                 <tr>
                                     <td><?= $no++; ?></td>
                                     <td><?= htmlspecialchars($row['nip']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_dosen']); ?></td>
+                                    <td><?= !empty($row['nama_prodi']) ? htmlspecialchars($row['nama_prodi']) : '-'; ?></td>
                                     <td><?= htmlspecialchars($row['jabatan']); ?></td>
                                     <td><?= htmlspecialchars($row['role_akses']); ?></td>
                                     <td>
@@ -239,7 +247,8 @@ $query = mysqli_query($koneksi, "
                                             '<?= htmlspecialchars($row['nip'], ENT_QUOTES); ?>',
                                             '<?= htmlspecialchars($row['nama_dosen'], ENT_QUOTES); ?>',
                                             '<?= htmlspecialchars($row['jabatan'], ENT_QUOTES); ?>',
-                                            '<?= htmlspecialchars($row['role_akses'], ENT_QUOTES); ?>'
+                                            '<?= htmlspecialchars($row['role_akses'], ENT_QUOTES); ?>',
+                                            '<?= $row['id_prodi']; ?>' 
                                         )">
                                                 Edit
                                             </a>
@@ -253,7 +262,7 @@ $query = mysqli_query($koneksi, "
                             <?php }
                         } else { ?>
                             <tr>
-                                <td colspan="6" style="text-align:center; padding: 20px;">Data dosen tidak ditemukan.</td>
+                                <td colspan="7" class="empty-table">Data dosen tidak ditemukan.</td>
                             </tr>
                         <?php } ?>
                     </tbody>
@@ -288,32 +297,46 @@ $query = mysqli_query($koneksi, "
         </main>
     </div>
 
-    <!-- MODAL TAMBAH DOSEN -->
     <div id="modalTambah" class="modal-preview">
         <div class="modal-content-preview">
-            <h3>Tambah Dosen Baru</h3>
-
+            <h3>Tambah Data Baru</h3>
             <form method="POST" onsubmit="konfirmasiSimpan(event, this, 'Yakin ingin menyimpan data dosen baru ini?'); return false;">
+                <input type="hidden" name="tambah" value="1">
+
                 <div class="form-group">
                     <label>NIP</label>
-                    <input type="text" name="nip" required class="form-control" placeholder="Masukkan NIP dosen">
+                    <input type="text"
+                        name="nip"
+                        class="form-control"
+                        placeholder="Masukkan NIP Dosen"
+                        pattern="[0-9]+"
+                        title="NIP hanya boleh berisi angka."
+                        onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                        required>
                 </div>
-
                 <div class="form-group">
-                    <label>Nama Dosen</label>
+                    <label>Nama</label>
                     <input type="text" name="nama_dosen" required class="form-control" placeholder="Masukkan nama lengkap beserta gelar">
                 </div>
-
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" name="password" required class="form-control" placeholder="Masukkan password akun">
                 </div>
 
                 <div class="form-group">
+                    <label>Program Studi <small class="text-muted-small">(Kosongkan jika Pimpinan)</small></label>
+                    <select name="id_prodi" class="form-control">
+                        <option value="">-- Tidak terikat prodi spesifik --</option>
+                        <?php foreach ($list_prodi as $pr): ?>
+                            <option value="<?= $pr['id_prodi'] ?>"><?= htmlspecialchars($pr['nama_prodi']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label>Jabatan</label>
                     <input type="text" name="jabatan" required class="form-control" placeholder="Contoh: Ketua Prodi / Dosen Tetap">
                 </div>
-
                 <div class="form-group">
                     <label>Role Akses</label>
                     <select name="role_akses" class="form-control" required>
@@ -324,12 +347,8 @@ $query = mysqli_query($koneksi, "
                 </div>
 
                 <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" onclick="konfirmasiBatal('modalTambah')">
-                        Batal
-                    </button>
-                    <button type="submit" name="tambah" class="btn-modal-submit">
-                        Simpan Dosen
-                    </button>
+                    <button type="button" class="btn-modal-cancel" onclick="konfirmasiBatal('modalTambah')">Batal</button>
+                    <button type="submit" class="btn-modal-submit">Simpan Data</button>
                 </div>
             </form>
         </div>
@@ -338,26 +357,34 @@ $query = mysqli_query($koneksi, "
     <!-- MODAL EDIT DOSEN -->
     <div id="modalEdit" class="modal-preview">
         <div class="modal-content-preview">
-            <h3>Edit Data Dosen</h3>
-
+            <h3>Edit Data</h3>
             <form method="POST" onsubmit="konfirmasiSimpan(event, this, 'Yakin ingin menyimpan perubahan data dosen ini?'); return false;">
+                <input type="hidden" name="update" value="1">
                 <input type="hidden" name="id_dosen" id="edit_id">
 
                 <div class="form-group">
                     <label>NIP</label>
                     <input type="text" name="nip" id="edit_nip" class="form-control" required>
                 </div>
+                <div class="form-group">
+                    <label>Nama</label>
+                    <input type="text" name="nama_dosen" id="edit_nama" class="form-control" required>
+                </div>
 
                 <div class="form-group">
-                    <label>Nama Dosen</label>
-                    <input type="text" name="nama_dosen" id="edit_nama" class="form-control" required>
+                    <label>Program Studi <small class="text-muted-small">(Kosongkan jika Pimpinan)</small></label>
+                    <select name="id_prodi" id="edit_prodi" class="form-control">
+                        <option value="">-- Tidak terikat prodi spesifik --</option>
+                        <?php foreach ($list_prodi as $pr): ?>
+                            <option value="<?= $pr['id_prodi'] ?>"><?= htmlspecialchars($pr['nama_prodi']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label>Jabatan</label>
                     <input type="text" name="jabatan" id="edit_jabatan" class="form-control" required>
                 </div>
-
                 <div class="form-group">
                     <label>Role</label>
                     <select name="role_akses" id="edit_role" class="form-control">
@@ -367,19 +394,16 @@ $query = mysqli_query($koneksi, "
                 </div>
 
                 <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" onclick="konfirmasiBatal('modalEdit')">
-                        Batal
-                    </button>
-                    <button type="submit" name="update" class="btn-modal-submit">
-                        Simpan Perubahan
-                    </button>
+                    <button type="button" class="btn-modal-cancel" onclick="konfirmasiBatal('modalEdit')">Batal</button>
+                    <button type="submit" class="btn-modal-submit">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <?php include "adm_footer.php"; ?>
+
     <script>
-        // Fungsi Modal Tambah
         function bukaTambah() {
             document.getElementById('modalTambah').style.display = 'flex';
         }
@@ -388,13 +412,15 @@ $query = mysqli_query($koneksi, "
             document.getElementById('modalTambah').style.display = 'none';
         }
 
-        // Fungsi Modal Edit
-        function editDosen(id, nip, nama, jabatan, role) {
+        function editDosen(id, nip, nama, jabatan, role, prodi) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nip').value = nip;
             document.getElementById('edit_nama').value = nama;
             document.getElementById('edit_jabatan').value = jabatan;
             document.getElementById('edit_role').value = role;
+
+            document.getElementById('edit_prodi').value = prodi ? prodi : "";
+
             document.getElementById('modalEdit').style.display = 'flex';
         }
 

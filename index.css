@@ -6,7 +6,7 @@
   --color-blue-600: #2563eb;
   --color-blue-700: #1d4ed8;
   --color-blue-800: #0056b3;
-  --font-primary: 'Montserrat', sans-serif;
+  --font-primary: "Montserrat", sans-serif;
   --shadow-lg: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
   --radius-md: 10px;
   --radius-lg: 15px;
@@ -19,7 +19,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
 }
@@ -212,6 +213,14 @@ body {
 
 .register-link a:hover {
   text-decoration: underline;
+}
+
+.input-uppercase {
+  text-transform: uppercase;
+}
+
+.input-uppercase::placeholder {
+  text-transform: none;
 }
 
 /* ── Responsive ── */

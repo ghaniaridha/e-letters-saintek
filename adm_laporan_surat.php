@@ -54,6 +54,7 @@ $query = mysqli_query($koneksi, "
         sp.id_surat,
         sp.nomor_surat,
         sp.tanggal_pengajuan,
+        sp.waktu_selesai, /* Tambahkan kolom waktu selesai */
         sp.status_akhir,
         sp.file_surat_final,
         m.npm,
@@ -65,7 +66,7 @@ $query = mysqli_query($koneksi, "
     JOIN prodi p ON m.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     $where
-    ORDER BY sp.tanggal_pengajuan DESC
+    ORDER BY sp.waktu_selesai DESC
     LIMIT $limit OFFSET $offset
 ");
 
@@ -171,7 +172,15 @@ $jenisSurat = mysqli_query($koneksi, "
                             while ($row = mysqli_fetch_assoc($query)) { ?>
                                 <tr>
                                     <td><?= $no++; ?></td>
-                                    <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                    <td>
+                                        <?php
+                                        if (!empty($row['waktu_selesai']) && $row['waktu_selesai'] !== '0000-00-00 00:00:00') {
+                                            echo date('d-m-Y H:i', strtotime($row['waktu_selesai'])) . ' WIB';
+                                        } else {
+                                            echo '<span style="color: #94a3b8;">Belum Selesai</span>';
+                                        }
+                                        ?>
+                                    </td>
                                     <td><?= htmlspecialchars($row['nomor_surat']); ?></td>
                                     <td><?= htmlspecialchars($row['npm']); ?></td>
                                     <td><?= htmlspecialchars($row['nama_mhs']); ?></td>
@@ -190,13 +199,21 @@ $jenisSurat = mysqli_query($koneksi, "
                                             elseif (strpos($namaSurat, 'aktif') !== false) {
                                                 $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
                                             }
+                                            // Kondisi untuk SK Lulus
+                                            elseif (strpos($namaSurat, 'lulus') !== false) {
+                                                $linkUnduh = "generate_sk_lulus_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
+                                            }
+                                            // Kondisi untuk SKMK
+                                            elseif (strpos($namaSurat, 'masih kuliah') !== false) {
+                                                $linkUnduh = "generate_skmk_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
+                                            }
                                             // Kondisi Default untuk Surat Riset / Lainnya
                                             else {
                                                 $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=laporan";
                                             }
                                         ?>
                                             <a href="<?= $linkUnduh; ?>" target="_blank" class="btn btn-detail">
-                                                <i class="fa-solid fa-file-lines"></i> Lihat
+                                                <i class="fa-solid fa-file-lines"></i>
                                             </a>
                                         <?php } else { ?>
                                             -
@@ -247,6 +264,8 @@ $jenisSurat = mysqli_query($koneksi, "
             </div>
         </main>
     </div>
+
+    <?php include "adm_footer.php"; ?>
 </body>
 
 </html>

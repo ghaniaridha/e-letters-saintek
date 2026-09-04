@@ -8,6 +8,7 @@ if (!isset($_SESSION['id_mhs'])) {
 }
 
 $id_mhs = $_SESSION['id_mhs'];
+$id_surat_edit = isset($_POST['id_surat']) ? (int)$_POST['id_surat'] : 0;
 
 $id_jenis               = $_POST['id_jenis'];
 $semester               = mysqli_real_escape_string($koneksi, $_POST['semester']);
@@ -25,8 +26,7 @@ if (!is_dir($folder_upload)) {
 function uploadFile($field, $folder_upload, $allowed_ext, $allowed_mime)
 {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] != 0) {
-        echo "<script>alert('File " . $field . " wajib diupload'); history.back();</script>";
-        exit;
+        return null;
     }
 
     $nama_asli = $_FILES[$field]['name'];
@@ -55,76 +55,107 @@ function uploadFile($field, $folder_upload, $allowed_ext, $allowed_mime)
 $ext_umum = ['pdf', 'jpg', 'jpeg', 'png'];
 $mime_umum = ['application/pdf', 'image/jpeg', 'image/png'];
 
-$file_ktm      = uploadFile('ktm', $folder_upload, $ext_umum, $mime_umum);
+$file_ktm       = uploadFile('ktm', $folder_upload, $ext_umum, $mime_umum);
 $file_bukti_ukt = uploadFile('bukti_ukt', $folder_upload, $ext_umum, $mime_umum);
-$file_khs      = uploadFile('khs', $folder_upload, $ext_umum, $mime_umum);
+$file_khs       = uploadFile('khs', $folder_upload, $ext_umum, $mime_umum);
 
 $tanggal_pengajuan = date('Y-m-d H:i:s');
-$dokumen_hash      = hash('sha256', $id_mhs . $id_jenis . time());
 
-$query_utama = "
-    INSERT INTO surat_pengajuan 
-    (id_mhs, id_jenis, nomor_surat, file_surat_final, tanggal_pengajuan, status_akhir, status_pimpinan, tujuan_admin, dokumen_hash)
-    VALUES 
-    ('$id_mhs', '$id_jenis', '', '', '$tanggal_pengajuan', 'Menunggu Admin', 'Menunggu', 'admin2', '$dokumen_hash')
-";
-
-if (mysqli_query($koneksi, $query_utama)) {
-
-    $id_surat = mysqli_insert_id($koneksi);
-
-    $query_detail = "
-        INSERT INTO detail_surat_magang 
-        (id_surat, semester, tanggal_mulai_magang, tanggal_selesai_magang, lokasi_magang, surat_ditujukan)
-        VALUES 
-        ('$id_surat', '$semester', '$tanggal_mulai_magang', '$tanggal_selesai_magang', '$lokasi_magang', '$surat_ditujukan')
+// ==========================================
+// JIKA MODE EDIT / REVISI
+// ==========================================
+if ($id_surat_edit > 0) {
+    $query_utama = "
+        UPDATE surat_pengajuan 
+        SET tanggal_pengajuan = '$tanggal_pengajuan', 
+            status_akhir = 'Menunggu Admin', 
+            tujuan_admin = 'admin2', 
+            alasan_penolakan = NULL 
+        WHERE id_surat = '$id_surat_edit' AND id_mhs = '$id_mhs'
     ";
 
-    if (mysqli_query($koneksi, $query_detail)) {
+    if (mysqli_query($koneksi, $query_utama)) {
+        // Update detail magang
+        $query_detail = "
+            UPDATE detail_surat_magang 
+            SET semester = '$semester', 
+                tanggal_mulai_magang = '$tanggal_mulai_magang', 
+                tanggal_selesai_magang = '$tanggal_selesai_magang', 
+                lokasi_magang = '$lokasi_magang', 
+                surat_ditujukan = '$surat_ditujukan' 
+            WHERE id_surat = '$id_surat_edit'
+        ";
+        mysqli_query($koneksi, $query_detail);
 
-        $lampiran_values = [];
-
-        $lampiran_values[] = "('$id_surat', '4', '$file_ktm')";
-        $lampiran_values[] = "('$id_surat', '2', '$file_bukti_ukt')";
-        $lampiran_values[] = "('$id_surat', '3', '$file_khs')";
-
-        if (count($lampiran_values) > 0) {
-            $query_lampiran = "INSERT INTO lampiran_pengajuan (id_surat, id_syarat, file_upload) VALUES " . implode(", ", $lampiran_values);
-
-            if (!mysqli_query($koneksi, $query_lampiran)) {
-            }
+        if ($file_ktm) {
+            mysqli_query($koneksi, "UPDATE lampiran_pengajuan SET file_upload = '$file_ktm', status_validasi = 'Menunggu' WHERE id_surat = '$id_surat_edit' AND id_syarat = '4'");
+        }
+        if ($file_bukti_ukt) {
+            mysqli_query($koneksi, "UPDATE lampiran_pengajuan SET file_upload = '$file_bukti_ukt', status_validasi = 'Menunggu' WHERE id_surat = '$id_surat_edit' AND id_syarat = '2'");
+        }
+        if ($file_khs) {
+            mysqli_query($koneksi, "UPDATE lampiran_pengajuan SET file_upload = '$file_khs', status_validasi = 'Menunggu' WHERE id_surat = '$id_surat_edit' AND id_syarat = '3'");
         }
 
-        $_SESSION['semester_magang_' . $id_surat] = $semester;
-
         $_SESSION['status'] = 'success';
-        $_SESSION['pesan']  = 'Surat permohonan izin magang berhasil dibuat dan diajukan';
-        header("Location: preview_surat_magang_mhs.php?id=$id_surat");
+        $_SESSION['pesan']  = 'Revisi pengajuan surat berhasil dikirim ulang ke admin!';
+        header("Location: preview_surat_magang_mhs.php?id=$id_surat_edit");
         exit;
     } else {
         $_SESSION['status'] = 'error';
-        $_SESSION['pesan']  = 'Sistem gagal memproses pengajuan surat.';
-        $halaman_sebelumnya = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'mhs_beranda.php';
-        header("Location: " . $halaman_sebelumnya);
+        $_SESSION['pesan']  = 'Gagal memperbarui permohonan surat.';
+        header("Location: mhs_riwayat.php");
         exit;
     }
 }
-?>
+// ==========================================
+// JIKA PENGAJUAN BARU
+// ==========================================
+else {
+    if (!$file_ktm || !$file_bukti_ukt || !$file_khs) {
+        echo "<script>alert('Semua dokumen pendukung wajib diupload untuk pengajuan baru!'); history.back();</script>";
+        exit;
+    }
 
-<!DOCTYPE html>
-<html lang="id">
+    $dokumen_hash = hash('sha256', $id_mhs . $id_jenis . time());
+    $karakter = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $kode_pelacakan = 'TRK-' . substr(str_shuffle($karakter), 0, 6);
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genarate Surat</title>
+    $query_utama = "
+        INSERT INTO surat_pengajuan 
+        (id_mhs, id_jenis, nomor_surat, file_surat_final, tanggal_pengajuan, status_akhir, status_pimpinan, tujuan_admin, dokumen_hash, kode_pelacakan)
+        VALUES 
+        ('$id_mhs', '$id_jenis', '', '', '$tanggal_pengajuan', 'Menunggu Admin', 'Menunggu', 'admin2', '$dokumen_hash', '$kode_pelacakan')
+    ";
 
-    <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
-    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
-</head>
+    if (mysqli_query($koneksi, $query_utama)) {
+        $id_surat = mysqli_insert_id($koneksi);
 
-<body>
+        $query_detail = "
+            INSERT INTO detail_surat_magang 
+            (id_surat, semester, tanggal_mulai_magang, tanggal_selesai_magang, lokasi_magang, surat_ditujukan)
+            VALUES 
+            ('$id_surat', '$semester', '$tanggal_mulai_magang', '$tanggal_selesai_magang', '$lokasi_magang', '$surat_ditujukan')
+        ";
 
-</body>
+        if (mysqli_query($koneksi, $query_detail)) {
+            $lampiran_values = [];
+            $lampiran_values[] = "('$id_surat', '4', '$file_ktm')";
+            $lampiran_values[] = "('$id_surat', '2', '$file_bukti_ukt')";
+            $lampiran_values[] = "('$id_surat', '3', '$file_khs')";
 
-</html>
+            $query_lampiran = "INSERT INTO lampiran_pengajuan (id_surat, id_syarat, file_upload) VALUES " . implode(", ", $lampiran_values);
+            mysqli_query($koneksi, $query_lampiran);
+
+            $_SESSION['status'] = 'success';
+            $_SESSION['pesan']  = 'Pengajuan berhasil! Lihat kode lacak pada halaman riwayat.';
+            header("Location: preview_surat_magang_mhs.php?id=$id_surat");
+            exit;
+        }
+    }
+
+    $_SESSION['status'] = 'error';
+    $_SESSION['pesan']  = 'Sistem gagal memproses pengajuan surat.';
+    header("Location: mhs_beranda.php");
+    exit;
+}

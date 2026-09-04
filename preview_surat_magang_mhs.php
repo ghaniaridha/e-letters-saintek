@@ -194,8 +194,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <a href="mhs_daftar_surat_akademik.php" class="btn-action btn-outline">
                     Kembali
                 </a>
-                <a href="mhs_lacak.php?id=<?= $id ?>" class="btn-action btn-fill">
-                    Lacak Surat
+                <a href="mhs_riwayat.php?id=<?= $id ?>" class="btn-action btn-fill">
+                    Selesai
                 </a>
             </div>
         </div>

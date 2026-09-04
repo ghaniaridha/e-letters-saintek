@@ -2,10 +2,6 @@
 session_start();
 include "koneksi.php";
 
-if (!isset($koneksi)) {
-    include "koneksi.php";
-}
-
 $role = $_SESSION['role_admin'] ?? '';
 $filter_admin = "";
 
@@ -267,7 +263,7 @@ $query_string = '&' . http_build_query($data_get);
         `,
                 showCancelButton: true,
                 showDenyButton: true,
-                confirmButtonText: '<i class="fa-solid fa-save"></i> Simpan Manual',
+                confirmButtonText: 'Simpan Manual',
                 denyButtonText: 'Generate Otomatis',
                 cancelButtonText: 'Batal',
                 confirmButtonColor: '#10b981',

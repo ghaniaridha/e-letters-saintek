@@ -51,7 +51,6 @@ $query = mysqli_query($koneksi, "
             <a href="mhs_beranda.php#home">Beranda</a>
             <a href="mhs_beranda.php#services">Pengajuan Surat</a>
             <a href="mhs_beranda.php#status-info">Status & Informasi</a>
-            <a href="mhs_lacak.php">Lacak Surat</a>
             <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
@@ -61,10 +60,17 @@ $query = mysqli_query($koneksi, "
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -214,6 +220,26 @@ $query = mysqli_query($koneksi, "
                 });
             }
         });
+
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
     </script>
 </body>
 

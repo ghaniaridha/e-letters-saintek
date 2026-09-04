@@ -56,6 +56,8 @@ $selesai = $count['jml_selesai'] ?? 0;
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -68,7 +70,6 @@ $selesai = $count['jml_selesai'] ?? 0;
             <a href="#home">Beranda</a>
             <a href="#services">Pengajuan Surat</a>
             <a href="#status-info">Status & Informasi</a>
-            <a href="mhs_lacak.php">Lacak Surat</a>
             <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
@@ -78,10 +79,10 @@ $selesai = $count['jml_selesai'] ?? 0;
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <a href="mhs_profile.php" class="user-info-link">
-                        <div class="user-info">
-                            <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
-                            <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
                         </div>
                     </a>
                     <div class="divider"></div>
@@ -187,7 +188,7 @@ $selesai = $count['jml_selesai'] ?? 0;
                 </div>
                 <h3>Lacak Surat</h3>
                 <p>Pantau posisi terkini dan kemajuan proses pengajuan surat Anda secara langsung.</p>
-                <a href="mhs_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="mhs_input_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
     </section>
@@ -246,7 +247,6 @@ $selesai = $count['jml_selesai'] ?? 0;
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // fungsi dropdown menu pengguna
         document.addEventListener('DOMContentLoaded', function() {

@@ -9,12 +9,27 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
 
 $id_dosen = $_SESSION['id_dosen'] ?? 0;
 
-$is_pembina = false;
+$is_pembina_ukm = false;
 $cek_pembina = mysqli_query($koneksi, "SELECT id_ormawa FROM ormawa WHERE id_pembina = '$id_dosen'");
-
 if ($cek_pembina && mysqli_num_rows($cek_pembina) > 0) {
-    $is_pembina = true;
+    $is_pembina_ukm = true;
 }
+
+$is_kaprodi = false;
+$cek_kaprodi = mysqli_query($koneksi, "SELECT id_prodi FROM prodi WHERE id_kaprodi = '$id_dosen'");
+if ($cek_kaprodi && mysqli_num_rows($cek_kaprodi) > 0) {
+    $is_kaprodi = true;
+}
+
+$punya_akses_ormawa = ($is_pembina_ukm || $is_kaprodi);
+
+$is_pembina_akademik = false;
+$cek_akademik = mysqli_query($koneksi, "SELECT id_surat FROM detail_surat_riset WHERE id_pb1 = '$id_dosen' OR id_pb2 = '$id_dosen' LIMIT 1");
+if ($cek_akademik && mysqli_num_rows($cek_akademik) > 0) {
+    $is_pembina_akademik = true;
+}
+
+$punya_keduanya = ($is_pembina_akademik && $punya_akses_ormawa);
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -26,41 +41,103 @@ if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
 
-$qMenunggu = mysqli_query($koneksi, "
+// -------------------------------------------------------------
+// PERHITUNGAN SURAT AKADEMIK
+// -------------------------------------------------------------
+$qAkaMenunggu = mysqli_query($koneksi, "
     SELECT COUNT(*) AS total
     FROM surat_pengajuan sp
-    JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
     WHERE 
-    -- Skenario A: Jika dia adalah Pembimbing 2
     (dsr.id_pb2 = '$id_dosen' AND dsr.status_pb2 = 'Menunggu')
     OR
-    -- Skenario B: Jika dia adalah Pembimbing 1, dia baru bisa melihatnya SETELAH Pembimbing 2 setuju
     (dsr.id_pb1 = '$id_dosen' AND dsr.status_pb2 = 'Disetujui' AND dsr.status_pb1 = 'Menunggu')
+    OR
+    (dak.id_pa = '$id_dosen' AND dak.status_pa = 'Menunggu')
 ");
 
-$qDisetujui = mysqli_query($koneksi, "
+$qAkaDisetujui = mysqli_query($koneksi, "
     SELECT COUNT(*) AS total
     FROM surat_pengajuan sp
-    JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
     WHERE 
     (dsr.id_pb2 = '$id_dosen' AND dsr.status_pb2 = 'Disetujui')
     OR
     (dsr.id_pb1 = '$id_dosen' AND dsr.status_pb1 = 'Disetujui')
+    OR
+    (dak.id_pa = '$id_dosen' AND dak.status_pa = 'Disetujui')
 ");
 
-$qDitolak = mysqli_query($koneksi, "
+$qAkaDitolak = mysqli_query($koneksi, "
     SELECT COUNT(*) AS total
     FROM surat_pengajuan sp
-    JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_surat_riset dsr ON sp.id_surat = dsr.id_surat
+    LEFT JOIN detail_aktif_kuliah dak ON sp.id_surat = dak.id_surat
     WHERE 
     (dsr.id_pb2 = '$id_dosen' AND dsr.status_pb2 = 'Ditolak')
     OR
     (dsr.id_pb1 = '$id_dosen' AND dsr.status_pb1 = 'Ditolak')
+    OR
+    (dak.id_pa = '$id_dosen' AND dak.status_pa = 'Ditolak')
 ");
 
-$menunggu = mysqli_fetch_assoc($qMenunggu)['total'] ?? 0;
-$disetujui = mysqli_fetch_assoc($qDisetujui)['total'] ?? 0;
-$ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
+$menunggu_aka  = mysqli_fetch_assoc($qAkaMenunggu)['total'] ?? 0;
+$disetujui_aka = mysqli_fetch_assoc($qAkaDisetujui)['total'] ?? 0;
+$ditolak_aka   = mysqli_fetch_assoc($qAkaDitolak)['total'] ?? 0;
+
+// -------------------------------------------------------------
+// PERHITUNGAN SURAT ORMAWA (Hanya jika dosen punya akses)
+// -------------------------------------------------------------
+$menunggu_orm  = 0;
+$disetujui_orm = 0;
+$ditolak_orm   = 0;
+
+if ($punya_akses_ormawa) {
+    // Menunggu Verifikasi Pembina
+    $qOrmMenunggu = mysqli_query($koneksi, "
+        SELECT COUNT(*) AS total
+        FROM surat_pengajuan sp
+        JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+        LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
+        WHERE (o.id_pembina = '$id_dosen' OR p.id_kaprodi = '$id_dosen')
+          AND sp.posisi_sekarang = 'Pembina'
+    ");
+
+    // Riwayat: Sudah diproses & Disetujui
+    $qOrmDisetujui = mysqli_query($koneksi, "
+        SELECT COUNT(*) AS total
+        FROM surat_pengajuan sp
+        JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+        LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
+        WHERE (o.id_pembina = '$id_dosen' OR p.id_kaprodi = '$id_dosen')
+          AND sp.posisi_sekarang != 'Pembina'
+          AND LOWER(sp.status_akhir) NOT LIKE '%ditolak%'
+    ");
+
+    // Riwayat: Sudah diproses & Ditolak
+    $qOrmDitolak = mysqli_query($koneksi, "
+        SELECT COUNT(*) AS total
+        FROM surat_pengajuan sp
+        JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+        LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
+        WHERE (o.id_pembina = '$id_dosen' OR p.id_kaprodi = '$id_dosen')
+          AND sp.posisi_sekarang != 'Pembina'
+          AND LOWER(sp.status_akhir) LIKE '%ditolak%'
+    ");
+
+    $menunggu_orm  = mysqli_fetch_assoc($qOrmMenunggu)['total'] ?? 0;
+    $disetujui_orm = mysqli_fetch_assoc($qOrmDisetujui)['total'] ?? 0;
+    $ditolak_orm   = mysqli_fetch_assoc($qOrmDitolak)['total'] ?? 0;
+}
+
+// -------------------------------------------------------------
+// TOTAL
+// -------------------------------------------------------------
+$menunggu  = $menunggu_aka + $menunggu_orm;
+$disetujui = $disetujui_aka + $disetujui_orm;
+$ditolak   = $ditolak_aka + $ditolak_orm;
 ?>
 
 <!DOCTYPE html>
@@ -88,7 +165,7 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
         <div class="navbar-nav">
             <a href="#home">Beranda</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -96,13 +173,15 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
                         <a href="dosen_permohonan_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_permohonan_ormawa.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php else: ?>
-                <a href="dosen_permohonan_akademik.php">Verifikasi Permohonan</a>
+                <a href="dosen_permohonan_akademik.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php endif; ?>
 
             <a href="#riwayat">Informasi Persuratan</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -110,8 +189,10 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
                         <a href="dosen_riwayat_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_riwayat_ormawa.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php else: ?>
-                <a href="dosen_riwayat_akademik.php">Riwayat Verifikasi</a>
+                <a href="dosen_riwayat_akademik.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php endif; ?>
         </div>
 
@@ -304,8 +385,7 @@ $ditolak = mysqli_fetch_assoc($qDitolak)['total'] ?? 0;
                     }
                 });
             }
-        </script>
-        <script>
+
             document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.querySelector('.navbar-nav')?.classList.toggle('active');

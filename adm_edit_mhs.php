@@ -79,9 +79,6 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
     <div class="edit-container">
         <div class="edit-card-header">
             <h2 class="edit-card-title">Ubah Data Mahasiswa</h2>
-            <a href="adm_kelola_mhs.php" class="btn-back-link aksi-batal">
-                <i class="fa-solid fa-arrow-left"></i> Kembali ke Tabel
-            </a>
         </div>
 
         <form method="POST" action="" id="form-edit-mhs">
@@ -150,7 +147,6 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
                         </select>
                     </div>
 
-
                     <div class="form-group">
                         <label>Dosen Pembimbing Skripsi 2</label>
                         <select name="id_pb2" class="form-control select-cari-dosen">
@@ -166,7 +162,7 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
 
                 <div class="form-actions">
                     <a href="adm_kelola_mhs.php" class="btn-cancel aksi-batal">Batal</a>
-                    <button type="submit" class="btn-save form-edit-mhs"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                    <button type="submit" class="btn-save form-edit-mhs">Simpan Perubahan</button>
                 </div>
 
             </div>

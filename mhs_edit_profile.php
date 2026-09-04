@@ -19,12 +19,30 @@ while ($d = mysqli_fetch_assoc($queryDosen)) {
     $daftar_dosen[] = $d;
 }
 
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
 $teks_status = ($data['status'] == 1) ? 'Aktif' : 'Menunggu / Nonaktif';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nama_mhs = mysqli_real_escape_string($koneksi, $_POST['nama_mhs']);
     $email    = mysqli_real_escape_string($koneksi, $_POST['email']);
     $id_prodi = mysqli_real_escape_string($koneksi, $_POST['id_prodi']);
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match("/\.[a-zA-Z]{2,}$/", $email)) {
+        $_SESSION['pesan']  = "Format email tidak valid atau kurang lengkap! Pastikan menggunakan ekstensi domain (contoh: .com).";
+        $_SESSION['status'] = "error";
+
+        header("Location: mhs_edit_profile.php");
+        exit;
+    }
 
     $id_pa  = !empty($_POST['id_pa']) ? $_POST['id_pa'] : NULL;
     $id_pb1 = !empty($_POST['id_pb1']) ? $_POST['id_pb1'] : NULL;
@@ -84,32 +102,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <a href="mhs_beranda.php#home">Beranda</a>
             <a href="mhs_beranda.php#services">Pengajuan Surat</a>
             <a href="mhs_beranda.php#status-info">Status & Informasi</a>
-            <a href="mhs_lacak.php">Lacak Surat</a>
             <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <a href="#" class="user-info-link">
-                        <div class="user-info">
-                            <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
-                            <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
                         </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </a>
                 </div>
             </div>
@@ -142,7 +153,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <div class="data-group">
                         <label>Email</label>
-                        <input type="email" name="email" class="data-input-field" value="<?= htmlspecialchars($data['email'] ?? ''); ?>" required>
+                        <input type="email"
+                            name="email"
+                            class="data-input-field"
+                            value="<?= htmlspecialchars($data['email'] ?? ''); ?>"
+                            pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                            title="Masukkan format email yang valid dan lengkap (contoh: emailanda@gmail.com)"
+                            required>
                     </div>
 
                     <div class="data-group">
@@ -211,7 +228,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="profile-action-bar">
                 <a href="mhs_profile.php" class="btn-secondary aksi-batal">Batal</a>
                 <button type="submit" class="btn-primary">
-                    <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+                    Simpan Perubahan
                 </button>
             </div>
         </form>
@@ -222,6 +239,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </footer>
 
     <script>
+        // Mengelola dropdown menu pengguna
+        document.addEventListener('DOMContentLoaded', function() {
+            const userBtn = document.getElementById('user-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            if (userBtn && dropdown) {
+                userBtn.addEventListener('click', function(event) {
+                    dropdown.classList.toggle('show');
+                    event.stopPropagation();
+                });
+
+                window.addEventListener('click', function(event) {
+                    if (!event.target.matches('#user-btn') && !event.target.closest('#user-btn')) {
+                        if (dropdown.classList.contains('show')) {
+                            dropdown.classList.remove('show');
+                        }
+                    }
+                });
+            }
+        });
+
         //fungsi dropdown pilih dosen PA, Pembimbing Skripsi 1, dan Pembimbing Skripsi 2
         $(document).ready(function() {
             $('.select-cari-dosen').select2({
@@ -282,6 +320,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
         });
+
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
     </script>
 </body>
 

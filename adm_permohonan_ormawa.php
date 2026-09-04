@@ -7,54 +7,54 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit;
 }
 
+date_default_timezone_set('Asia/Jakarta');
+$waktu_sekarang = date('Y-m-d H:i:s');
+
 $keyword         = $_GET['keyword'] ?? '';
 $id_jenis_filter = $_GET['id_jenis'] ?? '';
 $detail_id       = $_GET['detail'] ?? '';
 
 /* ===========================
-   PROSES JADWAL & TOLAK
+   PROSES TERUSKAN & KEMBALIKAN
 =========================== */
 if (isset($_POST['aksi_admin'])) {
     $id_surat = (int) $_POST['id_surat'];
     $aksi     = $_POST['aksi_admin'];
 
-    if ($aksi == "jadwal") {
-        $tanggal = $_POST['tanggal_kegiatan'];
-        $mulai   = $_POST['jam_mulai'];
-        $selesai = $_POST['jam_selesai'];
-        $catatan = mysqli_real_escape_string($koneksi, $_POST['catatan']);
-
+    // AKSI: TERUSKAN KE PIMPINAN
+    if ($aksi == "teruskan") {
         $cekJenis = mysqli_fetch_assoc(mysqli_query($koneksi, "
             SELECT js.nama_surat FROM surat_pengajuan sp
             JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.id_surat='$id_surat'
         "));
 
         if (stripos($cekJenis['nama_surat'], 'dana') !== false) {
-            mysqli_query($koneksi, "
-                UPDATE detail_pengajuan_dana
-                SET tanggal_jadwal='$tanggal', jam_mulai='$mulai', jam_selesai='$selesai', catatan='$catatan'
-                WHERE id_surat='$id_surat'
-            ");
+            // Surat DANA -> Untuk Wadek 2
+            $status_pimpinan = 'Menunggu Disposisi Wadek 2';
         } else {
-            mysqli_query($koneksi, "
-                UPDATE detail_peminjaman_ruangan
-                SET tanggal_mulai='$tanggal', tanggal_selesai='$tanggal', jam_mulai='$mulai', jam_selesai='$selesai', catatan='$catatan'
-                WHERE id_surat='$id_surat'
-            ");
+            // Surat RUANGAN -> Untuk Kasubbag TU
+            $status_pimpinan = 'Menunggu Disposisi Kasubbag TU';
         }
 
         mysqli_query($koneksi, "
             UPDATE surat_pengajuan
-            SET status_akhir='Selesai', status_keputusan='Disetujui', posisi_sekarang='Selesai'
-            WHERE id_surat='$id_surat'
+            SET status_akhir = '$status_pimpinan', 
+                posisi_sekarang = 'Pimpinan',
+                tujuan_admin = NULL,
+                waktu_verif_admin='$waktu_sekarang'
+            WHERE id_surat = '$id_surat'
         ");
 
-        header("Location: adm_permohonan_ormawa.php");
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan']  = 'Permohonan berhasil diteruskan ke Pimpinan terkait.';
+        header("Location: adm_riwayat_ormawa.php");
         exit;
     }
 
-    if ($aksi == "tolak_ormawa") {
-        $catatan = mysqli_real_escape_string($koneksi, $_POST['catatan']);
+    // AKSI: KEMBALIKAN PERMOHONAN (REVISI)
+    if ($aksi == "kembalikan") {
+        $catatan = mysqli_real_escape_string($koneksi, $_POST['catatan'] ?? '');
+
         $cekJenis = mysqli_fetch_assoc(mysqli_query($koneksi, "
             SELECT js.nama_surat FROM surat_pengajuan sp
             JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.id_surat='$id_surat'
@@ -68,9 +68,14 @@ if (isset($_POST['aksi_admin'])) {
 
         mysqli_query($koneksi, "
             UPDATE surat_pengajuan
-            SET status_akhir='Ditolak Admin', status_keputusan='Ditolak', posisi_sekarang='Selesai'
-            WHERE id_surat='$id_surat'
+            SET status_akhir = 'Perbaikan', 
+                posisi_sekarang = 'Mahasiswa',
+                waktu_verif_admin='$waktu_sekarang'
+            WHERE id_surat = '$id_surat'
         ");
+
+        $_SESSION['status'] = 'success';
+        $_SESSION['pesan'] = 'Permohonan dikembalikan ke mahasiswa untuk perbaikan.';
         header("Location: adm_permohonan_ormawa.php");
         exit;
     }
@@ -145,7 +150,7 @@ if ($detail_id != "") {
             dpr.jam_mulai AS jam_mulai_ruangan, dpr.jam_selesai AS jam_selesai_ruangan, dpr.catatan AS catatan_ruangan,
             
             -- Data Pengajuan Dana
-            dpd.nama_kegiatan AS nama_kegiatan_dana, dpd.tema_kegiatan, dpd.tempat_kegiatan, dpd.tanggal_kegiatan AS tanggal_kegiatan_dana, dpd.proposal AS proposal_dana,
+            dpd.nama_kegiatan AS nama_kegiatan_dana, dpd.tempat_kegiatan, dpd.tanggal_kegiatan AS tanggal_kegiatan_dana, dpd.proposal AS proposal_dana,
             dpd.tanggal_jadwal AS tanggal_jadwal_dana, dpd.jam_mulai AS jam_mulai_dana, dpd.jam_selesai AS jam_selesai_dana, dpd.catatan AS catatan_dana
             
         FROM surat_pengajuan sp
@@ -158,6 +163,7 @@ if ($detail_id != "") {
     $detail = mysqli_fetch_assoc($query_detail);
 }
 
+$hari_array = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
 $array_bulan = [
     1 => 'Januari',
     'Februari',
@@ -174,11 +180,11 @@ $array_bulan = [
 ];
 
 $tglDana = !empty($detail['tanggal_kegiatan_dana'])
-    ? date('d', strtotime($detail['tanggal_kegiatan_dana'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_kegiatan_dana']))] . ' ' . date('Y', strtotime($detail['tanggal_kegiatan_dana']))
+    ? $hari_array[date('w', strtotime($detail['tanggal_kegiatan_dana']))] . ', ' . date('d', strtotime($detail['tanggal_kegiatan_dana'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_kegiatan_dana']))] . ' ' . date('Y', strtotime($detail['tanggal_kegiatan_dana']))
     : '-';
 
 $tglMulai = !empty($detail['tanggal_mulai'])
-    ? date('d', strtotime($detail['tanggal_mulai'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_mulai']))] . ' ' . date('Y', strtotime($detail['tanggal_mulai']))
+    ? $hari_array[date('w', strtotime($detail['tanggal_mulai']))] . ', ' . date('d', strtotime($detail['tanggal_mulai'])) . ' ' . $array_bulan[(int)date('m', strtotime($detail['tanggal_mulai']))] . ' ' . date('Y', strtotime($detail['tanggal_mulai']))
     : '-';
 ?>
 
@@ -224,10 +230,7 @@ $tglMulai = !empty($detail['tanggal_mulai'])
                                 <th>Nama Kegiatan</th>
                                 <td><?= htmlspecialchars($detail['nama_kegiatan_dana'] ?? '-'); ?></td>
                             </tr>
-                            <tr>
-                                <th>Tema Kegiatan</th>
-                                <td><?= htmlspecialchars($detail['tema_kegiatan'] ?? '-'); ?></td>
-                            </tr>
+
                             <tr>
                                 <th>Tempat Kegiatan</th>
                                 <td><?= htmlspecialchars($detail['tempat_kegiatan'] ?? '-'); ?></td>
@@ -246,7 +249,7 @@ $tglMulai = !empty($detail['tanggal_mulai'])
                                 <td><?= htmlspecialchars($detail['ruangan_yang_diajukan'] ?? '-'); ?></td>
                             </tr>
                             <tr>
-                                <th>Tanggal Kegiatan</th>
+                                <th>Hari & Tanggal Kegiatan</th>
                                 <td><?= $tglMulai; ?></td>
                             </tr>
                         <?php } ?>
@@ -292,7 +295,7 @@ $tglMulai = !empty($detail['tanggal_mulai'])
                                         $waktu = date('H:i', strtotime($jam_mulai_db)) . ' - ' . date('H:i', strtotime($jam_selesai_db)) . ' WIB';
 
                                         echo '<i class="fa-regular fa-calendar-days icon-jadwal"></i> ' . $tanggal;
-                                        echo '<span class="jadwal-separator" style="margin: 0 10px;">||</span>';
+                                        echo '<span class="jadwal-separator">||</span>';
                                         echo '<i class="fa-regular fa-clock icon-jadwal"></i> ' . $waktu;
                                     } else {
                                         echo '<i class="fa-solid fa-circle-exclamation icon-jadwal"></i> Jadwal belum ditentukan';
@@ -302,72 +305,124 @@ $tglMulai = !empty($detail['tanggal_mulai'])
                             </tr>
                         <?php } ?>
 
+                        <?php
+                        $catatan_admin = !empty($detail['catatan_dana']) ? $detail['catatan_dana'] : (!empty($detail['catatan_ruangan']) ? $detail['catatan_ruangan'] : '');
+
+                        if (!empty($catatan_admin)):
+                        ?>
+                            <tr>
+                                <th>Keterangan Audiensi</th>
+                                <td <td class="keterangan-audiensi-cell">
+                                    <?= nl2br(htmlspecialchars($catatan_admin)); ?>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+
                         <?php if ($status_ditolak && !empty($catatan_db)) { ?>
                             <tr>
                                 <th>Catatan Penolakan</th>
-                                <td class="status-tolak" style="color: #dc2626;">
+                                <td class="status-tolak">
                                     <?= nl2br(htmlspecialchars($catatan_db)); ?>
                                 </td>
                             </tr>
                         <?php } ?>
                     </table>
 
-                    <h3 class="section-title mt-4">Dokumen Pendukung</h3>
-                    <div class="document-box">
-                        <p><i class="fa-solid fa-file-circle-check icon-spacing"></i> Klik tombol di bawah untuk memeriksa lampiran sebelum menindaklanjuti permohonan.</p>
+                    <?php
+                    $isDana = (stripos($detail['nama_surat'], 'dana') !== false);
+                    ?>
 
-                        <div class="document-buttons">
-                            <?php
-                            if ($isDana) {
-                                $filePreview = "preview_pengajuan_dana.php?id=" . $detail['id_surat'] . "&mode=view";
-                                $proposalFile = $detail['proposal_dana'] ?? '';
-                            } else {
-                                $filePreview = "preview_peminjaman_ruangan.php?id=" . $detail['id_surat'] . "&mode=view";
-                                $proposalFile = $detail['proposal'] ?? '';
-                            }
-                            ?>
-                            <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $filePreview; ?>')">
-                                Surat Permohonan
-                            </a>
+                    <form method="POST" class="document-box" id="formVerifikasi" action="adm_permohonan_ormawa.php">
+                        <input type="hidden" name="id_surat" value="<?= $detail['id_surat']; ?>">
+                        <input type="hidden" name="aksi_admin" id="aksiInput" value="">
+                        <input type="hidden" name="catatan" id="catatanInput" value="">
 
-                            <?php if (!empty($proposalFile)) { ?>
-                                <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($proposalFile); ?>')">
-                                    Proposal Kegiatan
-                                </a>
-                            <?php } else { ?>
-                                <span class="btn-disabled">Proposal Belum Ada</span>
-                            <?php } ?>
-                        </div>
-                    </div>
-
-                    <div class="action-panel">
                         <?php
                         $asal_halaman = $_GET['asal'] ?? '';
 
-                        if ($asal_halaman == 'laporan') {
+                        if ($asal_halaman == 'riwayat') {
+                            $link_kembali = 'adm_riwayat_ormawa.php';
+                        } elseif ($asal_halaman == 'laporan') {
                             $link_kembali = 'adm_laporan_ormawa.php';
                         } else {
                             $link_kembali = 'adm_permohonan_ormawa.php';
                         }
+
+                        $is_menunggu_admin = ($detail['status_akhir'] == 'Menunggu Admin');
                         ?>
 
-                        <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">
-                            Kembali
-                        </a>
+                        <h3 class="section-title mt-4">Dokumen Pendukung</h3>
+                        <div class="document-box">
+                            <?php if ($is_menunggu_admin): ?>
+                                <p><i class="fa-solid fa-file-circle-check icon-spacing"></i> Periksa kelengkapan berkas di bawah ini dan beri centang 'Sesuai' sebelum meneruskan permohonan.</p>
+                            <?php else: ?>
+                                <p><i class="fa-solid fa-file-circle-check icon-spacing"></i> Status validasi berkas lampiran yang telah diajukan.</p>
+                            <?php endif; ?>
 
-                        <?php
-                        if ($asal_halaman != 'laporan'):
-                        ?>
-                            <div class="form-action-group">
-                                <button type="button" class="btn-styled btn-reject" onclick="konfirmasiTolak()">
-                                    Tolak
-                                </button>
-                                <button type="button" class="btn-styled btn-approve" onclick="bukaModalJadwal()">
-                                    Atur Jadwal
-                                </button>
+                            <div class="document-buttons-custom">
+                                <?php
+                                if ($isDana) {
+                                    $filePreview = "preview_pengajuan_dana.php?id=" . $detail['id_surat'] . "&mode=view";
+                                    $proposalFile = $detail['proposal_dana'] ?? '';
+                                } else {
+                                    $filePreview = "preview_peminjaman_ruangan.php?id=" . $detail['id_surat'] . "&mode=view";
+                                    $proposalFile = $detail['proposal'] ?? '';
+                                }
+                                ?>
+
+                                <!-- Surat Permohonan (Dihasilkan Sistem) -->
+                                <div class="document-item-row document-item-draft">
+                                    <a href="#" class="document-link-item" onclick="bukaPreview('<?= $filePreview; ?>')">
+                                        <i class="fa-solid fa-file-lines document-icon-blue"></i> Surat Permohonan
+                                    </a>
+                                    <span class="document-system-note">Dihasilkan oleh sistem</span>
+                                </div>
+
+                                <!-- Proposal Kegiatan -->
+                                <?php if (!empty($proposalFile)) { ?>
+                                    <div class="document-item-row">
+                                        <a href="#" class="document-link-item" onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($proposalFile); ?>')">
+                                            <i class="fa-solid fa-paperclip document-icon-amber"></i> Proposal Kegiatan
+                                        </a>
+
+                                        <?php if ($is_menunggu_admin): ?>
+                                            <label class="checkbox-label-valid">
+                                                <input type="checkbox" class="checkbox-input-custom required-checkbox"> Sesuai
+                                            </label>
+                                        <?php else: ?>
+                                            <?php
+                                            $statusAkhirL = strtolower($detail['status_akhir']);
+                                            if (strpos($statusAkhirL, 'ditolak admin') !== false || strpos($statusAkhirL, 'perbaikan') !== false) {
+                                                echo '<span class="badge-status-doc badge-invalid"><i class="fa-solid fa-circle-xmark"></i> Perlu Perbaikan</span>';
+                                            } else {
+                                                echo '<span class="badge-status-doc badge-valid"><i class="fa-solid fa-circle-check"></i> Sesuai</span>';
+                                            }
+                                            ?>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php } else { ?>
+                                    <p class='text-error-doc'>
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Proposal Belum Ada.
+                                    </p>
+                                <?php } ?>
                             </div>
-                        <?php endif; ?>
-                    </div>
+                        </div>
+
+                        <div class="action-panel-sec action-panel-custom-sec">
+                            <a href="<?= $link_kembali; ?>" class="btn-styled btn-back">Kembali</a>
+
+                            <?php if ($asal_halaman != 'laporan' && $is_menunggu_admin): ?>
+                                <div class="action-buttons-group">
+                                    <button type="button" class="btn-styled btn-reject-amber" onclick="konfirmasiRevisi()" title="Kembalikan untuk direvisi">
+                                        Kembalikan Permohonan
+                                    </button>
+                                    <button type="button" class="btn-styled btn-approve" onclick="konfirmasiAksi('teruskan', 'Yakin ingin meneruskan permohonan ini ke pimpinan?', 'question')">
+                                        Teruskan ke Pimpinan
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </form>
                 </div>
 
             <?php } else { ?>
@@ -476,48 +531,6 @@ $tglMulai = !empty($detail['tanggal_mulai'])
         </div>
     </div>
 
-    <!-- MODAL ATUR JADWAL -->
-    <div id="modalJadwal" class="modal-preview">
-        <div class="modal-content-preview">
-            <h3>Atur Jadwal Pertemuan Ormawa dan Pimpinan</h3>
-
-            <form method="POST" onsubmit="konfirmasiAturJadwal(event, this); return false;">
-                <input type="hidden" name="id_surat" value="<?= $detail['id_surat'] ?? ''; ?>">
-                <input type="hidden" name="aksi_admin" value="jadwal">
-
-                <div class="form-group">
-                    <label>Tanggal</label>
-                    <input type="date" name="tanggal_kegiatan" class="form-control" required>
-                </div>
-
-                <div class="modal-row-time">
-                    <div class="form-group modal-col-time">
-                        <label>Jam Mulai</label>
-                        <input type="time" name="jam_mulai" class="form-control" required>
-                    </div>
-                    <div class="form-group modal-col-time">
-                        <label>Jam Selesai</label>
-                        <input type="time" name="jam_selesai" class="form-control" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Catatan Admin</label>
-                    <textarea name="catatan" class="form-control" rows="3" placeholder="Masukkan catatan atau keterangan tambahan (opsional)"></textarea>
-                </div>
-
-                <div class="modal-footer-actions">
-                    <button type="button" class="btn-modal-cancel" onclick="konfirmasiBatal('modalJadwal')">
-                        Batal
-                    </button>
-                    <button type="submit" class="btn-modal-submit">
-                        Simpan Jadwal
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         function bukaPreview(url) {
             document.getElementById('previewFrame').src = url;
@@ -527,76 +540,6 @@ $tglMulai = !empty($detail['tanggal_mulai'])
         function tutupPreview() {
             document.getElementById('modalPreview').style.display = 'none';
             document.getElementById('previewFrame').src = '';
-        }
-
-        function bukaModalJadwal() {
-            document.getElementById('modalJadwal').style.display = 'flex';
-        }
-
-        function tutupModalJadwal() {
-            document.getElementById('modalJadwal').style.display = 'none';
-        }
-
-        // Fungsi Konfirmasi simpan jadwal Permohonan
-        function konfirmasiAturJadwal(event, formElement) {
-            event.preventDefault();
-            Swal.fire({
-                title: 'Konfirmasi Jadwal',
-                text: 'Yakin ingin menyimpan jadwal dan menyelesaikan permohonan ini?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Simpan',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    formElement.submit();
-                }
-            });
-        }
-
-        // Konfirmasi membatalkan pengisian form
-        function konfirmasiBatal(modalId) {
-            Swal.fire({
-                title: 'Batalkan?',
-                text: 'Data yang sudah diisi tidak akan disimpan.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Batalkan',
-                cancelButtonText: 'Lanjutkan Mengisi'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById(modalId).style.display = 'none';
-                }
-            });
-        }
-
-        // Fungsi Konfirmasi Tolak Permohonan
-        function konfirmasiTolak() {
-            Swal.fire({
-                title: 'Alasan Penolakan',
-                input: 'textarea',
-                inputPlaceholder: 'Masukkan alasan spesifik penolakan permohonan...',
-                showCancelButton: true,
-                confirmButtonText: 'Kirim',
-                cancelButtonText: 'Batal',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#64748b',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'Anda harus mengisi alasan penolakan terlebih dahulu!';
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('catatanInput').value = result.value;
-                    document.getElementById('aksiInput').value = 'tolak';
-                    document.getElementById('formVerifikasi').submit();
-                }
-            });
         }
 
         // Fungsi Konfirmasi hapus Permohonan
@@ -613,6 +556,48 @@ $tglMulai = !empty($detail['tanggal_mulai'])
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = 'adm_permohonan_ormawa.php?hapus=' + id;
+                }
+            });
+        }
+
+        function konfirmasiRevisi() {
+            Swal.fire({
+                title: 'Catatan Revisi Kesalahan',
+                input: 'textarea',
+                inputPlaceholder: 'Sebutkan bagian data atau berkas yang salah agar diperbaiki oleh Ormawa / UKM...',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#64748b',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Anda harus menuliskan catatan atau alasan revisi terlebih dahulu!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('catatanInput').value = result.value;
+                    document.getElementById('aksiInput').value = 'revisi';
+                    document.getElementById('formVerifikasi').submit();
+                }
+            });
+        }
+
+        function konfirmasiAksi(aksi, pesan, icon) {
+            Swal.fire({
+                title: 'Konfirmasi Tindakan',
+                text: pesan,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('aksiInput').value = aksi;
+                    document.getElementById('formVerifikasi').submit();
                 }
             });
         }

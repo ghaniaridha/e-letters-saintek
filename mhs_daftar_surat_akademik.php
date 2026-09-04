@@ -1,6 +1,40 @@
 <?php
 session_start();
 include "koneksi.php";
+
+$namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
+$idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
+$role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
+
+$inisial = '';
+$namaParts = explode(' ', $namaLengkap);
+if (!empty($namaParts)) {
+    $inisial = strtoupper(substr($namaParts[0], 0, 1));
+}
+
+function getSyaratSurat($koneksi, $id_jenis)
+{
+    $query = "SELECT s.nama_syarat, s.format_file 
+              FROM syarat_jenis_surat p 
+              JOIN master_syarat s ON p.id_syarat = s.id_syarat 
+              WHERE p.id_jenis = '$id_jenis'";
+
+    $result = mysqli_query($koneksi, $query);
+    $list_syarat = [];
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $format = !empty($row['format_file']) ? " (" . strtoupper($row['format_file']) . ")" : "";
+        $list_syarat[] = $row['nama_syarat'] . $format;
+    }
+
+    return json_encode($list_syarat);
+}
+
+$syarat_riset    = getSyaratSurat($koneksi, 1);
+$syarat_magang   = getSyaratSurat($koneksi, 4);
+$syarat_skmk     = getSyaratSurat($koneksi, 5);
+$syarat_skl      = getSyaratSurat($koneksi, 14);
+$syarat_sk_aktif = getSyaratSurat($koneksi, 3);
 ?>
 
 <!DOCTYPE html>
@@ -15,6 +49,8 @@ include "koneksi.php";
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     </ /link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -28,31 +64,26 @@ include "koneksi.php";
             <a href="mhs_beranda.php#home">Beranda</a>
             <a href="mhs_beranda.php#services">Pengajuan Surat</a>
             <a href="mhs_beranda.php#status-info">Status & Informasi</a>
-            <a href="mhs_lacak.php">Lacak Surat</a>
             <a href="mhs_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <?php
-                $namaLengkap = isset($_SESSION['nama_lengkap']) ? $_SESSION['nama_lengkap'] : 'Pengguna';
-                $idLogin = isset($_SESSION['nama']) ? $_SESSION['nama'] : '';
-                $role = isset($_SESSION['role']) ? ucwords($_SESSION['role']) : 'ROLE';
-
-                $inisial = '';
-                $namaParts = explode(' ', $namaLengkap);
-                if (!empty($namaParts)) {
-                    $inisial = strtoupper(substr($namaParts[0], 0, 1));
-                }
-                ?>
                 <button id="user-btn" class="user-btn">
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -111,23 +142,74 @@ include "koneksi.php";
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="mhs_form_surat_riset.php?id_jenis=1">
+            <!-- Baris 1 -->
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Permohonan Riset",
+                <?= $syarat_riset; ?>,
+                "mhs_form_surat_riset.php?id_jenis=1"
+            )'>
                 <div class="layanan-content">
                     <h3>Permohonan<br>Riset</h3>
                 </div>
             </a>
 
-            <a class="layanan-card" href="mhs_form_surat_magang.php?id_jenis=4">
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Izin Magang",
+                <?= $syarat_magang; ?>,
+                "mhs_form_surat_magang.php?id_jenis=4"
+            )'>
                 <div class="layanan-content">
                     <h3>Izin<br>Magang</h3>
                 </div>
             </a>
 
-            <a class="layanan-card" href="mhs_form_sk_aktif_kuliah.php">
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Surat Keterangan Lulus",
+                <?= $syarat_skl; ?>,
+                "mhs_form_sk_lulus.php"
+            )'>
                 <div class="layanan-content">
-                    <h3>Keterangan<br>Aktif Kuliah Kembali</h3>
+                    <h3>Surat Keterangan<br>Lulus</h3>
                 </div>
             </a>
+
+            <!-- Baris 2 -->
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Surat Keterangan Masih Kuliah",
+                <?= $syarat_skmk; ?>,
+                "mhs_form_skmk.php?id_jenis=5"
+            )'>
+                <div class="layanan-content">
+                    <h3>Surat Keterangan<br>Masih Kuliah</h3>
+                </div>
+            </a>
+
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Surat Keterangan Aktif Kuliah Kembali",
+                <?= $syarat_sk_aktif; ?>,
+                "mhs_form_sk_aktif_kuliah.php"
+            )'>
+                <div class="layanan-content">
+                    <h3>Surat Keterangan<br>Aktif Kuliah Kembali</h3>
+                </div>
+            </a>
+        </div>
+
+        <div id="modalSyarat" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3 id="modalJudulSurat">Persyaratan Pengajuan</h3>
+                    <span class="btn-close" onclick="tutupModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>Pastikan Anda telah menyiapkan dokumen berikut dalam format digital sebelum melanjutkan:</p>
+                    <ul id="modalListSyarat"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-batal" onclick="tutupModal()">Batal</button>
+                    <a id="btnLanjutForm" href="#" class="btn-lanjut">Lanjutkan</a>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -203,8 +285,34 @@ include "koneksi.php";
                 }
             });
         });
-    </script>
-    <script>
+
+        function bukaModalSyarat(judul, daftarSyarat, urlForm) {
+            document.getElementById('modalJudulSurat').innerText = 'Syarat ' + judul;
+
+            let listContainer = document.getElementById('modalListSyarat');
+            listContainer.innerHTML = '';
+
+            daftarSyarat.forEach(function(syarat) {
+                let li = document.createElement('li');
+                li.innerText = syarat;
+                listContainer.appendChild(li);
+            });
+
+            document.getElementById('btnLanjutForm').setAttribute('href', urlForm);
+            document.getElementById('modalSyarat').style.display = 'flex';
+        }
+
+        function tutupModal() {
+            document.getElementById('modalSyarat').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('modalSyarat');
+            if (event.target == modal) {
+                tutupModal();
+            }
+        }
+
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelector('.navbar-nav')?.classList.toggle('active');
@@ -213,6 +321,26 @@ include "koneksi.php";
             e.preventDefault();
             document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
+
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
     </script>
 </body>
 

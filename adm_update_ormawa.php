@@ -7,59 +7,38 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if (isset($_GET['id'])) {
+    $id = mysqli_real_escape_string($koneksi, $_GET['id']);
+    $nama_ormawa = mysqli_real_escape_string($koneksi, $_GET['nama']);
+    $singkatan = mysqli_real_escape_string($koneksi, $_GET['singkatan']);
+    $username = mysqli_real_escape_string($koneksi, $_GET['username']);
 
-    $id = mysqli_real_escape_string($koneksi, $_POST['id_ormawa']);
-
-    $nama_ormawa = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['nama_ormawa']
-    );
-
-    $username = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['username']
-    );
-
-    $id_prodi = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['id_prodi']
-    );
-
-    $id_pembina = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['id_pembina']
-    );
-
-    $update = mysqli_query($koneksi,"
-        UPDATE ormawa
-        SET
-            nama_ormawa = '$nama_ormawa',
-            username = '$username',
-            id_prodi = '$id_prodi',
-            id_pembina = '$id_pembina'
-        WHERE id_ormawa = '$id'
-    ");
-
-    if($update){
-
-        $_SESSION['status'] = "success";
-        $_SESSION['pesan']  = "Data ormawa berhasil diperbarui.";
-
-    }else{
-
-        $_SESSION['status'] = "error";
-        $_SESSION['pesan']  = "Gagal memperbarui data ormawa.";
-
+    $update_pembina_query = "";
+    if (!empty($_GET['id_pembina'])) {
+        $id_pembina = mysqli_real_escape_string($koneksi, $_GET['id_pembina']);
+        $update_pembina_query = ", id_pembina = '$id_pembina'";
     }
 
-}else{
+    $query = "UPDATE ormawa SET 
+                nama_ormawa = '$nama_ormawa',
+                singkatan_ormawa = '$singkatan',
+                username = '$username'
+                $update_pembina_query
+              WHERE id_ormawa = '$id'";
 
+    $update = mysqli_query($koneksi, $query);
+
+    if ($update) {
+        $_SESSION['status'] = "success";
+        $_SESSION['pesan']  = "Data organisasi berhasil diperbarui.";
+    } else {
+        $_SESSION['status'] = "error";
+        $_SESSION['pesan']  = "Gagal memperbarui data: " . mysqli_error($koneksi);
+    }
+} else {
     $_SESSION['status'] = "error";
     $_SESSION['pesan']  = "Akses tidak valid.";
-
 }
 
 header("Location: adm_kelola_ormawa.php");
 exit;
-?>

@@ -6,7 +6,6 @@ if (session_status() === PHP_SESSION_NONE) {
 include "koneksi.php";
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
-    echo "<script>alert('Silakan login sebagai admin'); window.location='login.php';</script>";
+    echo "<script>alert('Silakan login sebagai admin'); window.location='index.php';</script>";
     exit;
 }
-?>

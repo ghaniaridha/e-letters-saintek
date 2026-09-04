@@ -24,7 +24,6 @@ if (isset($_GET['id'])) {
     $id_ormawa        = $data_kombinasi['id_ormawa'];
     $nomor_surat       = $data_kombinasi['nomor_surat'] ?? '-';
     $nama_kegiatan    = $data_kombinasi['nama_kegiatan'];
-    $tema_kegiatan      = $data_kombinasi['tema_kegiatan'];
     $tempat_kegiatan    = $data_kombinasi['tempat_kegiatan'];
     $tanggal_kegiatan   = $data_kombinasi['tanggal_kegiatan'];
     $status_pembina   = $data_kombinasi['status_akhir'];
@@ -84,19 +83,38 @@ if (isset($_GET['id'])) {
 
     $nomor_surat        = htmlspecialchars($_POST['nomor_surat']);
     $nama_kegiatan      = htmlspecialchars($_POST['nama_kegiatan']);
-    $tema_kegiatan      = htmlspecialchars($_POST['tema_kegiatan']);
     $tempat_kegiatan    = htmlspecialchars($_POST['tempat_kegiatan']);
     $tanggal_kegiatan   = htmlspecialchars($_POST['tanggal_kegiatan']);
 }
 
 $ormawa = mysqli_fetch_assoc(mysqli_query($koneksi, "
-    SELECT o.*, d.nama_dosen AS nama_pembina,
-           d.nip AS nip_pembina,
-           d.kode_ttd_qr AS qr_pembina
+    SELECT o.*, 
+           p.nama_prodi,
+           p.id_kaprodi,
+           d_ukm.nama_dosen AS nama_pembina_ukm,
+           d_ukm.nip AS nip_pembina_ukm,
+           d_ukm.kode_ttd_qr AS qr_pembina_ukm,
+           d_kaprodi.nama_dosen AS nama_kaprodi,
+           d_kaprodi.nip AS nip_kaprodi,
+           d_kaprodi.kode_ttd_qr AS qr_kaprodi
     FROM ormawa o
-    LEFT JOIN dosen d ON o.id_pembina=d.id_dosen
+    LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
+    LEFT JOIN dosen d_ukm ON o.id_pembina = d_ukm.id_dosen
+    LEFT JOIN dosen d_kaprodi ON p.id_kaprodi = d_kaprodi.id_dosen
     WHERE o.id_ormawa='$id_ormawa'
 "));
+
+if ($ormawa['jenis_organisasi'] == 'Ormawa') {
+    $nama_penanggung_jawab = $ormawa['nama_kaprodi'];
+    $nip_penanggung_jawab = $ormawa['nip_kaprodi'];
+    $qr_penanggung_jawab = $ormawa['qr_kaprodi'];
+    $jabatan_surat = "KETUA PROGRAM STUDI " . strtoupper(htmlspecialchars($ormawa['nama_prodi'] ?? ''));
+} else {
+    $nama_penanggung_jawab = $ormawa['nama_pembina_ukm'];
+    $nip_penanggung_jawab = $ormawa['nip_pembina_ukm'];
+    $qr_penanggung_jawab = $ormawa['qr_pembina_ukm'];
+    $jabatan_surat = "DOSEN PEMBINA " . strtoupper(htmlspecialchars($ormawa['singkatan_ormawa'] ?? 'ORMAWA'));
+}
 
 $hari_array = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
 $array_bulan = [
@@ -228,12 +246,6 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
                 <td class="col-separator">:</td>
                 <td><?= htmlspecialchars($nama_kegiatan) ?></td>
             </tr>
-
-            <tr>
-                <td class="col-label">Tema Kegiatan</td>
-                <td class="col-separator">:</td>
-                <td><?= htmlspecialchars($tema_kegiatan) ?></td>
-            </tr>
         </table>
 
         <div class="ormawa-paragraf">
@@ -269,27 +281,26 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
 
             <div class="ormawa-ttd-pembina">
                 <div>Mengetahui,</div>
-                <div class="ormawa-jabatan-pembina">DOSEN PEMBINA <?= strtoupper(htmlspecialchars($ormawa['singkatan_ormawa'] ?? 'ORMAWA')) ?></div>
+                <div class="ormawa-jabatan-pembina"><?= $jabatan_surat ?></div>
 
                 <?php
                 $status_lower = strtolower($status_pembina);
                 $is_ditolak = (strpos($status_lower, 'ditolak') !== false);
-
                 $is_disetujui = ($status_pembina !== "Menunggu Persetujuan Pembina" && !empty($status_pembina) && !$is_ditolak);
 
-                if ($view_mode && $is_disetujui && !empty($ormawa['qr_pembina'])) {
-                    $link_pembina = $base_url . "/verifikasi.php?hash=" . $ormawa['qr_pembina'];
+                if ($view_mode && $is_disetujui && !empty($qr_penanggung_jawab)) {
+                    $link_pembina = $base_url . "/verifikasi.php?hash=" . $qr_penanggung_jawab;
                     $qr_pembina_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_pembina);
                 ?>
-                    <img src="<?= $qr_pembina_url ?>" alt="QR Pembina">
+                    <img src="<?= $qr_pembina_url ?>" alt="QR Penanggung Jawab">
                 <?php } else { ?>
                     <div class="ormawa-qr-placeholder" style="<?= $is_ditolak ? 'color: #dc2626; border-color: #dc2626;' : '' ?>">
                         <?= $is_ditolak ? 'Ditolak' : 'QR Belum Tersedia' ?>
                     </div>
                 <?php } ?>
 
-                <span class="ormawa-nama-ttd"><?= htmlspecialchars($ormawa['nama_pembina'] ?? '-') ?></span>
-                <span>NIP. <?= htmlspecialchars($ormawa['nip_pembina'] ?? '-') ?></span>
+                <span class="ormawa-nama-ttd"><?= htmlspecialchars($nama_penanggung_jawab ?? '-') ?></span>
+                <span>NIP. <?= htmlspecialchars($nip_penanggung_jawab ?? '-') ?></span>
             </div>
         </div>
     </div>
@@ -323,10 +334,6 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
                     <input type="hidden"
                         name="nama_kegiatan"
                         value="<?= htmlspecialchars($nama_kegiatan) ?>">
-
-                    <input type="hidden"
-                        name="tema_kegiatan"
-                        value="<?= htmlspecialchars($tema_kegiatan) ?>">
 
                     <input type="hidden"
                         name="tanggal_kegiatan"

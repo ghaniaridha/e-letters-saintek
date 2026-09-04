@@ -140,7 +140,7 @@ if (isset($data['status_pa']) && $data['status_pa'] == 'Disetujui' && !empty($da
                 <tr>
                     <td class="col-label">Lama Cuti</td>
                     <td class="col-separator">:</td>
-                    <td><?= htmlspecialchars($data['lama_cuti'] ?? ''); ?> Semester,</td>
+                    <td><?= htmlspecialchars($data['lama_cuti'] ?? ''); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">yaitu</td>
@@ -157,7 +157,7 @@ if (isset($data['status_pa']) && $data['status_pa'] == 'Disetujui' && !empty($da
             <p>
                 Dengan ini mengajukan permohonan untuk <strong>aktif kuliah kembali</strong> pada semester:
                 <strong><?= htmlspecialchars($data['semester_akademik'] ?? '..........'); ?></strong> tahun Akademik <strong><?= htmlspecialchars($data['tahun_akademik'] ?? '..../....'); ?></strong>
-                bersama ini saya lampirkan fotocopy Surat Keterangan Cuti yang pernah diambil.
+                bersama ini saya lampirkan Surat Keterangan Cuti yang pernah diambil.
             </p>
 
             <br>
@@ -211,8 +211,8 @@ if (isset($data['status_pa']) && $data['status_pa'] == 'Disetujui' && !empty($da
                 <a href="mhs_daftar_surat_akademik.php" class="btn-action btn-outline">
                     <i class="fa-solid fa-arrow-left"></i> Kembali
                 </a>
-                <a href="mhs_lacak.php?id=<?= $id ?>" class="btn-action btn-fill">
-                    <i class="fa-solid fa-route"></i> Lacak Surat
+                <a href="mhs_riwayat.php?id=<?= $id ?>" class="btn-action btn-fill">
+                    Selesai
                 </a>
             </div>
         </div>

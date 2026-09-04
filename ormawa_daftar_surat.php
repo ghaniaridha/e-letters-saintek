@@ -18,6 +18,27 @@ $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
+
+function getSyaratSurat($koneksi, $id_jenis)
+{
+    $query = "SELECT s.nama_syarat, s.format_file 
+              FROM syarat_jenis_surat p 
+              JOIN master_syarat s ON p.id_syarat = s.id_syarat 
+              WHERE p.id_jenis = '$id_jenis'";
+
+    $result = mysqli_query($koneksi, $query);
+    $list_syarat = [];
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $format = !empty($row['format_file']) ? " (" . strtoupper($row['format_file']) . ")" : "";
+        $list_syarat[] = $row['nama_syarat'] . $format;
+    }
+
+    return json_encode($list_syarat);
+}
+
+$syarat_ruangan = getSyaratSurat($koneksi, 11);
+$syarat_dana    = getSyaratSurat($koneksi, 12);
 ?>
 
 <!DOCTYPE html>
@@ -31,6 +52,8 @@ if (!empty($namaParts)) {
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css" media="screen" title="no title">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -44,7 +67,6 @@ if (!empty($namaParts)) {
             <a href="ormawa_beranda.php">Beranda</a>
             <a href="ormawa_beranda.php#services">Pengajuan Surat</a>
             <a href="ormawa_beranda.php#status-info">Status & Informasi</a>
-            <a href="ormawa_lacak.php">lacak surat</a>
             <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
         </div>
 
@@ -54,10 +76,17 @@ if (!empty($namaParts)) {
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= ($namaLengkap) ?></span>
-                        <span class="user-role"><?= $idLogin ?> - <?= $role ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -116,17 +145,43 @@ if (!empty($namaParts)) {
         </div>
 
         <div class="layanan-container">
-            <a class="layanan-card" href="ormawa_form_peminjaman_ruangan.php?id_jenis=1">
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Peminjaman Ruangan",
+                <?= $syarat_ruangan; ?>,
+                "ormawa_form_peminjaman_ruangan.php?id_jenis=11"
+            )'>
                 <div class="layanan-content">
                     <h3>Peminjaman<br>Ruangan</h3>
                 </div>
             </a>
 
-            <a class="layanan-card" href="ormawa_form_pengajuan_dana.php">
+            <a class="layanan-card" href="javascript:void(0)" onclick='bukaModalSyarat(
+                "Pengajuan Dana Kegiatan",
+                <?= $syarat_dana; ?>,
+                "ormawa_form_pengajuan_dana.php?id_jenis=12"
+            )'>
                 <div class="layanan-content">
                     <h3>Pengajuan Dana<br>Kegiatan</h3>
                 </div>
             </a>
+        </div>
+
+        <!-- Modal Syarat -->
+        <div id="modalSyarat" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3 id="modalJudulSurat">Persyaratan Pengajuan</h3>
+                    <span class="btn-close" onclick="tutupModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>Pastikan Anda telah menyiapkan dokumen berikut dalam format digital sebelum melanjutkan:</p>
+                    <ul id="modalListSyarat"></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-batal" onclick="tutupModal()">Batal</button>
+                    <a id="btnLanjutForm" href="#" class="btn-lanjut">Lanjutkan</a>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -203,6 +258,33 @@ if (!empty($namaParts)) {
             });
         });
 
+        function bukaModalSyarat(judul, daftarSyarat, urlForm) {
+            document.getElementById('modalJudulSurat').innerText = 'Syarat ' + judul;
+
+            let listContainer = document.getElementById('modalListSyarat');
+            listContainer.innerHTML = '';
+
+            daftarSyarat.forEach(function(syarat) {
+                let li = document.createElement('li');
+                li.innerText = syarat;
+                listContainer.appendChild(li);
+            });
+
+            document.getElementById('btnLanjutForm').setAttribute('href', urlForm);
+            document.getElementById('modalSyarat').style.display = 'flex';
+        }
+
+        function tutupModal() {
+            document.getElementById('modalSyarat').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('modalSyarat');
+            if (event.target == modal) {
+                tutupModal();
+            }
+        }
+
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelector('.navbar-nav')?.classList.toggle('active');
@@ -211,6 +293,26 @@ if (!empty($namaParts)) {
             e.preventDefault();
             document.querySelector('.my-navbar-nav')?.classList.toggle('active');
         });
+
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
     </script>
 </body>
 

@@ -36,17 +36,17 @@ if (!$data) {
     exit;
 }
 
-$query_dekan = mysqli_query($koneksi, "
+$query_pimpinan = mysqli_query($koneksi, "
     SELECT nama_dosen, nip 
     FROM dosen 
-    WHERE jabatan = 'Dekan' OR jabatan LIKE 'Dekan Fakultas%' 
+    WHERE jabatan LIKE '%wadek 1%' OR jabatan LIKE '%wakil dekan 1%' 
     LIMIT 1
 ");
 
-$data_dekan = mysqli_fetch_assoc($query_dekan);
+$data_pimpinan = mysqli_fetch_assoc($query_pimpinan);
 
-$nama_dekan = $data_dekan['nama_dosen'] ?? 'Nama Dekan Belum Diatur';
-$nip_dekan  = $data_dekan['nip'] ?? '-';
+$nama_wadek1 = $data_pimpinan['nama_dosen'] ?? 'Nama Pimpinan Belum Diatur';
+$nip_wadek1  = $data_pimpinan['nip'] ?? '-';
 
 if (isset($_POST['kirim_balasan'])) {
     $nama_file = "surat_resmi_izin_magang_" . $id_surat . "_" . time() . ".pdf";
@@ -160,14 +160,16 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <tr>
                     <td>Nomor</td>
                     <td>:</td>
-                    <td><?= htmlspecialchars($nomorSurat); ?></td>
+                    <td class="no-wrap"><?= htmlspecialchars($nomorSurat); ?></td>
+
                     <td class="spacer-info-surat"></td>
-                    <td>Bandar Lampung, <?= $tanggalSurat; ?></td>
+
+                    <td class="no-wrap">Bandar Lampung, <?= $tanggalSurat; ?></td>
                 </tr>
                 <tr>
                     <td>Sifat</td>
                     <td>:</td>
-                    <td>Penting</td>
+                    <td>Biasa</td>
                 </tr>
                 <tr>
                     <td>Lampiran</td>
@@ -177,7 +179,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <tr>
                     <td>Perihal</td>
                     <td>:</td>
-                    <td><strong>Permohonan Magang</strong></td>
+                    <td>Permohonan Izin Magang</td>
                 </tr>
             </table>
 
@@ -193,45 +195,51 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             <p>Assalamu’alaikum Wr. Wb.</p>
 
             <p class="isi">
-                Dalam rangka peningkatan standar kompetensi dan kualitas mahasiswa jurusan
-                <?= htmlspecialchars($data['nama_prodi']); ?> Fakultas Sains dan Teknologi
-                UIN Raden Intan Lampung dengan keterampilan manajerial yang relevan dan sesuai
-                dengan perkembangan sosial dunia usaha,
+                Bersama ini disampaikan permohonan izin untuk mengadakan Praktek Kerja Lapangan (PKL)/Magang mahasiswa kami sebagai berikut:
             </p>
 
-            <p class="isi">
-                Maka kami mohon kepada Bapak/Ibu kiranya berkenan menerima mahasiswa kami
-                melaksanakan magang pada lembaga yang Bapak/Ibu pimpin terhitung mulai tanggal
-                <?= $tglMulai; ?> s/d <?= $tglSelesai; ?>.
-            </p>
-
-            <p>Adapun nama mahasiswa sebagaimana tercantum di bawah ini:</p>
-
-            <table class="tabel-mhs">
-                <thead>
-                    <tr>
-                        <th>NO.</th>
-                        <th>Nama</th>
-                        <th>NPM</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
-                        <td><?= htmlspecialchars($data['npm']); ?></td>
-                    </tr>
-                </tbody>
+            <table class="tabel-data-mhs">
+                <tr>
+                    <td class="col-label">Nama</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['nama_mhs']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">NPM</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['npm']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Semester / Program Studi</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['semester']); ?> / <?= htmlspecialchars($data['nama_prodi']); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Lokasi Magang</td>
+                    <td class="col-titik">:</td>
+                    <td><?= htmlspecialchars($data['lokasi_magang'] ?? '-'); ?></td>
+                </tr>
+                <tr>
+                    <td class="col-label">Penanggung Jawab</td>
+                    <td class="col-titik">:</td>
+                    <td>Dosen Pembimbing</td>
+                </tr>
             </table>
 
             <p>
-                Demikian permohonan ini, atas perhatian dan kerjasamanya diucapkan terimakasih.
+                Praktek Kerja Lapangan (PKL) atau Magang, akan berlangsung mulai tanggal <?= htmlspecialchars($tglMulai); ?> s.d <?= htmlspecialchars($tglSelesai); ?>
+                dan bertujuan untuk meningkatkan pengalaman serta mengimplemetasikan ilmu pengetahuan yang diterima selama proses perkuliahan.
+            </p>
+
+            <p>
+                Demikian, atas perhatian dan kerjasamanya diucapkan terimakasih.
             </p>
 
             <p>Wassalamu’alaikum Wr. Wb.</p>
 
-            <div class="ttd">
-                <p>Dekan,</p>
+            <div class="ttd-container">
+                <p><b>An. Dekan</b></p>
+                <p><b>Wakil Dekan,</b></p>
 
                 <?php if (!empty($data['dokumen_hash'])) { ?>
                     <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
@@ -240,46 +248,46 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 <?php } ?>
 
                 <p>
-                    <strong><?= htmlspecialchars($nama_dekan); ?></strong><br>
-                    NIP. <?= htmlspecialchars($nip_dekan); ?>
+                    <strong>
+                        <u><?= htmlspecialchars($nama_wadek1); ?></u><br>
+                        NIP. <?= htmlspecialchars($nip_wadek1); ?>
+                    </strong>
                 </p>
             </div>
-
-            <br>
-
-            <p class="tembusan-surat">
-                <u>Tembusan:</u><br>
-                1. Wakil Dekan Bidang Akademik;<br>
-                2. Kajur/Kaprodi <?= htmlspecialchars($data['nama_prodi']); ?><br>
-                3. Kasubag Akademik;<br>
-                4. Mahasiswa yang bersangkutan
-            </p>
-
         </div>
 
         <div class="action">
             <?php
+            $is_preview = (isset($_GET['view']) && $_GET['view'] == 'true');
             $asal_halaman = $_GET['asal'] ?? '';
-            if ($asal_halaman == 'laporan') {
-                $link_kembali = 'adm_laporan_surat.php';
-            } elseif ($asal_halaman == 'pimpinan') {
-                $link_kembali = 'pimpinan_riwayat.php';
-            } else {
-                $link_kembali = 'mhs_riwayat.php';
-            }
-            ?>
-            <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
 
-            <button onclick="window.print()" class="btn-print">
-                Unduh Surat
-            </button>
+            if (!$is_preview || $asal_halaman == 'riwayat_pimpinan' || $asal_halaman == 'pimpinan' || $asal_halaman == 'laporan') :
+
+                if ($asal_halaman == 'laporan') {
+                    $link_kembali = 'adm_laporan_surat.php';
+                } elseif ($asal_halaman == 'pimpinan' || $asal_halaman == 'riwayat_pimpinan') {
+                    $link_kembali = 'pimpinan_riwayat.php';
+                } elseif ($asal_halaman == 'tracking') {
+                    $link_kembali = 'pimpinan_tracking.php';
+                } else {
+                    $link_kembali = 'mhs_riwayat.php';
+                }
+            ?>
+                <div class="action-button-container">
+                    <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
+
+                    <button onclick="window.print()" class="btn-print">
+                        Unduh Surat
+                    </button>
+                </div>
+            <?php endif; ?>
 
             <?php
             $is_view_only = (isset($_GET['view']) && $_GET['view'] == 'true');
 
             if (isset($_SESSION['role']) && strtolower($_SESSION['role']) == 'admin' && $username_admin !== 'ADM001' && !$is_view_only) {
             ?>
-                <form action="?id=<?= $id_surat; ?>" method="POST">
+                <form action="?id=<?= $id_surat; ?>" method="POST" class="action-button-container">
                     <button type="submit" name="kirim_balasan" class="btn-approve">
                         Terbitkan Surat
                     </button>

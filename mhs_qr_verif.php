@@ -62,7 +62,7 @@ function formatTanggalIndo($tanggal_db)
             <div class="status-box valid">
                 <i class="fa-solid fa-circle-check"></i>
                 <h2>TERVERIFIKASI</h2>
-                <p class="status-message">Dokumen ini sah dan dikeluarkan oleh SIPATU FST UIN RIL</p>
+                <p class="status-message">Dokumen ini telah diverifikasi secara elektronik melalui SIPATU FST UIN RIL</p>
             </div>
 
             <div class="info-group">
@@ -91,9 +91,9 @@ function formatTanggalIndo($tanggal_db)
 
         <?php } else { ?>
             <div class="status-box invalid">
-                <i class="fa-solid fa-circle-xmark"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 <h2>DOKUMEN TIDAK VALID</h2>
-                <p>Data tidak ditemukan. Dokumen mungkin palsu atau telah dihapus.</p>
+                <p>Peringatan! Data tidak ditemukan di pangkalan data kami. Dokumen ini mungkin telah direkayasa, tidak sah, atau telah ditarik kembali.</p>
             </div>
         <?php } ?>
     </div>

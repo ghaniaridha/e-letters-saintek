@@ -7,14 +7,29 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'dosen') {
     exit;
 }
 
-$id_dosen = $_SESSION['id_dosen'];
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 
-$is_pembina = false;
+$is_pembina_ukm = false;
 $cek_pembina = mysqli_query($koneksi, "SELECT id_ormawa FROM ormawa WHERE id_pembina = '$id_dosen'");
-
 if ($cek_pembina && mysqli_num_rows($cek_pembina) > 0) {
-    $is_pembina = true;
+    $is_pembina_ukm = true;
 }
+
+$is_kaprodi = false;
+$cek_kaprodi = mysqli_query($koneksi, "SELECT id_prodi FROM prodi WHERE id_kaprodi = '$id_dosen'");
+if ($cek_kaprodi && mysqli_num_rows($cek_kaprodi) > 0) {
+    $is_kaprodi = true;
+}
+
+$punya_akses_ormawa = ($is_pembina_ukm || $is_kaprodi);
+
+$is_pembina_akademik = false;
+$cek_akademik = mysqli_query($koneksi, "SELECT id_surat FROM detail_surat_riset WHERE id_pb1 = '$id_dosen' OR id_pb2 = '$id_dosen' LIMIT 1");
+if ($cek_akademik && mysqli_num_rows($cek_akademik) > 0) {
+    $is_pembina_akademik = true;
+}
+
+$punya_keduanya = ($is_pembina_akademik && $punya_akses_ormawa);
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'Dosen';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -29,18 +44,37 @@ if (!empty($namaParts)) {
 $limit = 10;
 $halaman = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($halaman - 1) * $limit;
+
+$search       = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, trim($_GET['search'])) : '';
+$filter_jenis = isset($_GET['id_jenis']) ? mysqli_real_escape_string($koneksi, trim($_GET['id_jenis'])) : '';
+
+$query_params = [];
+if (!empty($search)) $query_params['search'] = $search;
+if (!empty($filter_jenis)) $query_params['id_jenis'] = $filter_jenis;
+
 $query_string = "";
+if (!empty($query_params)) {
+    $query_string = "&" . http_build_query($query_params);
+}
 
 $where_clause = "
-    WHERE sp.id_pembina = '$id_dosen'
+    WHERE (o.id_pembina = '$id_dosen' OR p.id_kaprodi = '$id_dosen')
       AND sp.posisi_sekarang = 'Pembina'
       AND sp.urutan_sekarang = '3'
 ";
+
+if (!empty($search)) {
+    $where_clause .= " AND o.nama_ormawa LIKE '%$search%' ";
+}
+if (!empty($filter_jenis)) {
+    $where_clause .= " AND sp.id_jenis = '$filter_jenis' ";
+}
 
 $query_count = mysqli_query($koneksi, "
     SELECT COUNT(*) AS total
     FROM surat_pengajuan sp
     JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+    LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     $where_clause
 ");
@@ -52,14 +86,18 @@ $query = mysqli_query($koneksi, "
     SELECT 
         sp.*,
         o.nama_ormawa,
+        o.jenis_organisasi, 
         js.nama_surat
     FROM surat_pengajuan sp
     JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+    LEFT JOIN prodi p ON o.id_prodi = p.id_prodi
     JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
     $where_clause
     ORDER BY sp.tanggal_pengajuan DESC
     LIMIT $limit OFFSET $offset
 ");
+
+$q_jenis = mysqli_query($koneksi, "SELECT * FROM jenis_surat WHERE id_jenis IN (11, 12) ORDER BY nama_surat ASC");
 ?>
 
 <!DOCTYPE html>
@@ -69,9 +107,12 @@ $query = mysqli_query($koneksi, "
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifikasi Permohonan Ormawa</title>
+
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
     <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="dosen-page">
@@ -82,7 +123,7 @@ $query = mysqli_query($koneksi, "
         <div class="navbar-nav">
             <a href="dosen_beranda.php#home">Beranda</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Verifikasi Permohonan<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -90,13 +131,15 @@ $query = mysqli_query($koneksi, "
                         <a href="dosen_permohonan_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_permohonan_ormawa.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php else: ?>
-                <a href="dosen_permohonan_akademik.php">Verifikasi Permohonan</a>
+                <a href="dosen_permohonan_akademik.php" class="navbar-nav">Verifikasi Permohonan</a>
             <?php endif; ?>
 
             <a href="dosen_beranda.php#riwayat">Informasi Persuratan</a>
 
-            <?php if ($is_pembina): ?>
+            <?php if ($punya_keduanya): ?>
                 <div class="nav-dropdown">
                     <a href="#" class="navbar-nav">Riwayat Verifikasi<i class="fa-solid fa-chevron-down dropdown-icon"></i></a>
                     <div class="dropdown-content">
@@ -104,19 +147,31 @@ $query = mysqli_query($koneksi, "
                         <a href="dosen_riwayat_ormawa.php">Ormawa</a>
                     </div>
                 </div>
+            <?php elseif ($punya_akses_ormawa): ?>
+                <a href="dosen_riwayat_ormawa.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php else: ?>
-                <a href="dosen_riwayat_akademik.php">Riwayat Verifikasi</a>
+                <a href="dosen_riwayat_akademik.php" class="navbar-nav">Riwayat Verifikasi</a>
             <?php endif; ?>
         </div>
 
         <div class="navbar-extra">
             <div class="user-menu-container">
-                <button id="user-btn" class="user-btn"><span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span></button>
+                <button id="user-btn" class="user-btn">
+                    <span class="avatar-inisial"><?= htmlspecialchars($inisial); ?></span>
+                </button>
+
                 <div id="user-dropdown" class="dropdown-menu">
                     <div class="user-info">
                         <span class="user-name"><?= htmlspecialchars($namaLengkap); ?></span>
                         <span class="user-role"><?= htmlspecialchars($idLogin); ?> - <?= htmlspecialchars($role); ?></span>
                     </div>
+
+                    <div class="divider"></div>
+
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -127,10 +182,28 @@ $query = mysqli_query($koneksi, "
             <h2>Verifikasi Surat Permohonan Ormawa</h2>
         </div>
         <div class="table-wrapper" id="template-surat">
-            <div class="search-container">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="searchSurat" class="search-input" placeholder="Cari permohonan ormawa...">
-            </div>
+            <form method="GET" action="" class="filter-container">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="search" class="search-input" placeholder="Cari Nama Organisasi / Ormawa..." value="<?= htmlspecialchars($search); ?>">
+                </div>
+
+                <select name="id_jenis" class="filter-select" onchange="this.form.submit()">
+                    <option value="">-- Semua Jenis Surat --</option>
+                    <?php while ($j = mysqli_fetch_assoc($q_jenis)): ?>
+                        <option value="<?= $j['id_jenis']; ?>" <?= ($filter_jenis == $j['id_jenis']) ? 'selected' : ''; ?>>
+                            <?= htmlspecialchars($j['nama_surat']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+
+                <button type="submit" class="btn-filter-submit">Cari</button>
+
+                <?php if (!empty($search) || !empty($filter_jenis)): ?>
+                    <a href="?" class="btn-filter-reset">Reset</a>
+                <?php endif; ?>
+            </form>
+
             <table class="custom-table">
                 <thead>
                     <tr>
@@ -146,13 +219,24 @@ $query = mysqli_query($koneksi, "
                     <?php if ($query && mysqli_num_rows($query) > 0) {
                         $no = $offset + 1;
 
-                        while ($row = mysqli_fetch_assoc($query)) { ?>
+                        while ($row = mysqli_fetch_assoc($query)) {
+                            $status_tampil = $row['status_akhir'];
+                            $jenis_org = $row['jenis_organisasi'] ?? 'Ormawa';
+
+                            if (strpos(strtolower($status_tampil), 'menunggu') !== false) {
+                                if ($jenis_org == 'Ormawa') {
+                                    $status_tampil = 'Menunggu Persetujuan Kaprodi';
+                                } else {
+                                    $status_tampil = 'Menunggu Persetujuan Pembina';
+                                }
+                            }
+                    ?>
                             <tr>
                                 <td><?= $no++; ?></td>
                                 <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
                                 <td><?= htmlspecialchars($row['nama_ormawa']); ?></td>
                                 <td><?= htmlspecialchars($row['nama_surat']); ?></td>
-                                <td><?= htmlspecialchars($row['status_akhir']); ?></td>
+                                <td><?= htmlspecialchars($status_tampil); ?></td>
                                 <td>
                                     <a href="dosen_detail_permohonan.php?id=<?= $row['id_surat']; ?>&asal=ormawa" class="btn-aksi">Detail</a>
                                 </td>
@@ -162,7 +246,7 @@ $query = mysqli_query($koneksi, "
                         <tr>
                             <td colspan="6" class="empty-table-cell">
                                 <i class="fa-solid fa-folder-open"></i>
-                                <p>Tidak ada permohonan ormawa yang menunggu verifikasi.</p>
+                                <p>Tidak ada permohonan organisasi yang sesuai dengan filter.</p>
                             </td>
                         </tr>
                     <?php } ?>
@@ -197,6 +281,7 @@ $query = mysqli_query($koneksi, "
             <?php endif; ?>
         </div>
     </section>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const userBtn = document.getElementById("user-btn");
@@ -211,6 +296,26 @@ $query = mysqli_query($koneksi, "
                 }
             });
         });
+
+        function confirmLogout(event, url) {
+            event.preventDefault();
+
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: 'Anda harus login kembali untuk mengakses layanan akademik.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
 
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();

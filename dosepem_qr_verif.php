@@ -139,9 +139,9 @@ if (mysqli_num_rows($result_surat) > 0) {
 
         <?php } else { ?>
             <div class="status-box invalid">
-                <i class="fa-solid fa-circle-xmark"></i>
-                <h2>TANDA TANGAN TIDAK VALID</h2>
-                <p>Data persetujuan tidak ditemukan. QR Code mungkin tidak sah atau telah kedaluwarsa.</p>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h2>DOKUMEN TIDAK VALID</h2>
+                <p>Peringatan! Data persetujuan tidak ditemukan di pangkalan data kami. Dokumen ini mungkin telah direkayasa, tidak sah, atau telah ditarik kembali.</p>
             </div>
         <?php } ?>
     </div>

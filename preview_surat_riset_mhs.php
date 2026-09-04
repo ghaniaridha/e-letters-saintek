@@ -245,8 +245,8 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
                 <a href="mhs_daftar_surat_akademik.php" class="btn-action btn-outline">
                     Kembali
                 </a>
-                <a href="mhs_lacak.php?id=<?= $id ?>" class="btn-action btn-fill">
-                    Lacak Surat
+                <a href="mhs_riwayat.php?id=<?= $id ?>" class="btn-action btn-fill">
+                    Selesai
                 </a>
             </div>
         </div>

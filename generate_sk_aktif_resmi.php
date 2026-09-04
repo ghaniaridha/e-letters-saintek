@@ -145,14 +145,13 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             </table>
             <hr class="garis-kop">
 
-
-            <div style="text-align: center;">
-                <h3 style="margin:0; text-decoration:underline;">SURAT AKTIF KULIAH KEMBALI</h3>
+            <div class="surat-header-center">
+                <h3 class="surat-title-underline">SURAT AKTIF KULIAH KEMBALI</h3>
                 <p>Nomor: <?= $nomorSurat; ?></p>
             </div>
 
             <p>Yang bertandatangan di bawah ini :</p>
-            <table style="width:100%; margin-left:20px;">
+            <table class="surat-info-table">
                 <tr>
                     <td class="col-label">Nama</td>
                     <td class="col-separator">:</td>
@@ -171,7 +170,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             </table>
 
             <p>Dengan ini menerangkan dengan sesungguhnya bahwa :</p>
-            <table style="width:100%; margin-left:20px;">
+            <table class="surat-info-table">
                 <tr>
                     <td class="col-label">Nama</td>
                     <td class="col-separator">:</td>
@@ -229,27 +228,36 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
         <div class="action">
             <?php
+            $is_preview = (isset($_GET['view']) && $_GET['view'] == 'true');
             $asal_halaman = $_GET['asal'] ?? '';
-            if ($asal_halaman == 'laporan') {
-                $link_kembali = 'adm_laporan_surat.php';
-            } elseif ($asal_halaman == 'pimpinan') {
-                $link_kembali = 'pimpinan_riwayat.php';
-            } else {
-                $link_kembali = 'mhs_riwayat.php';
-            }
-            ?>
-            <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
 
-            <button onclick="window.print()" class="btn-print">
-                Unduh Surat
-            </button>
+            if (!$is_preview || $asal_halaman == 'riwayat_pimpinan' || $asal_halaman == 'pimpinan' || $asal_halaman == 'laporan') :
+
+                if ($asal_halaman == 'laporan') {
+                    $link_kembali = 'adm_laporan_surat.php';
+                } elseif ($asal_halaman == 'pimpinan' || $asal_halaman == 'riwayat_pimpinan') {
+                    $link_kembali = 'pimpinan_riwayat.php';
+                } elseif ($asal_halaman == 'tracking') {
+                    $link_kembali = 'pimpinan_tracking.php';
+                } else {
+                    $link_kembali = 'mhs_riwayat.php';
+                }
+            ?>
+                <div class="action-button-container">
+                    <a href="<?= $link_kembali; ?>" class="btn-secondary">Kembali</a>
+
+                    <button onclick="window.print()" class="btn-print">
+                        Unduh Surat
+                    </button>
+                </div>
+            <?php endif; ?>
 
             <?php
             $is_view_only = (isset($_GET['view']) && $_GET['view'] == 'true');
 
             if (isset($_SESSION['role']) && strtolower($_SESSION['role']) == 'admin' && $username_admin !== 'ADM001' && !$is_view_only) {
             ?>
-                <form action="?id=<?= $id_surat; ?>" method="POST">
+                <form action="?id=<?= $id_surat; ?>" method="POST" class="action-button-container">
                     <button type="submit" name="kirim_balasan" class="btn-approve">
                         Terbitkan Surat
                     </button>

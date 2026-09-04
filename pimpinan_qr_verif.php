@@ -149,7 +149,7 @@ if ($data_pimpinan) {
         <?php } else { ?>
             <div class="status-box invalid">
                 <i class="fa-solid fa-triangle-exclamation"></i>
-                <h2>DOKUMEN TIDAK VALID / PALSU</h2>
+                <h2>DOKUMEN TIDAK VALID</h2>
                 <p>Peringatan! Data persetujuan tidak ditemukan di pangkalan data kami. Dokumen ini mungkin telah direkayasa, tidak sah, atau telah ditarik kembali.</p>
             </div>
         <?php } ?>

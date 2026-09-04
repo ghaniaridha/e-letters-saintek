@@ -23,7 +23,8 @@ $id_surat = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $query_detail = mysqli_query($koneksi, "
     SELECT
         sp.*,
-        o.nama_ormawa,      
+        o.nama_ormawa, 
+        o.jenis_organisasi,
         js.nama_surat,
         
         -- Detail Peminjaman Ruangan
@@ -34,7 +35,6 @@ $query_detail = mysqli_query($koneksi, "
 
         -- Detail Pengajuan Dana
         dpd.nama_kegiatan AS nama_kegiatan_dana,
-        dpd.tema_kegiatan,
         dpd.tempat_kegiatan,
         dpd.tanggal_kegiatan,
         dpd.proposal AS proposal_dana,
@@ -42,7 +42,9 @@ $query_detail = mysqli_query($koneksi, "
         -- GABUNGAN JADWAL (Ruangan & Dana)
         COALESCE(dpr.tanggal_mulai, dpd.tanggal_jadwal) AS jadwal_tanggal,
         COALESCE(dpr.jam_mulai, dpd.jam_mulai) AS jadwal_jam_mulai,
-        COALESCE(dpr.jam_selesai, dpd.jam_selesai) AS jadwal_jam_selesai
+        COALESCE(dpr.jam_selesai, dpd.jam_selesai) AS jadwal_jam_selesai,
+        
+        COALESCE(dpr.catatan, dpd.catatan) AS catatan_admin_jadwal
         
     FROM surat_pengajuan sp
     LEFT JOIN ormawa o ON sp.id_ormawa = o.id_ormawa 
@@ -59,6 +61,7 @@ if (!$data) {
     exit;
 }
 
+$hari_array = array('Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu');
 $array_bulan = [
     1 => 'Januari',
     'Februari',
@@ -87,6 +90,7 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
     <title>Detail Riwayat Permohonan</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
+    <link rel="stylesheet" href="style.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="adm.css?v=<?= time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
@@ -102,7 +106,6 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
             <a href="ormawa_beranda.php">Beranda</a>
             <a href="ormawa_beranda.php#services">Pengajuan Surat</a>
             <a href="ormawa_beranda.php#status-info">Status & Informasi</a>
-            <a href="ormawa_lacak.php">Lacak Surat</a>
             <a href="ormawa_riwayat.php">Riwayat Permohonan</a>
         </div>
 
@@ -112,10 +115,17 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
-                        <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
-                    </div>
+                    <a href="mhs_profile.php" class="user-info-link-mhs">
+                        <div class="user-info-mhs">
+                            <span class="user-name-mhs"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role-mhs"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
+                    <div class="divider"></div>
+                    <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
+                        <span>Keluar</span>
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -145,19 +155,15 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
                     <td><?= htmlspecialchars($data['nama_kegiatan_dana'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Tema Kegiatan</th>
-                    <td><?= htmlspecialchars($data['tema_kegiatan'] ?? '-'); ?></td>
-                </tr>
-                <tr>
                     <th>Tempat Kegiatan</th>
                     <td><?= htmlspecialchars($data['tempat_kegiatan'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Tanggal Kegiatan</th>
+                    <th> Hari & Tanggal Kegiatan</th>
                     <td><?php
                         if (!empty($data['tanggal_kegiatan'])) {
                             $timestamp = strtotime($data['tanggal_kegiatan']);
-                            echo date('d', $timestamp) . ' ' . $array_bulan[(int)date('m', $timestamp)] . ' ' . date('Y', $timestamp);
+                            echo $hari_array[date('w', $timestamp)] . ', ' . date('d', $timestamp) . ' ' . $array_bulan[(int)date('m', $timestamp)] . ' ' . date('Y', $timestamp);
                         } else {
                             echo '-';
                         }
@@ -176,12 +182,12 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
                     <td><?= htmlspecialchars($data['ruangan_yang_diajukan'] ?? '-'); ?></td>
                 </tr>
                 <tr>
-                    <th>Tanggal Pelaksanaan</th>
+                    <th> Hari & Tanggal Pelaksanaan</th>
                     <td>
                         <?php
                         if (!empty($data['tanggal_mulai'])) {
                             $tgl = strtotime($data['tanggal_mulai']);
-                            echo date('d', $tgl) . ' ' . $array_bulan[(int)date('m', $tgl)] . ' ' . date('Y', $tgl);
+                            echo $hari_array[date('w', $tgl)] . ', ' . date('d', $tgl) . ' ' . $array_bulan[(int)date('m', $tgl)] . ' ' . date('Y', $tgl);
                         } else {
                             echo '-';
                         }
@@ -191,7 +197,16 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
             <?php } ?>
 
             <?php
-            $status_lower = strtolower($data['status_akhir']);
+            $status_asli = $data['status_akhir'];
+            $jenis_org = $data['jenis_organisasi'] ?? 'Ormawa';
+
+            $tampil_status = $status_asli;
+
+            if ($jenis_org == 'Ormawa') {
+                $tampil_status = str_ireplace('Pembina', 'Kaprodi', $status_asli);
+            }
+
+            $status_lower = strtolower($status_asli);
             $status_keputusan_lower = strtolower($data['status_keputusan']);
 
             $status_ditolak = (strpos($status_lower, 'ditolak') !== false);
@@ -209,7 +224,7 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
             <tr>
                 <th>Status Akhir Permohonan</th>
                 <td style="<?= $warna_status; ?>">
-                    <?= htmlspecialchars($data['status_akhir']); ?>
+                    <?= htmlspecialchars($tampil_status); ?>
                 </td>
             </tr>
 
@@ -217,7 +232,7 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
             if ($status_selesai) {
             ?>
                 <tr>
-                    <th>Jadwal Bertemu Pimpinan</th>
+                    <th>Jadwal Audiensi</th>
                     <td class="jadwal-pimpinan-cell">
                         <?php
                         if (!empty($data['jadwal_tanggal']) && !empty($data['jadwal_jam_mulai'])) {
@@ -238,6 +253,19 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
             <?php } ?>
 
             <?php
+            $catatan_admin = $data['catatan_admin_jadwal'] ?? '';
+
+            if (!empty($catatan_admin)):
+            ?>
+                <tr>
+                    <th>Keterangan Audiensi</th>
+                    <td class="keterangan-audiensi-cell">
+                        <?= nl2br(htmlspecialchars($catatan_admin)); ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
+
+            <?php
             if ($status_ditolak && !empty($data['catatan'])) {
             ?>
                 <tr>
@@ -254,44 +282,71 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
         <div class="document-box">
             <p><i class="fa-solid fa-file-circle-check"></i> Klik tombol di bawah untuk memeriksa lampiran surat Anda.</p>
 
-            <div class="document-buttons">
+            <div class="document-buttons-custom">
                 <?php
                 if ($isDana) {
                     $fileSystemPreview = "preview_pengajuan_dana.php?id=" . $data['id_surat'] . "&mode=view";
+                    $proposalFile = $data['proposal_dana'] ?? '';
                 } else {
                     $fileSystemPreview = "preview_peminjaman_ruangan.php?id=" . $data['id_surat'] . "&mode=view";
+                    $proposalFile = $data['proposal'] ?? '';
                 }
                 ?>
 
-                <!-- Surat Hasil Sistem / Preview -->
-                <a href="#" class="btn btn-detail" onclick="bukaPreview('<?= $fileSystemPreview; ?>')">
-                    Surat Permohonan
-                </a>
+                <!-- Surat Hasil Sistem -->
+                <div class="document-item-row document-item-draft">
+                    <a href="#" class="document-link-item" onclick="bukaPreview('<?= $fileSystemPreview; ?>')">
+                        <i class="fa-solid fa-file-lines document-icon-blue"></i> Surat Permohonan
+                    </a>
+                    <span class="document-system-note">Dihasilkan oleh sistem</span>
+                </div>
 
                 <!-- File Proposal -->
-                <?php if ($isDana) { ?>
-                    <?php if (!empty($data['proposal_dana'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($data['proposal_dana']); ?>')">
-                            Proposal Kegiatan
+                <?php if (!empty($proposalFile)) {
+
+                    $posisi = $data['posisi_sekarang'];
+                    $statusAkhir = strtolower($data['status_akhir']);
+
+                    if (strpos($statusAkhir, 'ditolak') !== false || strpos($statusAkhir, 'perbaikan') !== false) {
+                        $statusVal = 'Tidak Valid';
+                    } elseif ($posisi == 'Pimpinan' || strtolower($posisi) == 'selesai' || strpos($statusAkhir, 'disposisi') !== false) {
+                        $statusVal = 'Valid';
+                    } else {
+                        $statusVal = 'Menunggu';
+                    }
+                ?>
+                    <div class="document-item-row">
+                        <a href="#" class="document-link-item" onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($proposalFile); ?>')">
+                            <i class="fa-solid fa-paperclip document-icon-amber"></i> Proposal Kegiatan
                         </a>
-                    <?php } else { ?>
-                        <span class="btn-disabled">Proposal Kegiatan Belum Ada</span>
-                    <?php } ?>
+
+                        <!-- Badge Status Proposal -->
+                        <?php if ($statusVal == 'Valid') { ?>
+                            <span class="badge-status-doc badge-valid">
+                                <i class="fa-solid fa-circle-check"></i> Sesuai
+                            </span>
+                        <?php } elseif ($statusVal == 'Tidak Valid') { ?>
+                            <span class="badge-status-doc badge-invalid">
+                                <i class="fa-solid fa-circle-xmark"></i> Perlu Perbaikan
+                            </span>
+                        <?php } else { ?>
+                            <span class="badge-status-doc badge-waiting">
+                                <i class="fa-solid fa-clock"></i> Menunggu Pengecekan Fakultas
+                            </span>
+                        <?php } ?>
+                    </div>
+
                 <?php } else { ?>
-                    <?php if (!empty($data['proposal'])) { ?>
-                        <a href="#" class="btn btn-edit" onclick="bukaPreview('uploads/proposal/<?= htmlspecialchars($data['proposal']); ?>')">
-                            Proposal Kegiatan
-                        </a>
-                    <?php } else { ?>
-                        <span class="btn-disabled">Proposal Kegiatan Belum Ada</span>
-                    <?php } ?>
+                    <p class='empty-document-text'>
+                        <i class="fa-solid fa-triangle-exclamation"></i> Proposal Kegiatan Belum Ada.
+                    </p>
                 <?php } ?>
             </div>
         </div>
 
         <div class="action-panel">
             <a href="ormawa_riwayat.php" class="btn-styled btn-back">
-                <i class="fa-solid fa-arrow-left"></i> Kembali
+                Kembali
             </a>
         </div>
     </div>
@@ -305,6 +360,45 @@ $isDana = (strpos($namaSurat, 'dana') !== false);
     </div>
 
     <script>
+        // fungsi dropdown menu pengguna
+        document.addEventListener('DOMContentLoaded', function() {
+            const userBtn = document.getElementById('user-btn');
+            const dropdown = document.getElementById('user-dropdown');
+
+            userBtn.addEventListener('click', function(event) {
+                dropdown.classList.toggle('show');
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.matches('#user-btn') && !event.target.closest('#user-btn')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+        });
+
+        // Fungsi untuk menampilkan konfirmasi sebelum logout
+        function confirmLogout(event, url) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Yakin ingin keluar?',
+                text: "Anda harus masuk kembali untuk mengakses halaman ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        }
+
         document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelector('.navbar-nav')?.classList.toggle('active');

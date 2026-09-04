@@ -128,18 +128,21 @@ $query = mysqli_query($koneksi, "
     ORDER BY status DESC, id_jenis DESC
 ");
 
+$where_file = " WHERE file_template != '' AND file_template IS NOT NULL ";
+
 $limit = 10;
 $halaman = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($halaman - 1) * $limit;
 $query_string = "";
 
-$q_count = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM jenis_surat");
+$q_count = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM jenis_surat $where_file");
 $d_count = mysqli_fetch_assoc($q_count);
 $total_data = $d_count['total'];
 $total_halaman = ceil($total_data / $limit);
 
 $query = mysqli_query($koneksi, "
     SELECT * FROM jenis_surat
+    $where_file
     ORDER BY status DESC, id_jenis DESC
     LIMIT $limit OFFSET $offset
 ");
@@ -307,7 +310,7 @@ $query = mysqli_query($koneksi, "
 
                             <div class="form-group">
                                 <label>Deskripsi</label>
-                                <textarea name="deskripsi" placeholder="Tambahkan keterangan fungsi atau kegunaan surat ini..." required class="form-control" style="min-height: 80px; resize: vertical;"><?= htmlspecialchars($dataEdit['deskripsi'] ?? ''); ?></textarea>
+                                <textarea name="deskripsi" placeholder="Tambahkan keterangan fungsi atau kegunaan surat ini..." required class="form-control"><?= htmlspecialchars($dataEdit['deskripsi'] ?? ''); ?></textarea>
                             </div>
 
                             <div class="form-group">
@@ -342,6 +345,8 @@ $query = mysqli_query($koneksi, "
             </div>
         </main>
     </div>
+
+    <?php include "adm_footer.php"; ?>
 
     <script>
         //fungsi search
@@ -436,7 +441,6 @@ $query = mysqli_query($koneksi, "
             });
         }
     </script>
-
 </body>
 
 </html>

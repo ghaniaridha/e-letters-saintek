@@ -63,7 +63,6 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
             <a href="#home">Beranda</a>
             <a href="#services">Pengajuan Surat</a>
             <a href="#status-info">Status & Informasi</a>
-            <a href="ormawa_lacak.php">lacak surat</a>
             <a href="ormawa_riwayat.php">Riwayat Pengajuan</a>
         </div>
 
@@ -73,10 +72,12 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                     <span class="avatar-inisial"><?= htmlspecialchars($inisial) ?></span>
                 </button>
                 <div id="user-dropdown" class="dropdown-menu">
-                    <div class="user-info">
-                        <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
-                        <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
-                    </div>
+                    <a href="ormawa_profile.php" class="user-info-link">
+                        <div class="user-info">
+                            <span class="user-name"><?= htmlspecialchars($namaLengkap) ?></span>
+                            <span class="user-role"><?= htmlspecialchars($idLogin) ?> - <?= htmlspecialchars($role) ?></span>
+                        </div>
+                    </a>
                     <div class="divider"></div>
                     <a href="logout.php" class="logout-btn" onclick="confirmLogout(event, this.href)">
                         <span>Keluar</span>
@@ -165,7 +166,7 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                 </div>
                 <h3>Lacak Surat</h3>
                 <p>Pantau posisi terkini dan proses disposisi surat Anda secara real-time.</p>
-                <a href="ormawa_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="mhs_input_lacak.php" class="btn-action">Lacak Surat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
     </section>

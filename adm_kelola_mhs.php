@@ -95,39 +95,47 @@ $query_string = $query_string ? '&' . $query_string : '';
 
         <main class="main-content">
             <div class="page-title">
-                <h1>Verifikasi & Kelola Mahasiswa</h1>
-                <p>Kelola data dan lakukan verifikasi pendaftaran akun baru mahasiswa.</p>
+                <h1>Kelola Data Mahasiswa</h1>
             </div>
 
             <div class="table-card-table">
-                <form method="GET" action="" class="filter-section">
-                    <input type="text" name="keyword" placeholder="Cari NPM atau Nama..." value="<?= $_GET['keyword'] ?? '' ?>">
+                <form method="GET" action="" class="filter-section filter-section-split">
 
-                    <select name="prodi">
-                        <option value="">Semua Prodi</option>
-                        <?php
-                        $res = mysqli_query($koneksi, "SELECT * FROM prodi");
-                        while ($p = mysqli_fetch_assoc($res)) {
-                            $selected = (isset($_GET['prodi']) && $_GET['prodi'] == $p['id_prodi']) ? 'selected' : '';
-                            echo "<option value='" . $p['id_prodi'] . "' $selected>" . $p['nama_prodi'] . "</option>";
-                        }
-                        ?>
-                    </select>
+                    <div class="filter-left-group">
+                        <input type="text" name="keyword" placeholder="Cari NPM atau Nama..." value="<?= $_GET['keyword'] ?? '' ?>">
 
-                    <select name="status">
-                        <option value="">Semua Status</option>
-                        <option value="1" <?= (isset($_GET['status']) && $_GET['status'] == '1') ? 'selected' : '' ?>>Aktif</option>
-                        <option value="2" <?= (isset($_GET['status']) && $_GET['status'] == '2') ? 'selected' : '' ?>>Nonaktif</option>
-                        <option value="0" <?= (isset($_GET['status']) && $_GET['status'] == '0') ? 'selected' : '' ?>>Menunggu</option>
-                    </select>
+                        <select name="prodi">
+                            <option value="">Semua Prodi</option>
+                            <?php
+                            $res = mysqli_query($koneksi, "SELECT * FROM prodi");
+                            while ($p = mysqli_fetch_assoc($res)) {
+                                $selected = (isset($_GET['prodi']) && $_GET['prodi'] == $p['id_prodi']) ? 'selected' : '';
+                                echo "<option value='" . $p['id_prodi'] . "' $selected>" . $p['nama_prodi'] . "</option>";
+                            }
+                            ?>
+                        </select>
 
-                    <button type="submit" class="btn-filter">
-                        <i class="fa-solid fa-search"></i> Cari
-                    </button>
-                    <a href="adm_kelola_mhs.php" class="btn-reset-filter">
-                        <i class="fa-solid fa-rotate-left"></i> Reset
-                    </a>
+                        <select name="status">
+                            <option value="">Semua Status</option>
+                            <option value="1" <?= (isset($_GET['status']) && $_GET['status'] == '1') ? 'selected' : '' ?>>Aktif</option>
+                            <option value="2" <?= (isset($_GET['status']) && $_GET['status'] == '2') ? 'selected' : '' ?>>Nonaktif</option>
+                        </select>
+
+                        <button type="submit" class="btn-filter">
+                            <i class="fa-solid fa-search"></i> Cari
+                        </button>
+                        <a href="adm_kelola_mhs.php" class="btn-reset-filter">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </a>
+                    </div>
+
+                    <div class="filter-right-group">
+                        <button type="button" class="btn-tambah-dosen" onclick="window.location='adm_tambah_mhs.php'">
+                            <i class="fa-solid fa-plus"></i> Tambah Mahasiswa
+                        </button>
+                    </div>
                 </form>
+
                 <table>
                     <thead>
                         <tr>
@@ -155,10 +163,8 @@ $query_string = $query_string ? '&' . $query_string : '';
                                     <td>
                                         <?php if ($row['status'] == 1) { ?>
                                             <span class="status-aktif">Aktif</span>
-                                        <?php } elseif ($row['status'] == 2) { ?>
-                                            <span class="status-nonaktif">Dinonaktifkan</span>
                                         <?php } else { ?>
-                                            <span class="status-menunggu">Menunggu</span>
+                                            <span class="status-nonaktif">Dinonaktifkan</span>
                                         <?php } ?>
                                     </td>
 
@@ -219,6 +225,8 @@ $query_string = $query_string ? '&' . $query_string : '';
         </main>
     </div>
 
+    <?php include "adm_footer.php"; ?>
+
     <script>
         //fungsi button rincian data - start
         function lihatDetail(npm, nama, prodi, email, status, nama_pa, nama_dosbing1, nama_dosbing2) {
@@ -227,11 +235,9 @@ $query_string = $query_string ? '&' . $query_string : '';
 
             let statusBadge = '';
             if (status == 1) {
-                statusBadge = '<span class="badge-status badge-aktif">Akun Aktif</span>';
-            } else if (status == 0) {
-                statusBadge = '<span class="badge-status badge-menunggu">Menunggu Verifikasi</span>';
+                statusBadge = '<span class="badge-status badge-aktif badge-detail-margin">Akun Aktif</span>';
             } else {
-                statusBadge = '<span class="badge-status badge-nonaktif">Nonaktif</span>';
+                statusBadge = '<span class="badge-status badge-nonaktif badge-detail-margin">Nonaktif</span>';
             }
 
             let htmlContent = `
@@ -249,23 +255,15 @@ $query_string = $query_string ? '&' . $query_string : '';
                 </div>
             `;
 
-            if (status == 0) {
+            if (status == 2) {
                 htmlContent += `
             <div class="swal-action-box">
-                <button onclick="konfirmasiAksi('${npm}', 'setuju')" class="swal-btn swal-btn-setuju">Setuju</button>
-                <button onclick="konfirmasiAksi('${npm}', 'tolak')" class="swal-btn swal-btn-tolak">Tolak</button>
-                <button onclick="Swal.close()" class="swal-btn swal-btn-batal">Batal</button>
+                <button onclick="konfirmasiAktifkan('${npm}')" class="swal-btn-custom swal-btn-setuju">Aktifkan Kembali Akun</button>
+                <button onclick="Swal.close()" class="swal-btn-custom swal-btn-batal">Batal</button>
             </div>
-        `;
-            } else if (status == 2) {
-                htmlContent += `
-            <div class="swal-action-box">
-                <button onclick="konfirmasiAktifkan('${npm}')" class="swal-btn swal-btn-setuju">Aktifkan Kembali</button>
-                <button onclick="Swal.close()" class="swal-btn swal-btn-batal">Batal</button>
-            </div>
-        `;
+            `;
             } else {
-                htmlContent += `<div class="swal-status-aktif"><b>Akun sudah aktif</b></div>`;
+                htmlContent += `<div class="swal-status-message">Akun mahasiswa dalam keadaan aktif.</div>`;
             }
 
             Swal.fire({
@@ -279,28 +277,6 @@ $query_string = $query_string ? '&' . $query_string : '';
             });
         }
         //fungsi button rincian data - end
-
-        //fungsi button terima dan tolak permintaan akun baru - start
-        function konfirmasiAksi(npm, action) {
-            const isSetuju = action === 'setuju';
-
-            Swal.fire({
-                title: isSetuju ? 'Setujui Pendaftaran?' : 'Tolak Pendaftaran?',
-                text: isSetuju ?
-                    "Mahasiswa akan mendapatkan akses login." : "Data mahasiswa akan dihapus secara permanen.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: isSetuju ? '#28a745' : '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: isSetuju ? 'Ya, Setujui' : 'Ya, Tolak',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = 'adm_approval_mhs.php?npm=' + npm + '&action=' + action;
-                }
-            });
-        }
-        //fungsi button terima dan tolak permintaan akun baru - end
 
         //fungsi button reset password -start
         function konfirmasiReset(npm) {
@@ -319,7 +295,7 @@ $query_string = $query_string ? '&' . $query_string : '';
                 }
             });
         }
-        //fungsi button reset password -start
+        //fungsi button reset password -end
 
         //fungsi button nonaktifkan akun - start
         function konfirmasiNonaktif(npm) {
@@ -338,7 +314,7 @@ $query_string = $query_string ? '&' . $query_string : '';
                 }
             });
         }
-        // fungsi button nonaktifkan akun - start
+        // fungsi button nonaktifkan akun - end
 
         // fungsi button mengaktifkan akun kembali - start
         function konfirmasiAktifkan(npm) {
@@ -359,7 +335,6 @@ $query_string = $query_string ? '&' . $query_string : '';
         }
         // fungsi button mengaktifkan akun kembali - end
     </script>
-
 </body>
 
 </html>

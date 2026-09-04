@@ -2,11 +2,12 @@
 session_start();
 include "koneksi.php";
 
-$id_dosen = $_SESSION['id_dosen'] ?? 0;
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'pimpinan') {
     echo "<script>alert('Silakan login sebagai dosen'); window.location='index.php';</script>";
     exit;
 }
+
+$id_dosen = $_SESSION['id_dosen'] ?? 0;
 
 $namaLengkap = $_SESSION['nama_lengkap'] ?? 'pimpinan';
 $idLogin = $_SESSION['nama'] ?? '';
@@ -17,6 +18,112 @@ $namaParts = explode(' ', $namaLengkap);
 if (!empty($namaParts)) {
     $inisial = strtoupper(substr($namaParts[0], 0, 1));
 }
+
+$query_dosen = mysqli_query($koneksi, "SELECT jabatan FROM dosen WHERE id_dosen = '$id_dosen' LIMIT 1");
+$data_dosen = mysqli_fetch_assoc($query_dosen);
+$jabatan_pimpinan = strtolower($data_dosen['jabatan'] ?? '');
+$jabatan_lower = strtolower($jabatan_pimpinan);
+
+$status_target = '';
+$filter_jabatan = "";
+$is_ormawa_role = false;
+
+if (strpos($jabatan_lower, 'wadek 1') !== false || strpos($jabatan_lower, 'wakil dekan 1') !== false) {
+    $status_target = 'Menunggu Wadek 1';
+    $filter_jabatan = " AND (LOWER(js.nama_surat) LIKE '%magang%' OR LOWER(js.nama_surat) LIKE '%pkl%' OR LOWER(js.nama_surat) LIKE '%riset%' OR LOWER(js.nama_surat) LIKE '%aktif%')";
+} elseif (strpos($jabatan_lower, 'wadek 2') !== false || strpos($jabatan_lower, 'wakil dekan 2') !== false) {
+    $status_target = 'Menunggu Disposisi Wadek 2';
+    $is_ormawa_role = true;
+    $filter_jabatan = " AND (LOWER(js.nama_surat) LIKE '%dana%' OR LOWER(js.nama_surat) LIKE '%ruangan%')";
+} elseif (strpos($jabatan_lower, 'dekan') !== false && strpos($jabatan_lower, 'wakil') === false && strpos($jabatan_lower, 'wadek') === false) {
+    $status_target = 'Menunggu Dekan';
+    $filter_jabatan = " AND (LOWER(js.nama_surat) NOT LIKE '%magang%' AND LOWER(js.nama_surat) NOT LIKE '%pkl%' AND LOWER(js.nama_surat) NOT LIKE '%riset%' AND LOWER(js.nama_surat) NOT LIKE '%aktif%' AND LOWER(js.nama_surat) NOT LIKE '%dana%' AND LOWER(js.nama_surat) NOT LIKE '%ruangan%')";
+} elseif (strpos($jabatan_lower, 'kasubag') !== false || strpos($jabatan_lower, 'kasubbag') !== false) {
+    $status_target = 'Menunggu Disposisi Kasubbag TU';
+    $is_ormawa_role = true;
+    $filter_jabatan = " AND (LOWER(js.nama_surat) LIKE '%dana%' OR LOWER(js.nama_surat) LIKE '%ruangan%')";
+}
+
+$q_menunggu = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan sp JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.status_akhir = '$status_target' $filter_jabatan");
+$menunggu = mysqli_fetch_assoc($q_menunggu)['total'] ?? 0;
+
+$q_disetujui = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan sp JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.status_pimpinan = 'Disetujui' $filter_jabatan");
+$disetujui = mysqli_fetch_assoc($q_disetujui)['total'] ?? 0;
+
+$q_ditolak = mysqli_query($koneksi, "SELECT COUNT(*) as total FROM surat_pengajuan sp JOIN jenis_surat js ON sp.id_jenis = js.id_jenis WHERE sp.status_pimpinan = 'Ditolak' $filter_jabatan");
+$ditolak = mysqli_fetch_assoc($q_ditolak)['total'] ?? 0;
+
+$q_agenda = mysqli_query($koneksi, "
+    SELECT sp.id_surat, o.nama_ormawa, js.nama_surat, sp.jadwal_pertemuan
+    FROM surat_pengajuan sp
+    JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    WHERE sp.jadwal_pertemuan IS NOT NULL 
+      AND DATE(sp.jadwal_pertemuan) >= CURDATE()
+    ORDER BY sp.jadwal_pertemuan ASC
+    LIMIT 4
+");
+
+$tahun_ini = isset($_GET['y']) ? (int)$_GET['y'] : date('Y');
+$bulan_ini = isset($_GET['m']) ? (int)$_GET['m'] : date('n');
+
+$nama_bulan = [
+    1 => 'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+];
+
+$array_bulan_indo = [
+    1 => 'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+];
+
+$daftar_jadwal = [];
+$q_SemuaJadwal = mysqli_query($koneksi, "
+    SELECT sp.id_surat, sp.jadwal_pertemuan, o.nama_ormawa, js.nama_surat,
+           dpr.catatan as catatan_ruangan, dpd.catatan as catatan_dana
+    FROM surat_pengajuan sp
+    JOIN ormawa o ON sp.id_ormawa = o.id_ormawa
+    JOIN jenis_surat js ON sp.id_jenis = js.id_jenis
+    LEFT JOIN detail_peminjaman_ruangan dpr ON sp.id_surat = dpr.id_surat
+    LEFT JOIN detail_pengajuan_dana dpd ON sp.id_surat = dpd.id_surat
+    WHERE sp.jadwal_pertemuan IS NOT NULL 
+      AND MONTH(sp.jadwal_pertemuan) = '$bulan_ini' 
+      AND YEAR(sp.jadwal_pertemuan) = '$tahun_ini'
+      $filter_jabatan
+");
+
+while ($j = mysqli_fetch_assoc($q_SemuaJadwal)) {
+    $tgl_saja = date('Y-m-d', strtotime($j['jadwal_pertemuan']));
+    $daftar_jadwal[$tgl_saja][] = [
+        'nama_ormawa' => $j['nama_ormawa'],
+        'nama_surat'  => $j['nama_surat'],
+        'jam'         => date('H:i', strtotime($j['jadwal_pertemuan'])),
+        'catatan'     => $j['catatan_ruangan'] ?? $j['catatan_dana'] ?? '-'
+    ];
+}
+
+$jml_hari_bulan_ini = cal_days_in_month(CAL_GREGORIAN, $bulan_ini, $tahun_ini);
+$hari_pertama = date('w', strtotime("$tahun_ini-$bulan_ini-01"));
 ?>
 
 <!DOCTYPE html>
@@ -36,6 +143,7 @@ if (!empty($namaParts)) {
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
@@ -45,7 +153,16 @@ if (!empty($namaParts)) {
             <a href="pimpinan_verif.php">Disposisi & Verifikasi</a>
             <a href="pimpinan_beranda.php#riwayat">Informasi</a>
             <a href="pimpinan_riwayat.php">Riwayat Verifikasi</a>
-            <a href="pimpinan_tracking.php">Tracking</a>
+
+            <div class="nav-dropdown">
+                <a href="#" class="<?= basename($_SERVER['PHP_SELF']) == 'pimpinan_tracking.php' ? 'active' : ''; ?>">
+                    Tracking <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+                </a>
+                <div class="dropdown-content">
+                    <a href="pimpinan_tracking.php?kategori=akademik">Surat Akademik</a>
+                    <a href="pimpinan_tracking.php?kategori=ormawa">Surat Organisasi</a>
+                </div>
+            </div>
         </div>
 
         <div class="navbar-extra">
@@ -95,41 +212,103 @@ if (!empty($namaParts)) {
             </div>
 
             <div class="status-info-header">
-                <h2>Informasi <span class="text-orange">Persuratan</span></h2>
+                <h2>Ringkasan <span class="text-orange">Kinerja & Kalender</span></h2>
             </div>
 
-            <div class="dashboard-container">
-                <div class="action-box">
-                    <div class="action-icon">
-                        <i class="fa-solid fa-file-signature"></i>
+            <div class="pimpinan-dashboard-wrapper">
+                <div class="stats-column">
+                    <div class="status-box-pimpinan status-warning-pimpinan">
+                        <h4 class="stats-title">Menunggu</h4>
+                        <span class="status-count"><?= $menunggu; ?></span>
+                        <p class="stats-desc">Menunggu verifikasi Anda</p>
                     </div>
-                    <h3>Verifikasi & Disposisi Permohonan</h3>
-                    <p>Disposisi & verifikasi permohonan surat mahasiswa yang membutuhkan persetujuan Anda.</p>
-                    <a href="pimpinan_verif.php" class="btn-action">
-                        Aksi <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+
+                    <div class="status-box-pimpinan status-success">
+                        <h4 class="stats-title">Disetujui</h4>
+                        <span class="status-count"><?= $disetujui; ?></span>
+                        <p class="stats-desc">Riwayat persetujuan surat</p>
+                    </div>
+
+                    <div class="status-box-pimpinan status-danger">
+                        <h4 class="stats-title">Ditolak</h4>
+                        <span class="status-count"><?= $ditolak; ?></span>
+                        <p class="stats-desc">Riwayat penolakan surat</p>
+                    </div>
                 </div>
 
-                <div class="action-box">
-                    <div class="action-icon">
-                        <i class="fa-solid fa-share-nodes"></i>
-                    </div>
-                    <h3>Riwayat Verifikasi</h3>
-                    <p>Lihat daftar surat yang sudah pernah Anda setujui atau tolak sebelumnya.</p>
-                    <a href="pimpinan_riwayat.php" class="btn-action">
-                        Lihat Riwayat <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </div>
+                <div class="calendar-column">
+                    <div class="cal-header">
+                        <h3>
+                            <i class="fa-solid fa-calendar-days text-orange cal-title-icon"></i>
+                            <?= $array_bulan_indo[$bulan_ini]; ?> <?= $tahun_ini; ?>
+                        </h3>
+                        <div class="cal-nav-btns">
+                            <?php
+                            $prev_m = $bulan_ini - 1;
+                            $prev_y = $tahun_ini;
+                            if ($prev_m < 1) {
+                                $prev_m = 12;
+                                $prev_y--;
+                            }
 
-                <div class="action-box">
-                    <div class="action-icon">
-                        <i class="fa-solid fa-magnifying-glass-location"></i>
+                            $next_m = $bulan_ini + 1;
+                            $next_y = $tahun_ini;
+                            if ($next_m > 12) {
+                                $next_m = 1;
+                                $next_y++;
+                            }
+                            ?>
+                            <a href="?m=<?= $prev_m; ?>&y=<?= $prev_y; ?>" class="cal-nav-btn"><i class="fa-solid fa-chevron-left"></i></a>
+                            <a href="?m=<?= $next_m; ?>&y=<?= $next_y; ?>" class="cal-nav-btn"><i class="fa-solid fa-chevron-right"></i></a>
+                        </div>
                     </div>
-                    <h3>Tracking Disposisi</h3>
-                    <p>Pantau pergerakan alur surat Fakultas Sains dan Teknologi UIN RIL</p>
-                    <a href="pimpinan_tracking.php" class="btn-action">
-                        Lacak Surat <i class="fa-solid fa-arrow-right"></i>
-                    </a>
+
+                    <div class="cal-grid cal-grid-head">
+                        <div class="cal-day-name sunday">Min</div>
+                        <div class="cal-day-name">Sen</div>
+                        <div class="cal-day-name">Sel</div>
+                        <div class="cal-day-name">Rab</div>
+                        <div class="cal-day-name">Kam</div>
+                        <div class="cal-day-name">Jum</div>
+                        <div class="cal-day-name">Sab</div>
+                    </div>
+
+                    <div class="cal-grid">
+                        <?php
+                        for ($i = 0; $i < $hari_pertama; $i++) {
+                            echo '<div class="cal-cell other-month"></div>';
+                        }
+
+                        for ($d = 1; $d <= $jml_hari_bulan_ini; $d++) {
+                            $format_tgl = sprintf('%04d-%02d-%02d', $tahun_ini, $bulan_ini, $d);
+                            $is_today = ($format_tgl == date('Y-m-d'));
+
+                            $has_event = isset($daftar_jadwal[$format_tgl]);
+
+                            $class_extra = '';
+                            if ($is_today) $class_extra .= ' today';
+                            if ($has_event) $class_extra .= ' has-event clickable-event';
+
+                            $onclick_attr = '';
+                            if ($has_event) {
+                                $json_data = htmlspecialchars(json_encode($daftar_jadwal[$format_tgl]), ENT_QUOTES, 'UTF-8');
+                                $onclick_attr = " onclick='tampilkanDetailAgenda(\"$format_tgl\", $json_data)'";
+                            }
+
+                            echo '<div class="cal-cell' . $class_extra . '"' . $onclick_attr . '>';
+                            echo '<span>' . $d . '</span>';
+                            if ($has_event) {
+                                echo '<div class="event-dot" title="Klik untuk lihat detail agenda"></div>';
+                            }
+                            echo '</div>';
+                        }
+                        ?>
+                    </div>
+
+                    <div class="cal-footer">
+                        <span class="cal-legend-item"><span class="legend-dot dot-today"></span> Hari Ini</span>
+                        <span class="cal-legend-item"><span class="legend-dot dot-event"></span> Jadwal Audiensi Ormawa</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -226,6 +405,63 @@ if (!empty($namaParts)) {
                     }
                 });
             }
+
+            function tampilkanDetailAgenda(tanggalStr, listAgenda) {
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                };
+                const tanggalFormatted = new Date(tanggalStr).toLocaleDateString('id-ID', options);
+
+                let htmlContent = `<div class="agenda-container">`;
+
+                listAgenda.forEach((item, index) => {
+                    htmlContent += `
+                <div class="agenda-card">
+                    <div class="agenda-title">
+                        ${item.nama_ormawa}
+                    </div>
+                    <div class="agenda-subtitle">
+                        ${item.nama_surat}
+                    </div>
+                    <div class="agenda-footer">
+                        <div>
+                            <span class="agenda-time-badge">
+                                <i class="fa-regular fa-clock"></i> ${item.jam} WIB
+                            </span>
+                        </div>
+                        <div class="agenda-location" title="${item.catatan}">
+                            <i class="fa-solid fa-location-dot agenda-loc-icon"></i> ${item.catatan}
+                        </div>
+                    </div>
+                </div>`;
+                });
+
+                htmlContent += `</div>`;
+
+                Swal.fire({
+                    title: `<div class="swal2-title-sec">Agenda: ${tanggalFormatted}</div>`,
+                    html: htmlContent,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    closeButtonHtml: '<i class="fa-solid fa-xmark"></i>',
+                    width: '500px',
+                    customClass: {
+                        closeButton: 'custom-swal-close-btn'
+                    }
+                });
+            }
+
+            document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.navbar-nav')?.classList.toggle('active');
+            });
+            document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+            });
         </script>
 </body>
 
