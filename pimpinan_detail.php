@@ -180,7 +180,7 @@ if (isset($_POST['aksi'])) {
         } else if (strpos($namaSurat, 'lulus') !== false) {
             $url_preview = "generate_sk_lulus_resmi.php?id=$id_surat&asal=pimpinan&view=true";
         } else if (strpos($namaSurat, 'masih kuliah') !== false || strpos($namaSurat, 'skmk') !== false) {
-            $url_preview = "generate_skmk_resmi.php?id=$id_surat&asal=pimpinan&view=true"; // Sesuaikan nama file generator resmi SKMK Anda jika berbeda
+            $url_preview = "generate_skmk_resmi.php?id=$id_surat&asal=pimpinan&view=true";
         } else {
             $url_preview = "pimpinan_riwayat.php";
         }
@@ -283,6 +283,7 @@ function tgl_indo($tanggal)
 
 <body>
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/LOGO2.png" alt="navbar-logo">
         </a>
@@ -290,6 +291,7 @@ function tgl_indo($tanggal)
         <div class="navbar-nav">
             <a href="pimpinan_beranda.php#home">Beranda</a>
             <a href="pimpinan_verif.php">Disposisi & Verifikasi</a>
+            <a href="pimpinan_beranda.php#riwayat">Informasi</a>
             <a href="pimpinan_riwayat.php">Riwayat Verifikasi</a>
             <div class="nav-dropdown">
                 <a href="#" class="<?= basename($_SERVER['PHP_SELF']) == 'pimpinan_tracking.php' ? 'active' : ''; ?>">
@@ -791,6 +793,15 @@ function tgl_indo($tanggal)
                 }
             });
         }
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
     </script>
 </body>
 

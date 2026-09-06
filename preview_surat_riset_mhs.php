@@ -48,7 +48,10 @@ $array_bulan = [
     'November',
     'Desember'
 ];
-$tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y');
+
+// Format Tanggal Surat Tanda Tangan
+$timestamp_ttd = strtotime($data['tanggal_pengajuan']);
+$tgl_surat_indo = date('d', $timestamp_ttd) . ' ' . $array_bulan[(int)date('m', $timestamp_ttd)] . ' ' . date('Y', $timestamp_ttd);
 
 $semester = $data['semester'] ?? '-';
 
@@ -188,7 +191,7 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
             <p>Wassalamu’alaikum Wr. Wb.</p>
 
             <div class="surat-date">
-                Bandar Lampung, <?= $tanggal_surat; ?>
+                Bandar Lampung, <?= $tgl_surat_indo; ?>
             </div>
 
             <div class="surat-signatures-3">

@@ -280,8 +280,15 @@ $q_jenis = mysqli_query($koneksi, "
                         ?>
                             <tr>
                                 <td><?= $no++; ?></td>
-                                <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
-
+                                <td>
+                                    <?php
+                                    if (!empty($row['waktu_verif_pimpinan']) && $row['waktu_verif_pimpinan'] != '0000-00-00 00:00:00') {
+                                        echo date('d-m-Y H:i', strtotime($row['waktu_verif_pimpinan']));
+                                    } else {
+                                        echo '<span class="text-muted">-</span>';
+                                    }
+                                    ?>
+                                </td>
                                 <?php if ($is_ormawa_role): ?>
                                     <td><b><?= htmlspecialchars($row['nama_ormawa'] ?? '-'); ?></b></td>
                                 <?php else: ?>

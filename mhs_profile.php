@@ -82,6 +82,7 @@ $teks_pb2    = $data['nama_pb2'] ?? 'Belum Ada';
     <?php endif; ?>
 
     <nav class="navbar">
+        <a href="#" id="hamburger-menu"><i class="fa-solid fa-bars"></i></a>
         <a href="#" class="navbar-logo">
             <img src="images/logo2.png" alt="navbar-logo">
         </a>
@@ -225,6 +226,15 @@ $teks_pb2    = $data['nama_pb2'] ?? 'Belum Ada';
                 }
             });
         }
+
+        document.getElementById('hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.navbar-nav')?.classList.toggle('active');
+        });
+        document.getElementById('my-hamburger-menu')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.my-navbar-nav')?.classList.toggle('active');
+        });
     </script>
 </body>
 

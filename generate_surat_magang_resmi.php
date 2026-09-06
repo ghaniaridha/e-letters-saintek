@@ -84,7 +84,15 @@ $bulanIndo = [
     '12' => 'Desember'
 ];
 
-$tanggalSurat = date('d') . ' ' . $bulanIndo[date('m')] . ' ' . date('Y');
+/// Format Tanggal Surat Tanda Tangan
+$waktu_terbit = $data['waktu_selesai'];
+
+if (!empty($waktu_terbit) && $waktu_terbit != '0000-00-00 00:00:00') {
+    $timestamp_surat = strtotime($waktu_terbit);
+    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[(int)date('m', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
+} else {
+    $tgl_surat_indo = ".................";
+}
 
 $tglMulai = !empty($data['tanggal_mulai_magang'])
     ? date('d', strtotime($data['tanggal_mulai_magang'])) . ' ' .
@@ -98,9 +106,20 @@ $tglSelesai = !empty($data['tanggal_selesai_magang'])
     date('Y', strtotime($data['tanggal_selesai_magang']))
     : '____________';
 
-$base_url = "http://localhost/e-letters-saintek";
+$host = $_SERVER['HTTP_HOST'];
+$local_ip = gethostbyname(gethostname());
 
-$link_verifikasi = $base_url . "/verifikasi_surat.php?hash=" . $data['dokumen_hash'];
+if ($host == 'localhost' || $host == '127.0.0.1') {
+    $host = $local_ip;
+}
+
+if (strpos($host, '.') !== false && strpos($host, 'localhost') === false && !filter_var($host, FILTER_VALIDATE_IP)) {
+    $base_url = "https://" . $host;
+} else {
+    $base_url = "http://" . $host . "/e-letters-saintek";
+}
+
+$link_verifikasi = $base_url . "/pimpinan_qr_verif.php?hash=" . $data['dokumen_hash'];
 
 $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_verifikasi);
 ?>
@@ -164,7 +183,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
                     <td class="spacer-info-surat"></td>
 
-                    <td class="no-wrap">Bandar Lampung, <?= $tanggalSurat; ?></td>
+                    <td class="no-wrap">Bandar Lampung, <?= $tgl_surat_indo; ?></td>
                 </tr>
                 <tr>
                     <td>Sifat</td>

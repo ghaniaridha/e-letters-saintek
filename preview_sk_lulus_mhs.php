@@ -47,7 +47,8 @@ $array_bulan = [
 ];
 
 // Format Tanggal Surat Tanda Tangan
-$tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y');
+$timestamp_ttd = strtotime($data['tanggal_pengajuan']);
+$tgl_surat_indo = date('d', $timestamp_ttd) . ' ' . $array_bulan[(int)date('m', $timestamp_ttd)] . ' ' . date('Y', $timestamp_ttd);
 
 // Format TTL (Tempat, Tanggal Lahir) dengan Bulan Bahasa Indonesia
 $timestamp_lahir = strtotime($data['tanggal_lahir']);
@@ -177,7 +178,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             <br>
 
             <div class="ttd">
-                <p style="margin-bottom: 20px;">Bandar Lampung, <?= $tanggal_surat; ?></p>
+                <p style="margin-bottom: 20px;">Bandar Lampung, <?= $tgl_surat_indo; ?></p>
 
                 <p>Pemohon</p>
 

@@ -92,8 +92,15 @@ $bulanIndo = [
     '12' => 'Desember'
 ];
 
-// Format Tanggal Surat
-$tanggalSurat = date('d') . ' ' . $bulanIndo[date('m')] . ' ' . date('Y');
+// Format Tanggal Surat Tanda Tangan
+$waktu_terbit = $data['waktu_selesai'];
+
+if (!empty($waktu_terbit) && $waktu_terbit != '0000-00-00 00:00:00') {
+    $timestamp_surat = strtotime($waktu_terbit);
+    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[(int)date('m', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
+} else {
+    $tgl_surat_indo = ".................";
+}
 
 // Format TTL (Tempat, Tanggal Lahir)
 $tgl_lahir_ts = strtotime($data['tanggal_lahir']);
@@ -104,7 +111,22 @@ $ttl = htmlspecialchars($data['tempat_lahir']) . ', ' . $tanggalLahirFormatted;
 $tgl_lulus_ts = strtotime($data['tanggal_lulus']);
 $tanggalLulusFormatted = date('d', $tgl_lulus_ts) . ' ' . $bulanIndo[date('m', $tgl_lulus_ts)] . ' ' . date('Y', $tgl_lulus_ts);
 
-$qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode("http://192.168.18.174/localhost/e-letters-saintek/verifikasi_surat.php?hash=" . $data['dokumen_hash']);
+$host = $_SERVER['HTTP_HOST'];
+$local_ip = gethostbyname(gethostname());
+
+if ($host == 'localhost' || $host == '127.0.0.1') {
+    $host = $local_ip;
+}
+
+if (strpos($host, '.') !== false && strpos($host, 'localhost') === false && !filter_var($host, FILTER_VALIDATE_IP)) {
+    $base_url = "https://" . $host;
+} else {
+    $base_url = "http://" . $host . "/e-letters-saintek";
+}
+
+$link_verifikasi = $base_url . "/pimpinan_qr_verif.php?hash=" . $data['dokumen_hash'];
+
+$qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . urlencode($link_verifikasi);
 ?>
 
 <!DOCTYPE html>
@@ -241,7 +263,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 </div>
 
                 <div class="ttd-container-sk">
-                    <p class="tgl-surat-sk">Bandar Lampung, <?= $tanggalSurat; ?></p>
+                    <p class="tgl-surat-sk">Bandar Lampung, <?= $tgl_surat_indo; ?></p>
                     <p class="ttd-no-margin">An. Dekan</p>
                     <p class="ttd-margin-bottom"><b>Wakil Dekan 1,</b></p>
 

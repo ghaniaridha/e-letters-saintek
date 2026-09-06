@@ -131,7 +131,11 @@ $array_bulan = [
     'November',
     'Desember'
 ];
-$tanggal_surat = date('d') . ' ' . $array_bulan[(int)date('m')] . ' ' . date('Y');
+
+// Format Tanggal Surat Tanda Tangan
+$timestamp_ttd = strtotime($ormawa['tanggal_pengajuan']);
+$tgl_surat_indo = date('d', $timestamp_ttd) . ' ' . $array_bulan[(int)date('m', $timestamp_ttd)] . ' ' . date('Y', $timestamp_ttd);
+
 $timestamp = strtotime($tanggal_kegiatan ?? 'now');
 $tanggal_indo = date('d', $timestamp) . ' ' . $array_bulan[(int)date('m', $timestamp)] . ' ' . date('Y', $timestamp);
 $hari_index = date('w', strtotime($tanggal_kegiatan ?? 'now'));
@@ -260,7 +264,7 @@ $qr_sekretaris = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=
 
         <div class="ormawa-ttd-section">
             <div class="ormawa-tanggal-surat">
-                Bandar Lampung, <?= $tanggal_surat; ?>
+                Bandar Lampung, <?= $tgl_surat_indo; ?>
             </div>
 
             <div class="ormawa-ttd-container">
