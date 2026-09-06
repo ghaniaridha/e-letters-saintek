@@ -64,7 +64,6 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preview Surat Keterangan Masih Kuliah</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />

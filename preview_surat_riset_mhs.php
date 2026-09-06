@@ -100,7 +100,6 @@ if (isset($data['status_pb2']) && $data['status_pb2'] == 'Disetujui') {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preview Surat</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />

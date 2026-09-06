@@ -70,39 +70,39 @@ if (isset($_POST['kirim_balasan'])) {
 $nomorSurat = !empty($data['nomor_surat']) ? $data['nomor_surat'] : "BELUM DIBERI NOMOR";
 
 $bulanIndo = [
-    '01' => 'Januari',
-    '02' => 'Februari',
-    '03' => 'Maret',
-    '04' => 'April',
-    '05' => 'Mei',
-    '06' => 'Juni',
-    '07' => 'Juli',
-    '08' => 'Agustus',
-    '09' => 'September',
-    '10' => 'Oktober',
-    '11' => 'November',
-    '12' => 'Desember'
+    1 => 'Januari',
+    2 => 'Februari',
+    3 => 'Maret',
+    4 => 'April',
+    5 => 'Mei',
+    6 => 'Juni',
+    7 => 'Juli',
+    8 => 'Agustus',
+    9 => 'September',
+    10 => 'Oktober',
+    11 => 'November',
+    12 => 'Desember'
 ];
 
-/// Format Tanggal Surat Tanda Tangan
+// Format Tanggal Surat Tanda Tangan
 $waktu_terbit = $data['waktu_selesai'];
 
 if (!empty($waktu_terbit) && $waktu_terbit != '0000-00-00 00:00:00') {
     $timestamp_surat = strtotime($waktu_terbit);
-    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[(int)date('m', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
+    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[date('n', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
 } else {
     $tgl_surat_indo = ".................";
 }
 
 $tglMulai = !empty($data['tanggal_mulai_magang'])
     ? date('d', strtotime($data['tanggal_mulai_magang'])) . ' ' .
-    $bulanIndo[date('m', strtotime($data['tanggal_mulai_magang']))] . ' ' .
+    $bulanIndo[date('n', strtotime($data['tanggal_mulai_magang']))] . ' ' .
     date('Y', strtotime($data['tanggal_mulai_magang']))
     : '____________';
 
 $tglSelesai = !empty($data['tanggal_selesai_magang'])
     ? date('d', strtotime($data['tanggal_selesai_magang'])) . ' ' .
-    $bulanIndo[date('m', strtotime($data['tanggal_selesai_magang']))] . ' ' .
+    $bulanIndo[date('n', strtotime($data['tanggal_selesai_magang']))] . ' ' .
     date('Y', strtotime($data['tanggal_selesai_magang']))
     : '____________';
 

@@ -1630,9 +1630,9 @@ body.swal2-shown {
   overflow-x: auto;
   border: 1px solid #eaeaea;
   display: block;
-  width: 90%;
+  width: 95%;
   max-width: 1100px;
-  margin: 30px auto !important;
+  margin: 15px auto !important;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -2349,8 +2349,8 @@ body.swal2-shown {
 .filter-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 15px;
   width: 100%;
   flex-wrap: wrap;
 }
@@ -3458,20 +3458,49 @@ body.swal2-shown {
     text-align: center;
   }
 
-  /* Daftar surat */
   .daftar-surat-header h2 {
     font-size: 2rem;
   }
 
-  /* Template surat */
-  #template-surat .search-input {
-    width: 100%;
-  }
-
+  /* Template surat & Filter Vertikal */
   #template-surat .table-wrapper {
     width: 95%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-container .search-container,
+  .filter-container .filter-select,
+  .filter-container .btn-filter-submit,
+  .filter-container .btn-filter-reset,
+  #template-surat .search-input {
+    width: 100%;
+    min-width: unset;
+  }
+
+  #template-surat .custom-table th,
+  #template-surat .custom-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .badge-status {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .btn-file-surat {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .btn-file-surat i {
+    font-size: 16px;
   }
 
   /* Footer */
@@ -3802,17 +3831,6 @@ body.swal2-shown {
   form textarea {
     width: 100%;
     font-size: 16px;
-  }
-
-  .filter-container form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-container select,
-  .filter-container input {
-    width: 100%;
-    min-width: unset;
   }
 }
 

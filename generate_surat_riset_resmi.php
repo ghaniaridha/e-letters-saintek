@@ -68,18 +68,18 @@ if (isset($_POST['kirim_balasan'])) {
 $nomorSurat = !empty($data['nomor_surat']) ? $data['nomor_surat'] : "BELUM DIBERI NOMOR";
 
 $bulanIndo = [
-    '01' => 'Januari',
-    '02' => 'Februari',
-    '03' => 'Maret',
-    '04' => 'April',
-    '05' => 'Mei',
-    '06' => 'Juni',
-    '07' => 'Juli',
-    '08' => 'Agustus',
-    '09' => 'September',
-    '10' => 'Oktober',
-    '11' => 'November',
-    '12' => 'Desember'
+    1 => 'Januari',
+    2 => 'Februari',
+    3 => 'Maret',
+    4 => 'April',
+    5 => 'Mei',
+    6 => 'Juni',
+    7 => 'Juli',
+    8 => 'Agustus',
+    9 => 'September',
+    10 => 'Oktober',
+    11 => 'November',
+    12 => 'Desember'
 ];
 
 // Format Tanggal Surat Tanda Tangan
@@ -87,7 +87,7 @@ $waktu_terbit = $data['waktu_selesai'];
 
 if (!empty($waktu_terbit) && $waktu_terbit != '0000-00-00 00:00:00') {
     $timestamp_surat = strtotime($waktu_terbit);
-    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[(int)date('m', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
+    $tgl_surat_indo = date('d', $timestamp_surat) . ' ' . $bulanIndo[date('n', $timestamp_surat)] . ' ' . date('Y', $timestamp_surat);
 } else {
     $tgl_surat_indo = ".................";
 }
@@ -115,7 +115,6 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Surat Izin Reset</title>
 
     <link rel="shortcut icon" href="images/Logo UINRIL(2).png" />
@@ -199,30 +198,30 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                 Bersama ini disampaikan permohonan izin untuk mengadakan Riset guna penulisan skripsi mahasiswa kami sebagai berikut:
             </p>
 
-            <table class="tabel-data-mhs">
+            <table class="surat-info-table">
                 <tr>
-                    <td class="col-label">Nama / NPM:</td>
-                    <td class="col-titik">:</td>
+                    <td class="col-label">Nama / NPM</td>
+                    <td class="col-separator">:</td>
                     <td><?= htmlspecialchars($data['nama_mhs']); ?> / <?= htmlspecialchars($data['npm']); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">Semester / Program Studi</td>
-                    <td class="col-titik">:</td>
+                    <td class="col-separator">:</td>
                     <td><?= htmlspecialchars($data['semester']); ?> / <?= htmlspecialchars($data['nama_prodi']); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">Judul Skripsi</td>
-                    <td class="col-titik">:</td>
+                    <td class="col-separator">:</td>
                     <td class="paragraf-isi"><?= htmlspecialchars($data['judul_skripsi'] ?? '-'); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">Lokasi Penelitian</td>
-                    <td class="col-titik">:</td>
+                    <td class="col-separator">:</td>
                     <td><?= htmlspecialchars($data['lokasi_penelitian'] ?? '-'); ?></td>
                 </tr>
                 <tr>
                     <td class="col-label">Penanggung Jawab</td>
-                    <td class="col-titik">:</td>
+                    <td class="col-separator">:</td>
                     <td>Dosen Pembimbing</td>
                 </tr>
             </table>
@@ -236,21 +235,26 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
 
             <p>Wassalamu’alaikum Wr. Wb.</p>
 
-            <div class="ttd-container">
-                <p class="tgl-surat">Bandar Lampung, <?= $tgl_surat_indo; ?></p>
+            <div class="surat-footer-section" style="margin-top: 30px;">
+                <div class="tembusan-area">
+                </div>
 
-                <p>Wakil Dekan 1,</p>
+                <div class="ttd-container-sk">
+                    <p class="tgl-surat-sk">Bandar Lampung, <?= $tgl_surat_indo; ?></p>
+                    <p class="ttd-no-margin">An. Dekan</p>
+                    <p class="ttd-margin-bottom"><b>Wakil Dekan 1,</b></p>
 
-                <?php if (!empty($data['dokumen_hash'])) { ?>
-                    <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
-                <?php } else { ?>
-                    <br><br><br><br>
-                <?php } ?>
+                    <?php if (!empty($data['dokumen_hash'])) { ?>
+                        <img src="<?= $qr_url; ?>" class="qr-ttd" alt="QR Verifikasi">
+                    <?php } else { ?>
+                        <br><br><br>
+                    <?php } ?>
 
-                <p>
-                    <strong><?= htmlspecialchars($nama_wadek1); ?></strong><br>
-                    NIP. <?= htmlspecialchars($nip_wadek1); ?>
-                </p>
+                    <p class="ttd-margin-top">
+                        <span class="nama-penandatangan"><b><?= htmlspecialchars($nama_wadek1); ?></b></span><br>
+                        NIP. <?= htmlspecialchars($nip_wadek1); ?>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
