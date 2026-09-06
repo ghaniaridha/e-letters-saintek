@@ -253,6 +253,10 @@ $q_jenis = mysqli_query($koneksi, "SELECT * FROM jenis_surat ORDER BY nama_surat
                                             $linkUnduh = "generate_surat_magang_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         } elseif (strpos($namaSurat, 'aktif') !== false) {
                                             $linkUnduh = "generate_sk_aktif_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
+                                        } elseif (strpos($namaSurat, 'lulus') !== false) {
+                                            $linkUnduh = "generate_sk_lulus_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
+                                        } elseif (strpos($namaSurat, 'masih aktif') !== false || strpos($namaSurat, 'masih') !== false) {
+                                            $linkUnduh = "generate_skmk_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         } else {
                                             $linkUnduh = "generate_surat_riset_resmi.php?id=" . $row['id_surat'] . "&view=true&asal=mhs";
                                         }

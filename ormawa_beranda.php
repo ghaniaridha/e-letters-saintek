@@ -157,7 +157,7 @@ $c_selesai = mysqli_fetch_assoc($q_selesai)['total'];
                 </div>
                 <h3>Riwayat Pengajuan</h3>
                 <p>Lihat detail riwayat seluruh surat yang pernah Anda ajukan sebelumnya.</p>
-                <a href="ormawa_lacak.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
+                <a href="ormawa_riwayat.php" class="btn-action">Lihat Riwayat <i class="fa-solid fa-arrow-right"></i></a>
             </div>
 
             <div class="action-box">

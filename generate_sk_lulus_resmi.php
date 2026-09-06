@@ -264,7 +264,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
             $is_preview = (isset($_GET['view']) && $_GET['view'] == 'true');
             $asal_halaman = $_GET['asal'] ?? '';
 
-            if (!$is_preview || $asal_halaman == 'riwayat_pimpinan' || $asal_halaman == 'pimpinan' || $asal_halaman == 'laporan') :
+            if (!$is_preview || $asal_halaman == 'riwayat_pimpinan' || $asal_halaman == 'pimpinan' || $asal_halaman == 'laporan' || $asal_halaman == 'mhs') :
 
                 if ($asal_halaman == 'laporan') {
                     $link_kembali = 'adm_laporan_surat.php';
@@ -272,6 +272,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=" . url
                     $link_kembali = 'pimpinan_riwayat.php';
                 } elseif ($asal_halaman == 'tracking') {
                     $link_kembali = 'pimpinan_tracking.php';
+                } elseif ($asal_halaman == 'mhs') {
+                    $link_kembali = 'mhs_riwayat.php';
                 } else {
                     $link_kembali = 'mhs_riwayat.php';
                 }
